@@ -177,6 +177,7 @@ function categoryIds() { return allCategories().map(c => c.id); }
 (function migrateProductsCategory() {
   const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='products'").get().sql || '';
   if (!sql.includes("CHECK (category IN (")) return;
+  db.exec(`PRAGMA legacy_alter_table=ON;`);
   db.exec(`
     ALTER TABLE products RENAME TO products_old;
     CREATE TABLE products (
@@ -194,7 +195,51 @@ function categoryIds() { return allCategories().map(c => c.id); }
       SELECT id,name,description,price,image_url,category,tags,stock,created_at FROM products_old;
     DROP TABLE products_old;
   `);
+  db.exec(`PRAGMA legacy_alter_table=OFF;`);
   console.log('[migrasi] products: CHECK kategori dihapus (kategori dinamis)');
+})();
+// Repair: kembalikan FK product_images/reviews/voucher_codes ke products
+// (bug: RENAME products tanpa legacy_alter_table menulis ulang FK -> products_old)
+(function repairProductFKs() {
+  const defs = {
+    product_images: ['id,product_id,path,sort_order,created_at', `CREATE TABLE product_images (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      path TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`],
+    reviews: ['id,product_id,user_id,order_id,rating,comment,created_at', `CREATE TABLE reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      order_id INTEGER NOT NULL REFERENCES orders(id),
+      rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+      comment TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(user_id, product_id)
+    )`],
+    voucher_codes: ['id,product_id,code,used,order_id,created_at', `CREATE TABLE voucher_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      code TEXT NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0,
+      order_id INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`],
+  };
+  for (const t of Object.keys(defs)) {
+    const sql = (db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name=?`).get(t) || {}).sql || '';
+    if (!sql.includes('products_old')) continue;
+    const [cols, ddl] = defs[t];
+    db.exec(`PRAGMA legacy_alter_table=ON;
+      ALTER TABLE ${t} RENAME TO ${t}_fix;
+      ${ddl};
+      INSERT INTO ${t} (${cols}) SELECT ${cols} FROM ${t}_fix;
+      DROP TABLE ${t}_fix;
+      PRAGMA legacy_alter_table=OFF;`);
+    console.log(`[repair] ${t}: FK dikembalikan ke products`);
+  }
 })();
 // Kolom tambahan orders (idempoten untuk DB lama)
 for (const [col, def] of [['discount', 'REAL NOT NULL DEFAULT 0'], ['voucher_code', 'TEXT']]) {
