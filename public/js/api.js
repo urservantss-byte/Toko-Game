@@ -1,6 +1,21 @@
 /* ===== API helper, toast, format, konstanta ===== */
 const CATLABEL = { topup: 'Top Up Game', voucher: 'Voucher', akun: 'Akun' };
 const CATCOLOR = { topup: '#8b5cf6', voucher: '#f59e0b', akun: '#3b82f6' };
+const CATPALETTE = ['#8b5cf6', '#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
+// Label & warna kategori: pakai data dinamis dari server (store.cats), fallback ke konstanta lama
+function catLabel(id) {
+  const c = (store.cats || []).find(x => x.id === id);
+  if (c) return (c.icon ? c.icon + ' ' : '') + c.label;
+  return CATLABEL[id] || id;
+}
+function catColor(id) {
+  if (CATCOLOR[id]) return CATCOLOR[id];
+  const idx = (store.cats || []).findIndex(x => x.id === id);
+  let h = 0; const s = String(id);
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return CATPALETTE[(idx >= 0 ? idx : h) % CATPALETTE.length];
+}
+function setCats(cats) { store.cats = cats || []; }
 const STLBL = { pending: 'Menunggu', proses: 'Diproses', delivery: 'Dikirim', selesai: 'Selesai', batal: 'Dibatalkan' };
 const STCOLOR = { pending: 'bg-amber-100 text-amber-700', proses: 'bg-blue-100 text-blue-700', delivery: 'bg-purple-100 text-purple-700', selesai: 'bg-green-100 text-green-700', batal: 'bg-red-100 text-red-700' };
 const PAYMETHODS = [

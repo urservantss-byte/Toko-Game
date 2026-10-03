@@ -26,7 +26,7 @@ const HeaderView = {
       <div class="flex items-center gap-3 h-16">
         <a @click="goHome" class="cursor-pointer flex items-center gap-2 shrink-0">
           <span class="text-2xl">🎮</span>
-          <span class="font-extrabold text-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent hidden sm:block">TokoGame</span>
+          <span class="font-extrabold text-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent hidden sm:block">{{ store.siteName }}</span>
         </a>
         <div class="flex-1 min-w-0 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2">
           <span class="text-gray-400">🔍</span>

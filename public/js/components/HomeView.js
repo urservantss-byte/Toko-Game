@@ -86,8 +86,8 @@ const HomeView = {
     <!-- Filter chips -->
     <div class="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
       <button @click="setCat('all')" :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', !f.cat || f.cat==='all' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border']">Semua</button>
-      <button v-for="(lbl, c) in CATLABEL" :key="c" @click="setCat(c)"
-              :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', f.cat===c ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border']">{{ lbl }}</button>
+      <button v-for="c in store.cats" :key="c.id" @click="setCat(c.id)"
+              :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', f.cat===c.id ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border']">{{ c.icon }} {{ c.label }}</button>
       <button v-for="t in tags" :key="t" @click="setTag(t)"
               :class="['text-xs px-3 py-1.5 rounded-full whitespace-nowrap', f.tag===t ? 'bg-indigo-100 text-primary border border-primary' : 'bg-indigo-50 text-primary']">#{{ t }}</button>
     </div>
@@ -109,12 +109,12 @@ const HomeView = {
            class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
         <div class="relative aspect-square">
           <blur-img :src="imgOf(p)" cls="w-full h-full" :alt="p.name"></blur-img>
-          <span class="absolute top-2 left-2 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: CATCOLOR[p.category] }">{{ CATLABEL[p.category] }}</span>
+          <span class="absolute top-2 left-2 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: catColor(p.category) }">{{ catLabel(p.category) }}</span>
           <span v-if="(p.images||[]).length > 1" class="absolute bottom-2 right-2 text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full">📷 {{ p.images.length }}</span>
         </div>
         <div class="p-2.5 flex flex-col flex-1">
           <div class="text-[13px] font-medium leading-snug clamp2">{{ p.name }}</div>
-          <div class="text-[10px] text-gray-400 mt-0.5">{{ CATLABEL[p.category] || '' }}</div>
+          <div class="text-[10px] text-gray-400 mt-0.5">{{ catLabel(p.category) || '' }}</div>
           <div class="flex items-center justify-between mt-auto pt-1.5">
             <div class="text-accent font-extrabold text-sm">{{ rp(p.price) }}</div>
           </div>

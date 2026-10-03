@@ -4,8 +4,8 @@ const AdminProducts = {
   mounted() { this.load(); },
   methods: {
     rp,
-    catLbl(c) { return CATLABEL[c] || c; },
-    catBg(c) { return CATCOLOR[c] || '#6b7280'; },
+    catLbl(c) { return catLabel(c); },
+    catBg(c) { return catColor(c); },
     async load() {
       try { this.products = (await api('/api/products?limit=100')).products || []; }
       catch (e) { toast(e.message, false); }
@@ -209,9 +209,7 @@ const ProductFormModal = {
           <input v-model="form.stock" type="number" placeholder="Stok" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
         </div>
         <select v-model="form.category" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
-          <option value="akun">Akun</option>
-          <option value="voucher">Voucher</option>
-          <option value="topup">Top Up Game</option>
+          <option v-for="c in store.cats" :key="c.id" :value="c.id">{{ c.icon }} {{ c.label }}</option>
         </select>
         <input v-model="form.tags" placeholder="Tags (koma, mis: mlbb,diamond)" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
         <div>

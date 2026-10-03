@@ -55,7 +55,7 @@ const ProductModal = {
                :class="['w-16 h-16 object-cover rounded-xl cursor-pointer bg-gray-100 dark:bg-gray-800 shrink-0', j === idx ? 'ring-2 ring-primary' : '']">
         </div>
         <div class="mt-4">
-          <span class="text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: CATCOLOR[p.category] }">{{ CATLABEL[p.category] }}</span>
+          <span class="text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: catColor(p.category) }">{{ catLabel(p.category) }}</span>
           <h3 class="text-lg font-bold mt-2 leading-snug">{{ p.name }}</h3>
           <div class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
             <stars :value="Number(p.avg_rating) || 0"></stars>

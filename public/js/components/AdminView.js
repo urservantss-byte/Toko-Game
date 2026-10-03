@@ -1,6 +1,6 @@
 /* Admin panel: tab navigasi */
 const AdminView = {
-  components: { AdminDash, AdminOrders, AdminProducts, AdminUsers, AdminBanners, AdminTickets },
+  components: { AdminDash, AdminOrders, AdminProducts, AdminUsers, AdminBanners, AdminTickets, AdminVouchers, AdminSettings },
   computed: {
     tab: () => store.adminTab,
     pendingCount: () => store.pendingCount || 0,
@@ -34,6 +34,7 @@ const AdminView = {
       <button @click="nav('banners')" :class="tabCls('banners')">🎨 Banner</button>
       <button @click="nav('tickets')" :class="tabCls('tickets')">🎫 Tiket</button>
       <button @click="nav('users')" :class="tabCls('users')">👥 User</button>
+      <button @click="nav('settings')" :class="tabCls('settings')">⚙️ Pengaturan</button>
     </div>
     <admin-dash v-if="tab === 'dash'" :key="'d' + tab"></admin-dash>
     <admin-orders v-if="tab === 'orders'" :key="'o' + tab"></admin-orders>
@@ -42,6 +43,7 @@ const AdminView = {
     <admin-banners v-if="tab === 'banners'" :key="'b' + tab"></admin-banners>
     <admin-tickets v-if="tab === 'tickets'" :key="'t' + tab"></admin-tickets>
     <admin-users v-if="tab === 'users'" :key="'u' + tab"></admin-users>
+    <admin-settings v-if="tab === 'settings'" :key="'s' + tab"></admin-settings>
   </div>`
 };
 

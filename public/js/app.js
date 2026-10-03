@@ -7,14 +7,20 @@ const app = Vue.createApp({
     isAuthPage() { return ['login', 'register', 'forgot', 'reset'].includes(this.page); },
   },
   mounted() {
-    fetch('/api/settings/public').then(r => r.json()).then(d => { this.waCs = d.wa_cs || ''; }).catch(() => {});
+    fetch('/api/settings/public').then(r => r.json()).then(d => {
+      this.waCs = d.wa_cs || '';
+      setCats(d.categories || []);
+      if (d.store_name) store.siteName = d.store_name;
+      store.announcement = d.announcement || '';
+    }).catch(() => {});
   },
   methods: {
-    waLink() { return 'https://wa.me/' + this.waCs + '?text=' + encodeURIComponent('Halo TokoGame, saya mau tanya-tanya dulu 🙏'); },
+    waLink() { return 'https://wa.me/' + this.waCs + '?text=' + encodeURIComponent('Halo ' + store.siteName + ', saya mau tanya-tanya dulu 🙏'); },
     goTrack() { go('track'); },
   },
   template: `
   <div>
+    <div v-if="store.announcement" class="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-center text-xs font-semibold px-4 py-2">📢 {{ store.announcement }}</div>
     <header-view></header-view>
     <main class="min-h-[70vh]">
       <home-view v-if="page === 'home'"></home-view>
@@ -28,7 +34,7 @@ const app = Vue.createApp({
       <track-view v-if="page === 'track'"></track-view>
     </main>
     <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
-      <div class="border-t pt-6">🎮 TokoGame — Akun, Voucher & Topup Digital · Pembayaran aman · Proses kilat</div>
+      <div class="border-t pt-6">🎮 {{ store.siteName }} — Akun, Voucher & Topup Digital · Pembayaran aman · Proses kilat</div>
       <div class="mt-2"><a @click="goTrack" class="cursor-pointer text-primary font-semibold hover:underline">🔍 Lacak Pesanan</a></div>
     </footer>
     <a v-if="waCs" :href="waLink()" target="_blank"
@@ -78,6 +84,7 @@ app.config.warnHandler = (msg) => { console.warn(msg); };
 Object.assign(app.config.globalProperties, {
   go, logout, store, rp, fmtDate, toast, copyText,
   CATLABEL, CATCOLOR, STLBL, STCOLOR, PAYMETHODS,
+  catLabel, catColor, setCats,
   loadHome, loadMyOrders, refreshMe, openProduct,
 });
 

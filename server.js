@@ -144,6 +144,58 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   for (const r of rows) ins.run(...r);
   console.log('[seed] payment_methods: 4 metode default');
 })();
+// ---- Kategori produk dinamis ----
+db.exec(`
+CREATE TABLE IF NOT EXISTS categories (
+  id TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  icon TEXT NOT NULL DEFAULT '📦',
+  active INTEGER NOT NULL DEFAULT 1,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);`);
+(function seedCategories() {
+  const n = db.prepare('SELECT COUNT(*) c FROM categories').get().c;
+  if (n > 0) return;
+  const rows = [
+    ['topup', 'Top Up Game', '⚡', 0],
+    ['voucher', 'Voucher', '🎟️', 1],
+    ['akun', 'Akun', '👤', 2],
+  ];
+  const ins = db.prepare('INSERT INTO categories (id,label,icon,active,sort_order) VALUES (?,?,?,1,?)');
+  for (const r of rows) ins.run(...r);
+  console.log('[seed] categories: 3 kategori default');
+})();
+function allCategories() {
+  return db.prepare('SELECT id,label,icon,active,sort_order FROM categories ORDER BY sort_order,id').all();
+}
+function activeCategories() {
+  return db.prepare("SELECT id,label,icon FROM categories WHERE active = 1 ORDER BY sort_order,id").all();
+}
+function categoryIds() { return allCategories().map(c => c.id); }
+// Migrasi: hapus CHECK(category IN (...)) agar kategori bisa dinamis (rebuild tabel, idempoten)
+(function migrateProductsCategory() {
+  const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='products'").get().sql || '';
+  if (!sql.includes("CHECK (category IN (")) return;
+  db.exec(`
+    ALTER TABLE products RENAME TO products_old;
+    CREATE TABLE products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      price INTEGER NOT NULL DEFAULT 0,
+      image_url TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT 'voucher',
+      tags TEXT NOT NULL DEFAULT '',
+      stock INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO products (id,name,description,price,image_url,category,tags,stock,created_at)
+      SELECT id,name,description,price,image_url,category,tags,stock,created_at FROM products_old;
+    DROP TABLE products_old;
+  `);
+  console.log('[migrasi] products: CHECK kategori dihapus (kategori dinamis)');
+})();
 // Kolom tambahan orders (idempoten untuk DB lama)
 for (const [col, def] of [['discount', 'REAL NOT NULL DEFAULT 0'], ['voucher_code', 'TEXT']]) {
   try { db.exec(`ALTER TABLE orders ADD COLUMN ${col} ${def}`); } catch {}
@@ -662,7 +714,7 @@ app.get('/api/tags', (req, res) => {
 app.post('/api/products', auth, requireAdmin, (req, res) => {
   const { name, description = '', price = 0, image_url = '', category = 'voucher', tags = '', stock = 0 } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Nama produk wajib diisi' });
-  if (!['akun', 'voucher', 'topup'].includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
+  if (!categoryIds().includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
   const info = db.prepare('INSERT INTO products (name,description,price,image_url,category,tags,stock) VALUES (?,?,?,?,?,?,?)')
     .run(name, description, Number(price) || 0, image_url, category, tags, Number(stock) || 0);
   res.status(201).json({ product: db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid) });
@@ -672,7 +724,7 @@ app.put('/api/products/:id', auth, requireAdmin, (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Produk tidak ditemukan' });
   const { name, description, price, image_url, category, tags, stock } = req.body || {};
-  if (category && !['akun', 'voucher', 'topup'].includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
+  if (category && !categoryIds().includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
   db.prepare(`UPDATE products SET
     name=COALESCE(?,name), description=COALESCE(?,description), price=COALESCE(?,price),
     image_url=COALESCE(?,image_url), category=COALESCE(?,category), tags=COALESCE(?,tags),
@@ -1096,7 +1148,7 @@ app.get('/api/admin/settings', auth, requireAdmin, (req, res) => {
   res.json({ qris_configured: !!s, qris_merchant: s ? merchantName(s) : '', wa_cs: getSetting('wa_cs'), wa_cs_enabled: waCsEnabled(), pay_methods: allPayMethods() });
 });
 app.put('/api/admin/settings', auth, requireAdmin, (req, res) => {
-  const { qris_static, wa_cs, wa_cs_enabled } = req.body || {};
+  const { qris_static, wa_cs, wa_cs_enabled, store_name, announcement, announcement_on, auto_complete_days } = req.body || {};
   let merchant = '';
   if (qris_static !== undefined) {
     const s = String(qris_static || '').trim();
@@ -1110,7 +1162,24 @@ app.put('/api/admin/settings', auth, requireAdmin, (req, res) => {
   }
   const set = (k, v) => db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(k, v);
   if (wa_cs_enabled !== undefined) set('wa_cs_enabled', wa_cs_enabled ? '1' : '0');
+  if (store_name !== undefined) set('store_name', String(store_name).trim().slice(0, 40) || 'TokoGame');
+  if (announcement !== undefined) set('announcement', String(announcement).trim().slice(0, 200));
+  if (announcement_on !== undefined) set('announcement_on', announcement_on ? '1' : '0');
+  if (auto_complete_days !== undefined) {
+    const d = Math.max(1, Math.min(30, parseInt(auto_complete_days) || 2));
+    set('auto_complete_days', String(d));
+  }
   res.json({ ok: true, qris_merchant: merchant, wa_cs: getSetting('wa_cs'), wa_cs_enabled: waCsEnabled(), pay_methods: allPayMethods() });
+});
+// GET pengaturan toko (admin)
+app.get('/api/admin/store-settings', auth, requireAdmin, (req, res) => {
+  res.json({
+    store_name: getSetting('store_name') || 'TokoGame',
+    announcement: getSetting('announcement') || '',
+    announcement_on: getSetting('announcement_on') === '1',
+    auto_complete_days: parseInt(getSetting('auto_complete_days')) || 2,
+    categories: allCategories(),
+  });
 });
 // ---- CRUD metode pembayaran (admin) ----
 app.post('/api/admin/pay-methods', auth, requireAdmin, (req, res) => {
@@ -1154,11 +1223,77 @@ app.delete('/api/admin/pay-methods/:id', auth, requireAdmin, (req, res) => {
   db.prepare('DELETE FROM payment_methods WHERE id = ?').run(m.id);
   res.json({ ok: true });
 });
+// ---- CRUD kategori produk (admin) ----
+function catById(id) { return db.prepare('SELECT * FROM categories WHERE id = ?').get(id); }
+app.post('/api/admin/categories', auth, requireAdmin, (req, res) => {
+  const { id, label, icon = '📦' } = req.body || {};
+  const rawId = id || label || '';
+  const nid = String(rawId).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').replace(/_+/g, '_').slice(0, 40);
+  if (!nid || nid.length < 3) return res.status(400).json({ error: 'ID minimal 3 karakter (huruf/angka/_)' });
+  if (!label || !String(label).trim()) return res.status(400).json({ error: 'Label wajib diisi' });
+  if (catById(nid)) return res.status(400).json({ error: 'ID sudah dipakai' });
+  const maxSort = db.prepare('SELECT COALESCE(MAX(sort_order), -1) m FROM categories').get().m;
+  db.prepare('INSERT INTO categories (id,label,icon,active,sort_order) VALUES (?,?,?,1,?)')
+    .run(nid, String(label).trim().slice(0, 40), String(icon).trim().slice(0, 8) || '📦', maxSort + 1);
+  res.status(201).json({ category: catById(nid) });
+});
+app.put('/api/admin/categories/:id', auth, requireAdmin, (req, res) => {
+  const c = catById(req.params.id);
+  if (!c) return res.status(404).json({ error: 'Kategori tidak ditemukan' });
+  const { label, icon, active, sort_order } = req.body || {};
+  if (label !== undefined && !String(label).trim()) return res.status(400).json({ error: 'Label wajib diisi' });
+  if (active !== undefined && !active) {
+    const others = db.prepare('SELECT COUNT(*) c FROM categories WHERE active = 1 AND id != ?').get(c.id).c;
+    if (!others) return res.status(400).json({ error: 'Minimal satu kategori harus aktif' });
+  }
+  db.prepare(`UPDATE categories SET label = COALESCE(?, label), icon = COALESCE(?, icon),
+    active = COALESCE(?, active), sort_order = COALESCE(?, sort_order) WHERE id = ?`)
+    .run(label !== undefined ? String(label).trim().slice(0, 40) : null,
+      icon !== undefined ? String(icon).trim().slice(0, 8) || '📦' : null,
+      active !== undefined ? (active ? 1 : 0) : null,
+      sort_order !== undefined ? Number(sort_order) || 0 : null, c.id);
+  res.json({ category: catById(c.id) });
+});
+app.delete('/api/admin/categories/:id', auth, requireAdmin, (req, res) => {
+  const c = catById(req.params.id);
+  if (!c) return res.status(404).json({ error: 'Kategori tidak ditemukan' });
+  const used = db.prepare('SELECT COUNT(*) c FROM products WHERE category = ?').get(c.id).c;
+  if (used) return res.status(400).json({ error: `Kategori dipakai ${used} produk — pindahkan dulu produknya` });
+  if (c.active) {
+    const others = db.prepare('SELECT COUNT(*) c FROM categories WHERE active = 1 AND id != ?').get(c.id).c;
+    if (!others) return res.status(400).json({ error: 'Minimal satu kategori harus aktif' });
+  }
+  db.prepare('DELETE FROM categories WHERE id = ?').run(c.id);
+  res.json({ ok: true });
+});
+// ---- Auto-complete pesanan delivery (cron server-side, proteksi CRON_SECRET) ----
+app.post('/api/cron/auto-complete', (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || req.headers['x-cron-secret'] !== secret)
+    return res.status(403).json({ error: 'Forbidden' });
+  const days = Math.max(1, Math.min(30, parseInt(getSetting('auto_complete_days')) || 2));
+  const cutoff = `-${days} days`;
+  const rows = db.prepare(
+    `SELECT id, proof_path FROM orders WHERE status = 'delivery' AND COALESCE(delivered_at, created_at) <= datetime('now', ?)`
+  ).all(cutoff);
+  const r = db.prepare(
+    `UPDATE orders SET status = 'selesai', proof_path = NULL WHERE status = 'delivery' AND COALESCE(delivered_at, created_at) <= datetime('now', ?)`
+  ).run(cutoff);
+  for (const o of rows) {
+    if (o.proof_path) {
+      try { fs.unlinkSync(path.join(UPLOAD_DIR, path.basename(o.proof_path))); } catch {}
+    }
+  }
+  res.json({ ok: true, auto_completed: r.changes, days });
+});
 // Publik: nomor WA CS (untuk tombol chat)
 app.get('/api/settings/public', (req, res) => {
   res.json({
     wa_cs: waCsEnabled() ? getSetting('wa_cs') : '',
     pay_methods: enabledPayMethods().map(m => ({ id: m.id, label: m.label, desc: m.details, kind: m.kind })),
+    categories: activeCategories(),
+    store_name: getSetting('store_name') || 'TokoGame',
+    announcement: getSetting('announcement_on') === '1' ? getSetting('announcement') : '',
   });
 });
 

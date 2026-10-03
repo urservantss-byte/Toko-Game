@@ -26,7 +26,10 @@ const store = reactive({
   aof: { q: '', status: '' },
   adminProducts: [],
   adminUsers: [],
-  deliverOrder: null,      // order yg sedang di-input delivery-nya (admin)
+  // site dinamis (dari /api/settings/public)
+  cats: [],                 // [{id,label,icon}]
+  siteName: 'TokoGame',
+  announcement: '',  deliverOrder: null,      // order yg sedang di-input delivery-nya (admin)
   productForm: null,       // produk yg sedang diedit (admin), null = tambah baru
   myOrders: [],
   resetToken: '',
@@ -48,7 +51,7 @@ function setToken(t) {
 }
 
 const VALID_PAGES = ['home', 'login', 'register', 'forgot', 'reset', 'cart', 'checkout', 'orders', 'tickets', 'settings', 'admin', 'track'];
-const ADMIN_TABS = ['dash', 'orders', 'products', 'vouchers', 'banners', 'tickets', 'users'];
+const ADMIN_TABS = ['dash', 'orders', 'products', 'vouchers', 'banners', 'tickets', 'users', 'settings'];
 
 // Hash routing: halaman tersimpan di URL (#/orders, #/admin/products, ...)
 // sehingga refresh / tombol back-forward browser tetap di halaman yg sama.
