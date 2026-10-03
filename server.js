@@ -128,6 +128,26 @@ for (const [col, def] of [['discount', 'REAL NOT NULL DEFAULT 0'], ['voucher_cod
 try {
   for (const p of db.prepare('SELECT DISTINCT product_id FROM voucher_codes').all()) syncCodeStock(p.product_id);
 } catch {}
+// ---- Migrasi: kolom verifikasi email, reset password & avatar di users ----
+// (dijalankan SEBELUM seed agar DB fresh tidak crash)
+(function migrateUsers() {
+  const cols = db.prepare(`PRAGMA table_info(users)`).all().map(c => c.name);
+  const add = (name, def) => {
+    if (cols.includes(name)) return false;
+    db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`);
+    return true;
+  };
+  const addedVerified = add('email_verified', `INTEGER NOT NULL DEFAULT 0`);
+  add('avatar', `TEXT NOT NULL DEFAULT ''`);
+  add('verify_token', `TEXT`);
+  add('verify_expires', `TEXT`);
+  add('reset_token', `TEXT`);
+  add('reset_expires', `TEXT`);
+  if (addedVerified) {
+    db.exec(`UPDATE users SET email_verified = 1`); // user lama dianggap sudah terverifikasi
+    console.log('[migrasi] kolom verifikasi/reset/avatar ditambahkan; user lama ditandai terverifikasi');
+  }
+})();
 // ---- Seed ----
 function seed() {
   const userCount = db.prepare('SELECT COUNT(*) c FROM users').get().c;
@@ -171,25 +191,7 @@ seed();
   if (rows.length) console.log(`[migrasi] ${rows.length} produk di-backfill ke product_images`);
 })();
 
-// ---- Migrasi: kolom verifikasi email, reset password & avatar di users ----
-(function migrateUsers() {
-  const cols = db.prepare(`PRAGMA table_info(users)`).all().map(c => c.name);
-  const add = (name, def) => {
-    if (cols.includes(name)) return false;
-    db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`);
-    return true;
-  };
-  const addedVerified = add('email_verified', `INTEGER NOT NULL DEFAULT 0`);
-  add('avatar', `TEXT NOT NULL DEFAULT ''`);
-  add('verify_token', `TEXT`);
-  add('verify_expires', `TEXT`);
-  add('reset_token', `TEXT`);
-  add('reset_expires', `TEXT`);
-  if (addedVerified) {
-    db.exec(`UPDATE users SET email_verified = 1`); // user lama dianggap sudah terverifikasi
-    console.log('[migrasi] kolom verifikasi/reset/avatar ditambahkan; user lama ditandai terverifikasi');
-  }
-})();
+// (migrateUsers sudah dipindah ke atas, sebelum seed)
 
 // ---- Migrasi: kolom data delivery di orders ----
 (function migrateOrders() {
