@@ -56,6 +56,8 @@ const CheckoutView = {
   data: () => ({ loading: false, proofPreview: '', qris: null, qrisProof: null, qrisProofPreview: '',
     voucherCode: '', voucherDiscount: 0, voucherErr: '', voucherOk: '', payList: null }),
   mounted() {
+    this._esc = e => { if (e.key === 'Escape' && this.qris) this.closeQris(); };
+    document.addEventListener('keydown', this._esc);
     fetch('/api/settings/public').then(r => r.json()).then(d => {
       if (d.pay_methods && d.pay_methods.length) {
         this.payList = d.pay_methods;
@@ -63,6 +65,7 @@ const CheckoutView = {
       }
     }).catch(() => {});
   },
+  unmounted() { document.removeEventListener('keydown', this._esc); },
   computed: {
     cart: () => store.cart,
     subtotal: () => cartTotal.value,
@@ -191,7 +194,8 @@ const CheckoutView = {
     </button>
     <!-- Modal QRIS -->
     <div v-if="qris" class="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4" @click.self="closeQris">
-      <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-sm w-full text-center">
+      <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-sm w-full text-center relative">
+        <button @click="closeQris" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-lg leading-none" title="Tutup">✕</button>
         <div class="text-lg font-extrabold mb-1">⚡ Scan untuk Bayar</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">Pesanan #{{ qris.orderId }} • {{ qris.merchant }}</div>
         <img :src="qris.qr" class="w-64 h-64 mx-auto rounded-2xl border border-gray-200 dark:border-gray-700" alt="QRIS">
@@ -205,6 +209,7 @@ const CheckoutView = {
           <img v-if="qrisProofPreview" :src="qrisProofPreview" class="mt-2 rounded-xl max-h-40 mx-auto">
         </div>
         <button @click="confirmQrisPaid" :disabled="loading" class="w-full bg-primary text-white font-bold rounded-2xl py-3 hover:bg-indigo-700 disabled:opacity-50">{{ loading ? 'Mengirim...' : 'Saya Sudah Bayar ✓' }}</button>
+        <button @click="closeQris" class="mt-2 w-full text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 py-2">Tutup</button>
         <div class="text-[11px] text-gray-400 mt-2">Admin akan verifikasi pembayaranmu</div>
       </div>
     </div>

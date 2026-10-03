@@ -414,6 +414,15 @@ function mailLayout(title, bodyHtml, ctaUrl, ctaLabel) {
 const MAX_PHOTOS = 10;
 const MAX_PHOTO_BYTES = 1 * 1024 * 1024; // 1MB per foto
 const PHOTO_MIMES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+// Validasi magic bytes agar tidak hanya percaya header Content-Type
+function detectImageType(buf) {
+  if (!buf || buf.length < 12) return null;
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'image/jpeg';
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return 'image/png';
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 && buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return 'image/webp';
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return 'image/gif';
+  return null;
+}
 const PHOTO_DIR = path.join(UPLOAD_DIR, 'products');
 if (!fs.existsSync(PHOTO_DIR)) fs.mkdirSync(PHOTO_DIR, { recursive: true });
 
@@ -468,6 +477,7 @@ function parseMultipartMulti(req, { maxFiles = MAX_PHOTOS } = {}) {
             const mime = (typeM && typeM[1].trim().toLowerCase()) || '';
             if (!PHOTO_MIMES[mime]) { reject(new Error(`File "${fileM[1]}" bukan gambar (hanya jpeg/png/webp/gif)`)); return; }
             const data = Buffer.from(body, 'latin1');
+            if (!detectImageType(data)) { reject(new Error(`File "${fileM[1]}" bukan gambar valid`)); return; }
             if (data.length > MAX_PHOTO_BYTES) { reject(new Error(`File "${fileM[1]}" melebihi 1MB`)); return; }
             files.push({ field: name, filename: fileM[1], mime, data });
           } else if (name) {
@@ -485,6 +495,15 @@ function parseMultipartMulti(req, { maxFiles = MAX_PHOTOS } = {}) {
 // ---- Helpers ----
 const app = express();
 app.use(compression()); // gzip: HTML & JSON jauh lebih ringan
+// Security headers dasar (tanpa dependensi helmet)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.removeHeader('X-Powered-By');
+  next();
+});
 app.use(express.json({ limit: '1mb' }));
 
 function signToken(user) {
@@ -546,7 +565,9 @@ function parseMultipart(req) {
             const typeM = part.match(/Content-Type:\s*([^\r\n]+)/i);
             const mime = (typeM && typeM[1].trim()) || '';
             if (!mime.startsWith('image/')) { reject(new Error('Hanya file gambar yang diizinkan')); return; }
-            file = { field: name, filename: fileM[1], mime, data: Buffer.from(body, 'latin1') };
+            const fdata = Buffer.from(body, 'latin1');
+            if (!detectImageType(fdata)) { reject(new Error('File bukan gambar valid')); return; }
+            file = { field: name, filename: fileM[1], mime, data: fdata };
           } else if (name) {
             fields[name] = body;
           }
@@ -572,7 +593,30 @@ async function sendVerificationEmail(user) {
   return { sent, link };
 }
 
-app.post('/api/auth/register', async (req, res) => {
+// [SEMENTARA - hapus setelah cleanup QA 2026-10-03] Bersihkan data uji QA
+app.post('/api/admin/cleanup-qa', auth, requireAdmin, (req, res) => {
+  const out = {};
+  const tx = db.transaction(() => {
+    for (const oid of [5, 6]) {
+      out['order_' + oid] = db.prepare('DELETE FROM orders WHERE id = ?').run(oid).changes;
+    }
+    out.ticket_msgs_5 = db.prepare('DELETE FROM ticket_messages WHERE ticket_id = 5').run().changes;
+    out.ticket_5 = db.prepare('DELETE FROM tickets WHERE id = 5').run().changes;
+    for (const em of ['test-qa-x7k9@test.id', 'pentest7741@test.id']) {
+      const u = db.prepare('SELECT id FROM users WHERE email = ?').get(em);
+      if (u) {
+        db.prepare('DELETE FROM ticket_messages WHERE user_id = ?').run(u.id);
+        db.prepare('DELETE FROM reviews WHERE user_id = ?').run(u.id);
+        out['user_' + em] = db.prepare('DELETE FROM users WHERE id = ?').run(u.id).changes;
+      } else out['user_' + em] = 0;
+    }
+    out.user_demo_reset = db.prepare("UPDATE users SET name = 'User Demo' WHERE email = 'user@toko.id'").run().changes;
+  });
+  tx();
+  res.json({ ok: true, cleaned: out });
+});
+
+app.post('/api/auth/register', rateLimit({ max: 5, msg: 'Terlalu banyak pendaftaran. Coba lagi nanti.' }), async (req, res) => {
   const { name, email, password } = req.body || {};
   if (!name || !email || !password) return res.status(400).json({ error: 'name, email, password wajib diisi' });
   if (password.length < 6) return res.status(400).json({ error: 'Password minimal 6 karakter' });
@@ -582,10 +626,9 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Email sudah terdaftar' });
   let user;
   if (exists) {
-    // daftar ulang padahal belum verifikasi: perbarui data & kirim ulang link
-    db.prepare('UPDATE users SET name = ?, password_hash = ? WHERE id = ?')
-      .run(name, bcrypt.hashSync(password, 10), exists.id);
-    user = db.prepare('SELECT * FROM users WHERE id = ?').get(exists.id);
+    // akun belum verifikasi: JANGAN timpa nama/password (cegah takeover via daftar ulang);
+    // cukup kirim ulang link verifikasi ke email pemilik asli
+    user = exists;
   } else {
     const info = db.prepare('INSERT INTO users (name,email,password_hash,role,email_verified) VALUES (?,?,?,?,0)')
       .run(name, em, bcrypt.hashSync(password, 10), 'user');
@@ -661,7 +704,23 @@ app.post('/api/auth/reset-password', (req, res) => {
   res.json({ ok: true, message: 'Password berhasil diubah. Silakan masuk dengan password baru.' });
 });
 
-app.post('/api/auth/login', (req, res) => {
+// Rate limiter sederhana (in-memory): cegah brute force login & spam register
+const _rl = new Map(); // key -> { n, reset }
+function rateLimit({ windowMs = 5 * 60 * 1000, max = 10, keyFn, msg = 'Terlalu banyak percobaan. Coba lagi nanti.' } = {}) {
+  return (req, res, next) => {
+    const key = (keyFn ? keyFn(req) : req.ip) + ':' + (req.path || '');
+    const now = Date.now();
+    let e = _rl.get(key);
+    if (!e || now > e.reset) e = { n: 0, reset: now + windowMs };
+    e.n++;
+    _rl.set(key, e);
+    if (_rl.size > 5000) { for (const [k, v] of _rl) if (now > v.reset) _rl.delete(k); }
+    if (e.n > max) return res.status(429).json({ error: msg });
+    next();
+  };
+}
+
+app.post('/api/auth/login', rateLimit({ max: 10, keyFn: r => r.ip + ':' + String((r.body || {}).email || '').toLowerCase() }), (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'email & password wajib diisi' });
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(String(email).toLowerCase());
@@ -885,8 +944,8 @@ app.get('/api/admin/vouchers', auth, requireAdmin, (req, res) => {
 });
 app.post('/api/admin/vouchers', auth, requireAdmin, (req, res) => {
   const { code, kind, value, min_total, max_uses, expires_at } = req.body || {};
-  const c = String(code || '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
-  if (!c || c.length < 3) return res.status(400).json({ error: 'Kode minimal 3 karakter (A-Z, 0-9)' });
+  const c = String(code || '').toUpperCase().trim().replace(/[^A-Z0-9-]/g, '');
+  if (!c || c.length < 3) return res.status(400).json({ error: 'Kode minimal 3 karakter (A-Z, 0-9, -)' });
   if (!['percent', 'fixed'].includes(kind)) return res.status(400).json({ error: 'Jenis voucher tidak valid' });
   const val = Number(value);
   if (!(val > 0) || (kind === 'percent' && val > 100)) return res.status(400).json({ error: 'Nilai voucher tidak valid' });
@@ -1701,6 +1760,8 @@ app.post('/api/products/:id/reviews', auth, (req, res) => {
   const pid = Number(req.params.id);
   const r = Number(rating);
   if (!r || r < 1 || r > 5) return res.status(400).json({ error: 'Rating harus 1-5' });
+  const cmt = String(comment || '').trim();
+  if (!cmt) return res.status(400).json({ error: 'Tulis ulasan dulu ya' });
   const prod = db.prepare('SELECT id FROM products WHERE id = ?').get(pid);
   if (!prod) return res.status(404).json({ error: 'Produk tidak ditemukan' });
   // harus punya order delivery/selesai berisi produk ini
@@ -1716,7 +1777,7 @@ app.post('/api/products/:id/reviews', auth, (req, res) => {
   if (exists) return res.status(400).json({ error: 'Kamu sudah mengulas produk ini' });
   const ins = db.prepare(
     'INSERT INTO reviews (product_id, user_id, order_id, rating, comment) VALUES (?,?,?,?,?)'
-  ).run(pid, req.user.id, ok.id, r, (comment || '').slice(0, 1000));
+  ).run(pid, req.user.id, ok.id, r, cmt.slice(0, 1000));
   // kalau semua item order sudah diulas -> pesanan otomatis selesai
   const order_completed = order_id ? tryAutoCompleteOrder(ok.id, req.user.id) : false;
   res.status(201).json({ id: ins.lastInsertRowid, order_completed });

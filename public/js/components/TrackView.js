@@ -1,9 +1,10 @@
 /* Lacak pesanan publik (tanpa login): ID + email */
 const TrackView = {
   components: { StatusBadge },
-  data: () => ({ orderId: '', email: '', result: null, err: '', loading: false }),
+  data: () => ({ orderId: '', email: '', result: null, err: '', loading: false, payLabels: {} }),
   methods: {
     rp, fmtDate,
+    payLabel(id) { return this.payLabels[id] || id; },
     async track() {
       this.err = ''; this.result = null;
       if (!this.orderId || !this.email) return this.err = 'Isi ID pesanan dan email';
@@ -14,6 +15,13 @@ const TrackView = {
       } catch (e) { this.err = e.message; }
       finally { this.loading = false; }
     },
+  },
+  mounted() {
+    fetch('/api/settings/public').then(r => r.json()).then(d => {
+      const l = {};
+      for (const x of (d.pay_methods || [])) l[x.id] = x.label;
+      this.payLabels = l;
+    }).catch(() => {});
   },
   template: `
   <div class="max-w-lg mx-auto px-4 py-8">
@@ -32,7 +40,7 @@ const TrackView = {
       </div>
       <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
         <div>Total: <b class="text-gray-800 dark:text-gray-100">{{ rp(result.total) }}</b><span v-if="result.discount > 0" class="text-green-600"> (diskon {{ rp(result.discount) }})</span></div>
-        <div>Bayar via: {{ result.payment_method }} • {{ fmtDate(result.created_at) }}</div>
+        <div>Bayar via: {{ payLabel(result.payment_method) }} • {{ fmtDate(result.created_at) }}</div>
       </div>
       <div class="mt-3 space-y-1.5">
         <div v-for="it in result.items" :key="it.name" class="flex justify-between text-xs bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">

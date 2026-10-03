@@ -7,12 +7,15 @@ const OrdersView = {
   },
   mounted() {
     this.load();
+    this._esc = e => { if (e.key === 'Escape' && this.qris) this.qris = null; };
+    document.addEventListener('keydown', this._esc);
     fetch('/api/settings/public').then(r => r.json()).then(d => {
       const m = {}, l = {};
       for (const x of (d.pay_methods || [])) { m[x.id] = x.kind; l[x.id] = x.label; }
       this.payKinds = m; this.payLabels = l;
     }).catch(() => {});
   },
+  unmounted() { document.removeEventListener('keydown', this._esc); },
   methods: {
     rp, fmtDate,
     payKind(o) {
@@ -154,7 +157,8 @@ const OrdersView = {
     </div>
     <!-- Modal QRIS -->
     <div v-if="qris" class="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4" @click.self="qris = null">
-      <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-sm w-full text-center">
+      <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-sm w-full text-center relative">
+        <button @click="qris = null" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-lg leading-none" title="Tutup">✕</button>
         <div class="text-lg font-extrabold mb-1">⚡ Scan untuk Bayar</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">Pesanan #{{ qris.orderId }} • {{ qris.merchant }}</div>
         <img :src="qris.qr" class="w-64 h-64 mx-auto rounded-2xl border border-gray-200 dark:border-gray-700" alt="QRIS">
