@@ -1,7 +1,7 @@
 /* Menu utama: katalog produk + flash sale + filter */
 const HomeView = {
   components: { BlurImg, Stars },
-  data: () => ({ banners: [], bannerIdx: 0, bannerTimer: null }),
+  data: () => ({ banners: [], bannerIdx: 0, bannerTimer: null, flashEnds: '', now: Date.now(), cdTimer: null, testimonials: [] }),
   mounted() {
     fetch('/api/banners').then(r => r.json()).then(d => {
       this.banners = d.banners || [];
@@ -9,10 +9,22 @@ const HomeView = {
         this.bannerTimer = setInterval(() => { this.bannerIdx = (this.bannerIdx + 1) % this.banners.length; }, 5000);
       }
     }).catch(() => {});
+    fetch('/api/reviews/recent').then(r => r.json()).then(d => { this.testimonials = d.reviews || []; }).catch(() => {});
+    fetch('/api/settings/public').then(r => r.json()).then(d => {
+      this.flashEnds = d.flash_sale_ends || '';
+      if (this.flashEnds) this.cdTimer = setInterval(() => { this.now = Date.now(); }, 1000);
+    }).catch(() => {});
   },
-  beforeUnmount() { if (this.bannerTimer) clearInterval(this.bannerTimer); },
+  beforeUnmount() { if (this.bannerTimer) clearInterval(this.bannerTimer); if (this.cdTimer) clearInterval(this.cdTimer); },
   computed: {
     f: () => store.f,
+    countdown() {
+      if (!this.flashEnds) return '';
+      const diff = new Date(this.flashEnds).getTime() - this.now;
+      if (diff <= 0) return 'Berakhir';
+      const h = Math.floor(diff / 36e5), m = Math.floor(diff % 36e5 / 6e4), s = Math.floor(diff % 6e4 / 1e3);
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    },
     flash() { return store.products.filter(p => (p.discount || 0) > 0); },
     tags() {
       return [...new Set(store.products.flatMap(p => String(p.tags || '').split(',').map(t => t.trim()).filter(Boolean)))].slice(0, 12);
@@ -33,7 +45,7 @@ const HomeView = {
     },
   },
   methods: {
-    rp, CATLABEL, CATCOLOR,
+    rp, finalPrice, CATLABEL, CATCOLOR,
     imgOf(p) { return (p.images && p.images[0] && p.images[0].url) || p.image_url; },
     openProduct(id) { openProduct(id); },
     addCart(id) {
@@ -92,6 +104,7 @@ const HomeView = {
         <span class="text-xl">⚡</span>
         <h2 class="font-extrabold text-base">Flash Sale</h2>
         <span class="text-xs bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-300 font-bold px-2 py-0.5 rounded-full">Diskon!</span>
+        <span v-if="countdown" class="ml-auto text-xs font-mono font-bold bg-gray-900 dark:bg-gray-700 text-white px-2.5 py-1 rounded-lg">⏰ {{ countdown }}</span>
       </div>
       <div class="flex gap-3 overflow-x-auto styled-scroll pb-2 -mx-4 px-4">
         <div v-for="p in flash" :key="p.id" @click="openProduct(p.id)"
@@ -99,7 +112,8 @@ const HomeView = {
           <blur-img :src="imgOf(p)" cls="aspect-square" :alt="p.name"></blur-img>
           <div class="p-2 flex flex-col flex-1">
             <div class="text-xs font-medium clamp2" style="min-height:2.4em">{{ p.name }}</div>
-            <div class="text-accent font-extrabold text-sm mt-1">{{ rp(p.price) }}</div>
+            <div class="mt-1"><span class="text-accent font-extrabold text-sm">{{ rp(finalPrice(p)) }}</span>
+              <span v-if="p.discount > 0" class="text-[10px] text-gray-400 line-through ml-1">{{ rp(p.price) }}</span></div>
           </div>
         </div>
       </div>
@@ -139,7 +153,9 @@ const HomeView = {
           <div class="text-[13px] font-medium leading-snug clamp2">{{ p.name }}</div>
           <div class="text-[10px] text-gray-400 dark:text-gray-300 mt-0.5">{{ catLabel(p.category) || '' }}</div>
           <div class="flex items-center justify-between mt-auto pt-1.5">
-            <div class="text-accent font-extrabold text-sm">{{ rp(p.price) }}</div>
+            <div><span class="text-accent font-extrabold text-sm">{{ rp(finalPrice(p)) }}</span>
+              <span v-if="p.discount > 0" class="text-[10px] text-gray-400 line-through ml-1">{{ rp(p.price) }}</span></div>
+            <span v-if="p.discount > 0" class="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded">-{{ Math.round(p.discount) }}%</span>
           </div>
           <div class="flex items-center justify-between mt-0.5">
             <div class="text-[10px] text-gray-400 dark:text-gray-300">{{ p.sold_count ? p.sold_count + ' Terjual' : 'Baru' }}</div>
@@ -156,6 +172,24 @@ const HomeView = {
         <button @click="f.q=''; f.cat='all'; f.tag=''" class="bg-primary text-white text-sm font-bold rounded-xl px-6 py-2.5">Lihat Semua Produk</button>
       </div>
     </div>
+    <!-- Testimoni pembeli -->
+    <section v-if="testimonials.length" class="mt-8">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xl">⭐</span>
+        <h2 class="font-extrabold text-base">Kata Mereka</h2>
+        <span class="text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold px-2 py-0.5 rounded-full">Testimoni asli</span>
+      </div>
+      <div class="flex gap-3 overflow-x-auto styled-scroll pb-2 -mx-4 px-4">
+        <div v-for="(t, i) in testimonials" :key="i" class="flex-shrink-0 w-64 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl p-4">
+          <div class="text-amber-400 text-sm mb-1.5">{{ '★'.repeat(t.rating) }}<span class="text-gray-300 dark:text-gray-600">{{ '★'.repeat(5 - t.rating) }}</span></div>
+          <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed clamp2" style="min-height:2.6em">"{{ t.comment }}"</p>
+          <div class="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-gray-800">
+            <div class="text-xs font-bold">{{ t.user_name }}</div>
+            <div class="text-[10px] text-gray-400">beli {{ t.product_name }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>`
 };
 

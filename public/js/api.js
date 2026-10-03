@@ -26,6 +26,11 @@ const PAYMETHODS = [
 ];
 
 function rp(n) { return 'Rp' + Number(n || 0).toLocaleString('id-ID'); }
+/* Harga final setelah diskon flash sale (%) */
+function finalPrice(p) {
+  const d = Math.max(0, Math.min(100, Number(p.discount) || 0));
+  return Math.round(Number(p.price || 0) * (1 - d / 100));
+}
 function fmtDate(s) { if (!s) return '-'; return new Date(s).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
 
 async function api(path, opts = {}) {

@@ -129,7 +129,7 @@ const AdminProducts = {
 /* Modal form produk + photo manager */
 const ProductFormModal = {
   data: () => ({
-    form: { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '', process_time: '' },
+    form: { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '', process_time: '', discount: '' },
     existing: [],   // foto yg sudah tersimpan [{id, url, sort_order}]
     pending: [],    // File baru
     err: '',
@@ -151,11 +151,11 @@ const ProductFormModal = {
     async init() {
       const pf = store.productForm;
       this.existing = []; this.pending = []; this.err = ''; this.variants = []; this.nv = { label: '', price: '', stock: '' };
-      this.form = { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '', process_time: '' };
+      this.form = { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '', process_time: '', discount: '' };
       if (pf && pf.id) {
         try {
           const { product: p } = await api('/api/products/' + pf.id);
-          this.form = { name: p.name || '', description: p.description || '', price: p.price || '', stock: p.stock ?? '', category: p.category || 'voucher', tags: p.tags || '', process_time: p.process_time || '' };
+          this.form = { name: p.name || '', description: p.description || '', price: p.price || '', stock: p.stock ?? '', category: p.category || 'voucher', tags: p.tags || '', process_time: p.process_time || '', discount: p.discount || '' };
           this.existing = (p.images || []).slice();
           this.variants = (p.variants || []).slice();
         } catch (e) { toast(e.message, false); this.close(); }
@@ -230,7 +230,8 @@ const ProductFormModal = {
       const b = {
         name: this.form.name.trim(), description: this.form.description.trim(),
         price: Number(this.form.price) || 0, stock: Number(this.form.stock) || 0,
-        category: this.form.category, tags: this.form.tags.trim(), process_time: this.form.process_time.trim()
+        category: this.form.category, tags: this.form.tags.trim(), process_time: this.form.process_time.trim(),
+        discount: Math.max(0, Math.min(100, Number(this.form.discount) || 0))
       };
       if (!b.name || b.price < 0) return toast('Nama & harga wajib diisi', false);
       this.saving = true;
@@ -265,7 +266,10 @@ const ProductFormModal = {
           <input v-model="form.price" type="number" placeholder="Harga (Rp)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
           <input v-model="form.stock" type="number" placeholder="Stok" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
         </div>
-        <input v-model="form.process_time" placeholder="Estimasi proses (mis: 5 menit)" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
+        <div class="grid grid-cols-2 gap-3">
+          <input v-model="form.discount" type="number" min="0" max="100" placeholder="Diskon % (flash sale)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
+          <input v-model="form.process_time" placeholder="Estimasi proses (mis: 5 menit)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
+        </div>
         <select v-model="form.category" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
           <option v-for="c in store.cats" :key="c.id" :value="c.id">{{ c.icon }} {{ c.label }}</option>
         </select>

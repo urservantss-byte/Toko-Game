@@ -82,6 +82,7 @@ app.component('deliver-modal', DeliverModal);
 app.component('admin-products', AdminProducts);
 app.component('product-form-modal', ProductFormModal);
 app.component('admin-vouchers', AdminVouchers);
+app.component('admin-reports', AdminReports);
 app.component('admin-banners', AdminBanners);
 app.component('admin-tickets', AdminTickets);
 app.component('admin-users', AdminUsers);

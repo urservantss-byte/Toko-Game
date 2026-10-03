@@ -7,6 +7,10 @@ const CartView = {
   },
   methods: {
     rp,
+    itemPrice(c) {
+      const p = store.products.find(x => x.id === c.id);
+      return p ? finalPrice({ price: c.price, discount: p.discount }) : c.price;
+    },
     chQty(i, d) {
       const c = store.cart[i];
       c.qty += d;
@@ -33,7 +37,7 @@ const CartView = {
         <blur-img :src="c.image_url" cls="w-16 h-16 rounded-xl shrink-0" :alt="c.name"></blur-img>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-medium truncate">{{ c.name }}</div>
-          <div class="text-accent font-extrabold text-sm mt-0.5">{{ rp(c.price) }}</div>
+          <div class="text-accent font-extrabold text-sm mt-0.5">{{ rp(itemPrice(c)) }}</div>
           <div class="flex items-center gap-2 mt-1.5">
             <button @click="chQty(i, -1)" class="w-7 h-7 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-bold">−</button>
             <span class="text-sm font-semibold w-6 text-center">{{ c.qty }}</span>
@@ -58,6 +62,13 @@ const CheckoutView = {
   mounted() {
     this._esc = e => { if (e.key === 'Escape' && this.qris) this.closeQris(); };
     document.addEventListener('keydown', this._esc);
+    // Sinkron harga cart dengan harga terkini (mentah; diskon dihitung server saat checkout)
+    for (const c of store.cart) {
+      const p = store.products.find(x => x.id === c.id);
+      if (!p) continue;
+      if (!c.variant_id) c.price = p.price;
+    }
+    saveCart();
     fetch('/api/settings/public').then(r => r.json()).then(d => {
       if (d.pay_methods && d.pay_methods.length) {
         this.payList = d.pay_methods;
@@ -68,7 +79,13 @@ const CheckoutView = {
   unmounted() { document.removeEventListener('keydown', this._esc); },
   computed: {
     cart: () => store.cart,
-    subtotal: () => cartTotal.value,
+    subtotal() {
+      return store.cart.reduce((a, c) => {
+        const p = store.products.find(x => x.id === c.id);
+        const fp = p ? finalPrice({ price: c.price, discount: p.discount }) : c.price;
+        return a + c.qty * fp;
+      }, 0);
+    },
     total() { return Math.max(0, this.subtotal - this.voucherDiscount); },
     method() { return this.payOpts.find(m => m.id === store.payMethod); },
     payOpts() { return this.payList || PAYMETHODS.map(m => ({ ...m, kind: m.id === 'qris' ? 'qris' : 'transfer' })); },

@@ -52,7 +52,7 @@ function setToken(t) {
 }
 
 const VALID_PAGES = ['home', 'login', 'register', 'forgot', 'reset', 'cart', 'checkout', 'orders', 'tickets', 'settings', 'admin', 'track', 'wishlist', 'faq'];
-const ADMIN_TABS = ['dash', 'orders', 'products', 'vouchers', 'banners', 'tickets', 'users', 'settings'];
+const ADMIN_TABS = ['dash', 'orders', 'products', 'vouchers', 'reports', 'banners', 'tickets', 'users', 'settings'];
 
 // Hash routing: halaman tersimpan di URL (#/orders, #/admin/products, ...)
 // sehingga refresh / tombol back-forward browser tetap di halaman yg sama.

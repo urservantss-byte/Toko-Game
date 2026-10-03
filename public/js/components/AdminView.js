@@ -1,6 +1,6 @@
 /* Admin panel: tab navigasi */
 const AdminView = {
-  components: { AdminDash, AdminOrders, AdminProducts, AdminUsers, AdminBanners, AdminTickets, AdminVouchers, AdminSettings },
+  components: { AdminDash, AdminOrders, AdminProducts, AdminUsers, AdminBanners, AdminTickets, AdminVouchers, AdminReports, AdminSettings },
   computed: {
     tab: () => store.adminTab,
     pendingCount: () => store.pendingCount || 0,
@@ -31,6 +31,7 @@ const AdminView = {
       <button @click="nav('orders')" :class="tabCls('orders')">🧾 Pesanan</button>
       <button @click="nav('products')" :class="tabCls('products')">📦 Produk</button>
       <button @click="nav('vouchers')" :class="tabCls('vouchers')">🎟️ Voucher</button>
+      <button @click="nav('reports')" :class="tabCls('reports')">📈 Laporan</button>
       <button @click="nav('banners')" :class="tabCls('banners')">🎨 Banner</button>
       <button @click="nav('tickets')" :class="tabCls('tickets')">🎫 Tiket</button>
       <button @click="nav('users')" :class="tabCls('users')">👥 User</button>
@@ -40,6 +41,7 @@ const AdminView = {
     <admin-orders v-if="tab === 'orders'" :key="'o' + tab"></admin-orders>
     <admin-products v-if="tab === 'products'" :key="'p' + tab"></admin-products>
     <admin-vouchers v-if="tab === 'vouchers'" :key="'v' + tab"></admin-vouchers>
+    <admin-reports v-if="tab === 'reports'" :key="'r' + tab"></admin-reports>
     <admin-banners v-if="tab === 'banners'" :key="'b' + tab"></admin-banners>
     <admin-tickets v-if="tab === 'tickets'" :key="'t' + tab"></admin-tickets>
     <admin-users v-if="tab === 'users'" :key="'u' + tab"></admin-users>

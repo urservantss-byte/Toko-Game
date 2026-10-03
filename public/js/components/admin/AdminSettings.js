@@ -1,7 +1,7 @@
 /* Admin: Pengaturan toko (dinamis) — profil, kategori, otomatisasi */
 const AdminSettings = {
   data: () => ({
-    storeName: '', announcement: '', announcementOn: false, autoDays: 2, storeMsg: '',
+    storeName: '', announcement: '', announcementOn: false, autoDays: 2, flashEnds: '', storeMsg: '',
     cats: [], catMsg: '',
     catForm: { label: '', icon: '📦' }, catEdit: null,
   }),
@@ -14,6 +14,7 @@ const AdminSettings = {
         this.announcement = d.announcement || '';
         this.announcementOn = !!d.announcement_on;
         this.autoDays = d.auto_complete_days || 2;
+        this.flashEnds = d.flash_sale_ends || '';
         this.cats = d.categories || [];
       } catch (e) { toast(e.message, false); }
     },
@@ -23,6 +24,7 @@ const AdminSettings = {
         await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({
           store_name: this.storeName, announcement: this.announcement,
           announcement_on: this.announcementOn, auto_complete_days: this.autoDays,
+          flash_sale_ends: this.flashEnds,
         }) });
         store.siteName = this.storeName || 'TokoGame';
         store.announcement = this.announcementOn ? this.announcement : '';
@@ -89,6 +91,11 @@ const AdminSettings = {
           <label class="text-xs font-semibold text-gray-500">Auto-selesai pesanan (hari)</label>
           <input v-model.number="autoDays" type="number" min="1" max="30" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
           <p class="text-[10px] text-gray-400 mt-1">Pesanan "dikirim" otomatis selesai setelah N hari tanpa ulasan.</p>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500">Flash sale berakhir</label>
+          <input v-model="flashEnds" type="datetime-local" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
+          <p class="text-[10px] text-gray-400 mt-1">Countdown tampil di beranda. Kosongkan = tanpa countdown.</p>
         </div>
         <div class="md:col-span-2">
           <label class="text-xs font-semibold text-gray-500">Pengumuman (banner atas)</label>

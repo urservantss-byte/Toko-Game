@@ -257,7 +257,7 @@ function categoryIds() { return allCategories().map(c => c.id); }
   }
 })();
 // Kolom tambahan products (idempoten untuk DB lama)
-for (const [col, def] of [['process_time', `TEXT NOT NULL DEFAULT ''`]]) {
+for (const [col, def] of [['process_time', `TEXT NOT NULL DEFAULT ''`], ['discount', `REAL NOT NULL DEFAULT 0`]]) {
   try { db.exec(`ALTER TABLE products ADD COLUMN ${col} ${def}`); } catch {}
 }
 // Kolom tambahan orders (idempoten untuk DB lama)
@@ -454,6 +454,10 @@ function attachImages(p) {
   p.images = getImages(p.id);
   if (p.images.length) p.image_url = p.images[0].url;
   return p;
+}
+function effPrice(base, discount) {
+  const d = Math.max(0, Math.min(100, Number(discount) || 0));
+  return Math.round(Number(base) * (1 - d / 100));
 }
 function attachVariants(p) {
   if (!p) return p;
@@ -828,25 +832,27 @@ app.get('/api/tags', (req, res) => {
 
 // ---- Products (admin) ----
 app.post('/api/products', auth, requireAdmin, (req, res) => {
-  const { name, description = '', price = 0, image_url = '', category = 'voucher', tags = '', stock = 0, process_time = '' } = req.body || {};
+  const { name, description = '', price = 0, image_url = '', category = 'voucher', tags = '', stock = 0, process_time = '', discount = 0 } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Nama produk wajib diisi' });
   if (!categoryIds().includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
-  const info = db.prepare('INSERT INTO products (name,description,price,image_url,category,tags,stock,process_time) VALUES (?,?,?,?,?,?,?,?)')
-    .run(name, description, Number(price) || 0, image_url, category, tags, Number(stock) || 0, String(process_time || ''));
+  const disc = Math.max(0, Math.min(100, Number(discount) || 0));
+  const info = db.prepare('INSERT INTO products (name,description,price,image_url,category,tags,stock,process_time,discount) VALUES (?,?,?,?,?,?,?,?,?)')
+    .run(name, description, Number(price) || 0, image_url, category, tags, Number(stock) || 0, String(process_time || ''), disc);
   res.status(201).json({ product: db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid) });
 });
 
 app.put('/api/products/:id', auth, requireAdmin, (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Produk tidak ditemukan' });
-  const { name, description, price, image_url, category, tags, stock, process_time } = req.body || {};
+  const { name, description, price, image_url, category, tags, stock, process_time, discount } = req.body || {};
   if (category && !categoryIds().includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
+  const disc = discount === undefined ? null : Math.max(0, Math.min(100, Number(discount) || 0));
   db.prepare(`UPDATE products SET
     name=COALESCE(?,name), description=COALESCE(?,description), price=COALESCE(?,price),
     image_url=COALESCE(?,image_url), category=COALESCE(?,category), tags=COALESCE(?,tags),
-    stock=COALESCE(?,stock), process_time=COALESCE(?,process_time) WHERE id=?`)
+    stock=COALESCE(?,stock), process_time=COALESCE(?,process_time), discount=COALESCE(?,discount) WHERE id=?`)
     .run(name ?? null, description ?? null, price ?? null, image_url ?? null,
-      category ?? null, tags ?? null, stock ?? null, process_time ?? null, req.params.id);
+      category ?? null, tags ?? null, stock ?? null, process_time ?? null, disc, req.params.id);
   syncCodeStock(req.params.id); // produk berkode: stok selalu ngikutin jumlah kode
   res.json({ product: db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id) });
 });
@@ -1307,7 +1313,7 @@ app.get('/api/admin/settings', auth, requireAdmin, (req, res) => {
   res.json({ qris_configured: !!s, qris_merchant: s ? merchantName(s) : '', wa_cs: getSetting('wa_cs'), wa_cs_enabled: waCsEnabled(), pay_methods: allPayMethods() });
 });
 app.put('/api/admin/settings', auth, requireAdmin, (req, res) => {
-  const { qris_static, wa_cs, wa_cs_enabled, store_name, announcement, announcement_on, auto_complete_days } = req.body || {};
+  const { qris_static, wa_cs, wa_cs_enabled, store_name, announcement, announcement_on, auto_complete_days, flash_sale_ends } = req.body || {};
   let merchant = '';
   if (qris_static !== undefined) {
     const s = String(qris_static || '').trim();
@@ -1328,6 +1334,7 @@ app.put('/api/admin/settings', auth, requireAdmin, (req, res) => {
     const d = Math.max(1, Math.min(30, parseInt(auto_complete_days) || 2));
     set('auto_complete_days', String(d));
   }
+  if (flash_sale_ends !== undefined) set('flash_sale_ends', String(flash_sale_ends || ''));
   res.json({ ok: true, qris_merchant: merchant, wa_cs: getSetting('wa_cs'), wa_cs_enabled: waCsEnabled(), pay_methods: allPayMethods() });
 });
 // GET pengaturan toko (admin)
@@ -1337,6 +1344,7 @@ app.get('/api/admin/store-settings', auth, requireAdmin, (req, res) => {
     announcement: getSetting('announcement') || '',
     announcement_on: getSetting('announcement_on') === '1',
     auto_complete_days: parseInt(getSetting('auto_complete_days')) || 2,
+    flash_sale_ends: getSetting('flash_sale_ends') || '',
     categories: allCategories(),
   });
 });
@@ -1453,6 +1461,7 @@ app.get('/api/settings/public', (req, res) => {
     categories: activeCategories(),
     store_name: getSetting('store_name') || 'TokoGame',
     announcement: getSetting('announcement_on') === '1' ? getSetting('announcement') : '',
+    flash_sale_ends: getSetting('flash_sale_ends') || '',
   });
 });
 
@@ -1548,10 +1557,11 @@ app.post('/api/orders', auth, (req, res) => {
         if (!v) throw { status: 400, msg: `Varian tidak ditemukan` };
         if (v.stock < qty) throw { status: 400, msg: `Stok varian "${v.label}" tidak cukup (sisa ${v.stock})` };
         db.prepare('UPDATE product_variants SET stock = stock - ? WHERE id = ?').run(qty, v.id);
-        price = v.price; vlabel = v.label;
+        price = effPrice(v.price, p.discount); vlabel = v.label;
       } else {
         if (p.stock < qty) throw { status: 400, msg: `Stok "${p.name}" tidak cukup (sisa ${p.stock})` };
         db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?').run(qty, p.id);
+        price = effPrice(p.price, p.discount);
       }
       snapshot.push({ product_id: p.id, variant_id: it.variant_id || null, variant_label: vlabel, name: vlabel ? `${p.name} (${vlabel})` : p.name, price, qty, image_url: p.image_url });
       total += price * qty;
@@ -1815,6 +1825,16 @@ app.get('/api/products/:id/reviews', (req, res) => {
   res.json({ reviews: rows });
 });
 
+// Testimoni terbaru untuk beranda (rating 4-5, ada komentar)
+app.get('/api/reviews/recent', (req, res) => {
+  const rows = db.prepare(
+    `SELECT r.rating, r.comment, r.created_at, u.name AS user_name, p.name AS product_name
+     FROM reviews r JOIN users u ON u.id = r.user_id JOIN products p ON p.id = r.product_id
+     WHERE r.rating >= 4 AND TRIM(r.comment) != '' ORDER BY r.created_at DESC LIMIT 10`
+  ).all();
+  res.json({ reviews: rows });
+});
+
 app.get('/api/reviews/eligible', auth, (req, res) => {
   // produk dari order delivery/selesai yang belum diulas user ini
   const rows = db.prepare(
@@ -1856,6 +1876,45 @@ app.post('/api/products/:id/reviews', auth, (req, res) => {
 });
 
 // ---- Admin: statistik realtime dari DB ----
+// ---- Laporan penjualan ----
+function salesReport(from, to) {
+  const cond = `status != 'dibatalkan' AND date(created_at,'localtime') >= date(?) AND date(created_at,'localtime') <= date(?)`;
+  const summary = db.prepare(`SELECT COUNT(*) orders, COALESCE(SUM(total),0) revenue,
+    COALESCE(AVG(total),0) avg_order FROM orders WHERE ${cond}`).get(from, to);
+  const byDay = db.prepare(`SELECT date(created_at,'localtime') d, COUNT(*) orders, COALESCE(SUM(total),0) revenue
+    FROM orders WHERE ${cond} GROUP BY d ORDER BY d`).all(from, to);
+  const topProducts = db.prepare(`SELECT CAST(json_extract(j.value,'$.product_id') AS INTEGER) pid,
+      json_extract(j.value,'$.name') name, SUM(CAST(json_extract(j.value,'$.qty') AS INTEGER)) qty,
+      SUM(CAST(json_extract(j.value,'$.price') AS INTEGER) * CAST(json_extract(j.value,'$.qty') AS INTEGER)) revenue
+    FROM orders o, json_each(o.items_json) j WHERE ${cond}
+    GROUP BY pid ORDER BY revenue DESC LIMIT 20`).all(from, to);
+  const byPayment = db.prepare(`SELECT payment_method m, COUNT(*) orders, COALESCE(SUM(total),0) revenue
+    FROM orders WHERE ${cond} GROUP BY m ORDER BY revenue DESC`).all(from, to);
+  return { summary, byDay, topProducts, byPayment };
+}
+app.get('/api/admin/reports/sales', auth, requireAdmin, (req, res) => {
+  const to = req.query.to || new Date().toISOString().slice(0, 10);
+  const from = req.query.from || new Date(Date.now() - 29 * 864e5).toISOString().slice(0, 10);
+  res.json({ from, to, ...salesReport(from, to) });
+});
+app.get('/api/admin/reports/sales.csv', auth, requireAdmin, (req, res) => {
+  const to = req.query.to || new Date().toISOString().slice(0, 10);
+  const from = req.query.from || new Date(Date.now() - 29 * 864e5).toISOString().slice(0, 10);
+  const r = salesReport(from, to);
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  let csv = 'Laporan Penjualan,' + from + ' s/d ' + to + '\n\nRingkasan\n';
+  csv += `Total Pesanan,${r.summary.orders}\nTotal Omzet,${r.summary.revenue}\nRata-rata per Pesanan,${Math.round(r.summary.avg_order)}\n\n`;
+  csv += 'Per Hari\nTanggal,Jumlah Pesanan,Omzet\n';
+  for (const d of r.byDay) csv += `${d.d},${d.orders},${d.revenue}\n`;
+  csv += '\nProduk Terlaris\nProduk,Terjual,Omzet\n';
+  for (const p of r.topProducts) csv += `${esc(p.name)},${p.qty},${p.revenue}\n`;
+  csv += '\nPer Metode Bayar\nMetode,Jumlah Pesanan,Omzet\n';
+  for (const m of r.byPayment) csv += `${esc(m.m)},${m.orders},${m.revenue}\n`;
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="laporan-${from}_${to}.csv"`);
+  res.send('﻿' + csv);
+});
+
 app.get('/api/admin/stats', auth, requireAdmin, (req, res) => {
   const revenue = db.prepare(
     `SELECT COALESCE(SUM(total),0) t FROM orders WHERE status != 'dibatalkan'`).get().t;
