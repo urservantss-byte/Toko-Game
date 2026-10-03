@@ -675,11 +675,18 @@ app.post('/api/products/:id/images', auth, requireAdmin, async (req, res) => {
   fs.mkdirSync(dir, { recursive: true });
   const startOrder = db.prepare('SELECT COALESCE(MAX(sort_order),-1)+1 AS n FROM product_images WHERE product_id = ?').get(p.id).n;
   const ins = db.prepare('INSERT INTO product_images (product_id, path, sort_order) VALUES (?,?,?)');
-  parsed.files.forEach((f, i) => {
-    const fname = `${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${PHOTO_MIMES[f.mime]}`;
-    fs.writeFileSync(path.join(dir, fname), f.data);
+  const sharp = require('sharp');
+  for (let i = 0; i < parsed.files.length; i++) {
+    const f = parsed.files[i];
+    // Auto-resize: samakan semua foto jadi 800x800 (cover/crop ala itemku) biar seragam
+    let outBuf;
+    try {
+      outBuf = await sharp(f.data).resize(800, 800, { fit: 'cover', position: 'centre' }).jpeg({ quality: 82 }).toBuffer();
+    } catch { outBuf = f.data; } // kalau gagal resize, pakai file asli
+    const fname = `${Date.now()}_${crypto.randomBytes(6).toString('hex')}.jpg`;
+    fs.writeFileSync(path.join(dir, fname), outBuf);
     ins.run(p.id, `/uploads/products/${p.id}/${fname}`, startOrder + i);
-  });
+  }
   syncFirstImage(p.id);
   res.status(201).json({ images: getImages(p.id) });
 });
