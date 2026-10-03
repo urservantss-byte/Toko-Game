@@ -18,6 +18,7 @@ const HomeView = {
   beforeUnmount() { if (this.bannerTimer) clearInterval(this.bannerTimer); if (this.cdTimer) clearInterval(this.cdTimer); },
   computed: {
     f: () => store.f,
+    store: () => store,
     countdown() {
       if (!this.flashEnds) return '';
       const diff = new Date(this.flashEnds).getTime() - this.now;
@@ -99,6 +100,17 @@ const HomeView = {
       <button @click="go('track')" class="bg-white text-indigo-600 text-xs font-bold rounded-xl px-4 py-2.5 shrink-0">Lacak 🔍</button>
     </section>
     <!-- Flash sale -->
+    <section v-if="store.productsLoading">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="skel h-5 w-28"></div>
+      </div>
+      <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+        <div v-for="i in 4" :key="'fsk'+i" class="flex-shrink-0 w-32 sm:w-36 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+          <div class="skel aspect-square" style="border-radius:0"></div>
+          <div class="p-2 space-y-1.5"><div class="skel h-3 w-full"></div><div class="skel h-3.5 w-2/3"></div></div>
+        </div>
+      </div>
+    </section>
     <section v-if="flash.length">
       <div class="flex items-center gap-2 mb-2">
         <span class="text-xl">⚡</span>
@@ -140,7 +152,18 @@ const HomeView = {
     </div>
 
     <!-- Grid produk -->
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+    <div v-if="store.productsLoading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div v-for="i in 6" :key="'sk'+i" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+        <div class="skel aspect-square" style="border-radius:0"></div>
+        <div class="p-2.5 space-y-2">
+          <div class="skel h-3.5 w-full"></div>
+          <div class="skel h-3.5 w-2/3"></div>
+          <div class="skel h-4 w-1/2"></div>
+          <div class="skel h-8 w-full" style="border-radius:.75rem"></div>
+        </div>
+      </div>
+    </div>
+    <div v-else class="grid grid-cols-2 md:grid-cols-3 gap-3">
       <div v-for="p in list" :key="p.id" @click="openProduct(p.id)"
            class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
         <div class="relative aspect-square">
@@ -194,6 +217,8 @@ const HomeView = {
 };
 
 async function openProduct(id) {
+  store.productLoading = true;
+  store.product = { id, name: '', _skeleton: true };
   try {
     const d = await api('/api/products/' + id);
     store.product = d.product;
@@ -202,5 +227,6 @@ async function openProduct(id) {
     }
     store.galIdx = 0;
     store.reviews = (await api('/api/products/' + id + '/reviews')).reviews || [];
-  } catch (e) { toast(e.message, false); }
+  } catch (e) { store.product = null; toast(e.message, false); }
+  finally { store.productLoading = false; }
 }

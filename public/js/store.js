@@ -8,9 +8,12 @@ const store = reactive({
   cart: (() => { try { const c = JSON.parse(localStorage.getItem('cart') || '[]'); return c.map(x => ({ key: x.key || String(x.id), ...x })); } catch { return []; } })(),
   wishlist: [],
   products: [],
+  productsLoading: true,
+  ordersLoading: false,
   f: { q: '', cat: 'all', tag: '', sort: 'pop' },
   // product modal
   product: null,           // produk yg dibuka di modal detail
+  productLoading: false,
   galIdx: 0,
   reviews: [],
   // review modal
@@ -85,17 +88,21 @@ function go(page) {
 }
 
 async function loadHome() {
+  store.productsLoading = true;
   try {
     const d = await api('/api/products?limit=100');
     store.products = d.products || [];
   } catch (e) { /* biarkan kosong */ }
+  finally { store.productsLoading = false; }
 }
 
 async function loadMyOrders() {
   if (!store.user) return;
+  store.ordersLoading = true;
   try {
     store.myOrders = (await api('/api/orders')).orders || [];
   } catch (e) { toast(e.message, false); }
+  finally { store.ordersLoading = false; }
 }
 
 async function refreshMe() {

@@ -4,6 +4,7 @@ const OrdersView = {
   data: () => ({ eligible: [], qris: null, payKinds: {}, payLabels: {} }),
   computed: {
     orders: () => store.myOrders,
+    store: () => store,
   },
   mounted() {
     this.load();
@@ -107,7 +108,14 @@ const OrdersView = {
   template: `
   <div class="max-w-3xl mx-auto px-4 py-4">
     <h2 class="text-xl font-bold mb-4">📦 Pesanan Saya</h2>
-    <div v-if="!orders.length" class="text-center py-14">
+    <div v-if="store.ordersLoading" class="space-y-3">
+      <div v-for="i in 3" :key="'osk'+i" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 space-y-2.5">
+        <div class="flex justify-between"><div class="skel h-4 w-24"></div><div class="skel h-5 w-20" style="border-radius:999px"></div></div>
+        <div class="skel h-4 w-2/3"></div>
+        <div class="skel h-4 w-1/3"></div>
+      </div>
+    </div>
+    <div v-else-if="!orders.length" class="text-center py-14">
       <div class="text-5xl mb-3">📦</div>
       <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Belum ada pesanan</p>
       <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Yuk mulai belanja, prosesnya cepat!</p>

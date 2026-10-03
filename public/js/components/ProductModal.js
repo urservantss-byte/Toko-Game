@@ -6,6 +6,7 @@ const ProductModal = {
   beforeUnmount() { document.body.style.overflow = this._bo || ''; },
   computed: {
     p: () => store.product,
+    store: () => store,
     imgs() { return (this.p && this.p.images) || []; },
     idx: {
       get: () => store.galIdx,
@@ -71,7 +72,14 @@ const ProductModal = {
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="close">
     <div class="absolute inset-0 bg-black/50" @click="close"></div>
     <div class="relative bg-white dark:bg-gray-900 w-full max-w-md sm:max-w-lg rounded-3xl max-h-[86vh] overflow-y-auto overscroll-contain">
-      <div class="p-5">
+      <div v-if="store.productLoading" class="p-5 space-y-4">
+        <div class="skel w-full aspect-[4/3]" style="border-radius:1rem"></div>
+        <div class="skel h-6 w-3/4"></div>
+        <div class="skel h-4 w-1/3"></div>
+        <div class="skel h-10 w-full" style="border-radius:.75rem"></div>
+        <div class="skel h-10 w-full" style="border-radius:.75rem"></div>
+      </div>
+      <div v-else class="p-5">
         <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
           <div @click="zoom = true" class="cursor-zoom-in">
             <blur-img :src="imgs[idx] && imgs[idx].url" cls="w-full aspect-[4/3]" fit="contain" :alt="p.name" :eager="true" :key="idx"></blur-img>
