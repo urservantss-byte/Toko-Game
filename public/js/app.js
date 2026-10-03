@@ -34,7 +34,7 @@ const app = Vue.createApp({
       <track-view v-if="page === 'track'"></track-view>
     </main>
     <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
-      <div class="border-t pt-6">🎮 {{ store.siteName }} — Akun, Voucher & Topup Digital · Pembayaran aman · Proses kilat</div>
+      <div class="border-t dark:border-gray-800 pt-6">🎮 {{ store.siteName }} — Akun, Voucher & Topup Digital · Pembayaran aman · Proses kilat</div>
       <div class="mt-2"><a @click="goTrack" class="cursor-pointer text-primary font-semibold hover:underline">🔍 Lacak Pesanan</a></div>
     </footer>
     <a v-if="waCs" :href="waLink()" target="_blank"

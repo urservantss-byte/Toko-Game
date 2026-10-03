@@ -31,7 +31,7 @@ const AdminUsers = {
             <span v-else class="text-amber-500 text-xs" title="Belum verifikasi email"> !</span>
           </td>
           <td class="p-3 text-gray-500 dark:text-gray-400">{{ u.email }}</td>
-          <td class="p-3"><span :class="['text-[10px] font-bold px-2 py-1 rounded-full', u.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400']">{{ u.role }}</span></td>
+          <td class="p-3"><span :class="['text-[10px] font-bold px-2 py-1 rounded-full', u.role === 'admin' ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400']">{{ u.role }}</span></td>
           <td class="p-3 text-xs text-gray-400">{{ fmtDay(u.created_at) }}</td>
           <td class="p-3">
             <button v-if="me && u.id !== me.id" @click="toggleRole(u.id, u.role)" class="text-xs font-semibold text-primary hover:underline">Jadikan {{ u.role === 'admin' ? 'User' : 'Admin' }}</button>
