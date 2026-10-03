@@ -79,7 +79,7 @@ const AdminProducts = {
     </div>
     <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-x-auto shadow-sm">
       <table class="w-full text-sm">
-        <thead><tr class="text-left text-gray-400 border-b text-xs uppercase">
+        <thead><tr class="text-left text-gray-400 border-b dark:border-gray-800 text-xs uppercase">
           <th class="p-3 w-10"><input type="checkbox" :checked="allChecked" @change="toggleAll($event.target.checked)" class="w-4 h-4 accent-indigo-600 cursor-pointer"></th>
           <th class="p-3">Produk</th><th class="p-3">Foto</th><th class="p-3">Kategori</th><th class="p-3">Harga</th><th class="p-3">Stok</th><th class="p-3">Aksi</th>
         </tr></thead>

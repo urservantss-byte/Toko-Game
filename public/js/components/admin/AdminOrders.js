@@ -74,11 +74,11 @@ const AdminOrders = {
     </div>
     <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-x-auto shadow-sm">
       <table class="w-full text-sm">
-        <thead><tr class="text-left text-gray-400 border-b text-xs uppercase">
+        <thead><tr class="text-left text-gray-400 border-b dark:border-gray-800 text-xs uppercase">
           <th class="p-3">ID</th><th class="p-3">User</th><th class="p-3">Item</th><th class="p-3">Total</th><th class="p-3">Bayar</th><th class="p-3">Bukti</th><th class="p-3">Status</th>
         </tr></thead>
         <tbody>
-          <tr v-for="o in orders" :key="o.id" class="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800">
+          <tr v-for="o in orders" :key="o.id" class="border-b dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800">
             <td class="p-3 font-bold text-primary">#{{ o.id }}<br><span class="text-[10px] text-gray-400 font-normal">{{ fmtDay(o.created_at) }}</span></td>
             <td class="p-3">{{ o.user_name }}<br><span class="text-xs text-gray-400">{{ o.user_email }}</span></td>
             <td class="p-3 text-xs max-w-[180px]"><div v-for="it in (o.items || [])" :key="it.product_id">{{ it.name }} ×{{ it.qty }}</div></td>

@@ -44,11 +44,11 @@ const AdminVouchers = {
     <div class="bg-white dark:bg-gray-900 border rounded-2xl overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-sm min-w-[560px]">
-          <thead><tr class="text-left text-xs text-gray-400 border-b">
+          <thead><tr class="text-left text-xs text-gray-400 border-b dark:border-gray-800">
             <th class="p-3">Kode</th><th class="p-3">Diskon</th><th class="p-3">Min. Belanja</th><th class="p-3">Terpakai</th><th class="p-3">Expired</th><th class="p-3"></th>
           </tr></thead>
           <tbody>
-            <tr v-for="v in list" :key="v.code" class="border-b last:border-0">
+            <tr v-for="v in list" :key="v.code" class="border-b dark:border-gray-800 last:border-0">
               <td class="p-3 font-mono font-bold">{{ v.code }}</td>
               <td class="p-3">{{ valLabel(v) }}</td>
               <td class="p-3">{{ v.min_total > 0 ? rp(v.min_total) : '-' }}</td>

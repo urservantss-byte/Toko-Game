@@ -65,7 +65,7 @@ const SettingsView = {
       <div class="space-y-3">
         <div>
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nama</label>
-          <input v-model="name" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200">
+          <input v-model="name" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200 dark:ring-violet-800">
         </div>
         <div>
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
@@ -83,9 +83,9 @@ const SettingsView = {
     <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6">
       <h3 class="font-bold text-sm mb-4">🔑 Ganti Password</h3>
       <div class="space-y-3">
-        <input v-model="pwCur" type="password" placeholder="Password saat ini" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200">
-        <input v-model="pwNew" type="password" placeholder="Password baru (min. 6)" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200">
-        <input v-model="pwNew2" type="password" placeholder="Ulangi password baru" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200">
+        <input v-model="pwCur" type="password" placeholder="Password saat ini" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200 dark:ring-violet-800">
+        <input v-model="pwNew" type="password" placeholder="Password baru (min. 6)" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200 dark:ring-violet-800">
+        <input v-model="pwNew2" type="password" placeholder="Ulangi password baru" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200 dark:ring-violet-800">
         <button @click="changePassword" class="bg-primary text-white text-sm font-bold rounded-xl px-6 py-2.5">Ubah Password</button>
       </div>
     </div>

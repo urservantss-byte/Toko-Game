@@ -21,11 +21,11 @@ const AdminUsers = {
   template: `
   <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-x-auto shadow-sm">
     <table class="w-full text-sm">
-      <thead><tr class="text-left text-gray-400 border-b text-xs uppercase">
+      <thead><tr class="text-left text-gray-400 border-b dark:border-gray-800 text-xs uppercase">
         <th class="p-3">Nama</th><th class="p-3">Email</th><th class="p-3">Role</th><th class="p-3">Daftar</th><th class="p-3">Aksi</th>
       </tr></thead>
       <tbody>
-        <tr v-for="u in users" :key="u.id" class="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800">
+        <tr v-for="u in users" :key="u.id" class="border-b dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800">
           <td class="p-3 font-medium">{{ u.name }}
             <span v-if="u.email_verified" class="text-emerald-500 text-xs" title="Email terverifikasi"> ✓</span>
             <span v-else class="text-amber-500 text-xs" title="Belum verifikasi email"> !</span>

@@ -148,7 +148,7 @@ const OrdersView = {
           <button @click="complain(o.id)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">💬 Komplain</button>
           <button v-for="e in eligFor(o.id)" :key="e.product_id" @click="openReview(e)"
-                  class="col-span-2 text-xs font-bold px-3 py-2.5 rounded-xl bg-amber-400 text-white hover:bg-amber-500">⭐ Tulis Ulasan: {{ e.product_name.slice(0, 24) }}</button>
+                  class="col-span-2 text-xs font-bold px-3 py-2.5 rounded-xl bg-primary text-white hover:brightness-110">⭐ Tulis Ulasan: {{ e.product_name.slice(0, 24) }}</button>
         </div>
       </div>
     </div>

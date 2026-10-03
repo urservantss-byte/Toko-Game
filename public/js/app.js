@@ -20,7 +20,7 @@ const app = Vue.createApp({
   },
   template: `
   <div>
-    <div v-if="store.announcement" class="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-center text-xs font-semibold px-4 py-2">📢 {{ store.announcement }}</div>
+    <div v-if="store.announcement" class="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-indigo-950 dark:to-violet-950 dark:border-b dark:border-indigo-500/20 text-white text-center text-xs font-semibold px-4 py-2">📢 {{ store.announcement }}</div>
     <header-view></header-view>
     <main class="min-h-[70vh]">
       <home-view v-if="page === 'home'"></home-view>
