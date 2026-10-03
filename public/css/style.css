@@ -14,14 +14,15 @@ html,body{overflow-x:clip}
 .dark .tl-step.done .dot{background:#4f46e5}
 .dot{width:18px;height:18px;border-radius:50%;background:#e5e7eb;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;margin-top:1px}
 .stars{color:#f59e0b;letter-spacing:2px}.stars .off{color:#e5e7eb}.dark .stars .off{color:#4b5563}
-/* Form gelap otomatis di dark mode (kecuali yg sudah punya dark: sendiri) */
-.dark :where(input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]):not([type=range]),
-.dark :where(textarea),
-.dark :where(select){
+/* Form gelap global di dark mode — selector biasa (tanpa :where) agar jalan juga di WebView/browser lama */
+.dark input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]):not([type=range]),
+.dark textarea,
+.dark select{
   background-color:#111827;border-color:#374151;color:#e5e7eb;
 }
-.dark :where(input)::placeholder,.dark :where(textarea)::placeholder{color:#6b7280}
-.dark :where(select) option{background-color:#111827;color:#e5e7eb}
+.dark input::placeholder,.dark textarea::placeholder{color:#6b7280}
+.dark select option{background-color:#111827;color:#e5e7eb}
+.dark input[type=file]::file-selector-button{background-color:#374151;color:#e5e7eb;border:1px solid #4b5563;border-radius:.5rem;padding:.25rem .75rem;font-size:.75rem;font-weight:600}
 /* Blur-up lazy image: shimmer placeholder -> gambar tajam saat loaded */
 .blurwrap{position:relative;overflow:hidden;background:#edf0f5}
 .dark .blurwrap{background:#1f2937}
