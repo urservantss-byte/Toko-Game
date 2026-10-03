@@ -1,6 +1,7 @@
 /* Modal detail produk: galeri + ulasan */
 const ProductModal = {
   components: { BlurImg, Stars },
+  data: () => ({ zoom: false }),
   computed: {
     p: () => store.product,
     imgs() { return (this.p && this.p.images) || []; },
@@ -12,7 +13,7 @@ const ProductModal = {
   },
   methods: {
     rp, CATLABEL, CATCOLOR,
-    close() { store.product = null; },
+    close() { this.zoom = false; store.product = null; },
     gal(i) {
       const n = this.imgs.length;
       if (!n) return;
@@ -42,8 +43,11 @@ const ProductModal = {
     <div class="relative bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto">
       <div class="p-5">
         <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-          <blur-img :src="imgs[idx] && imgs[idx].url" cls="w-full aspect-[4/3]" :alt="p.name" :eager="true" :key="idx"></blur-img>
+          <div @click="zoom = true" class="cursor-zoom-in">
+            <blur-img :src="imgs[idx] && imgs[idx].url" cls="w-full aspect-[4/3]" fit="contain" :alt="p.name" :eager="true" :key="idx"></blur-img>
+          </div>
           <span class="absolute bottom-3 right-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium">{{ idx + 1 }}/{{ imgs.length }}</span>
+          <span class="absolute bottom-3 left-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium pointer-events-none">🔍 ketuk untuk perbesar</span>
           <template v-if="imgs.length > 1">
             <button @click="gal(idx - 1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">‹</button>
             <button @click="gal(idx + 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">›</button>
@@ -92,6 +96,15 @@ const ProductModal = {
           </div>
         </div>
       </div>
+    </div>
+    <div v-if="zoom" class="fixed inset-0 z-[70] bg-black/95 flex items-center justify-center" @click.self="zoom = false">
+      <img :src="imgs[idx] && imgs[idx].url" :alt="p.name" class="max-w-full max-h-[92vh] object-contain select-none" draggable="false">
+      <button @click="zoom = false" class="absolute top-3 right-3 w-10 h-10 bg-white/20 hover:bg-white/30 text-white rounded-full text-xl leading-none">✕</button>
+      <span class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-sm font-medium">{{ idx + 1 }}/{{ imgs.length }}</span>
+      <template v-if="imgs.length > 1">
+        <button @click.stop="gal(idx - 1)" class="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 bg-white/20 hover:bg-white/30 text-white rounded-full text-2xl font-bold">‹</button>
+        <button @click.stop="gal(idx + 1)" class="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 bg-white/20 hover:bg-white/30 text-white rounded-full text-2xl font-bold">›</button>
+      </template>
     </div>
   </div>`
 };

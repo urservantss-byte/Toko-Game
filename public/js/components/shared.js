@@ -1,12 +1,12 @@
 /* Komponen gambar lazy-load dgn blur/shimmer placeholder */
 const BlurImg = {
-  props: { src: String, cls: { type: String, default: '' }, alt: { type: String, default: '' }, eager: Boolean },
+  props: { src: String, cls: { type: String, default: '' }, alt: { type: String, default: '' }, eager: Boolean, fit: { type: String, default: 'cover' } },
   data: () => ({ loaded: false, err: false }),
   template: `
     <div :class="['blurwrap', cls, { loaded }]">
       <img v-if="src && !err" :src="src" :alt="alt" :loading="eager ? 'eager' : 'lazy'"
            @load="loaded = true" @error="err = true; loaded = true"
-           :class="{ loaded }" class="w-full h-full object-cover">
+           :class="[{ loaded }, fit === 'contain' ? 'object-contain' : 'object-cover']" class="w-full h-full">
       <div v-else class="w-full h-full flex items-center justify-center text-3xl bg-gray-100 dark:bg-gray-800">🎮</div>
     </div>`
 };
