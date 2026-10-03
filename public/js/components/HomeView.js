@@ -61,7 +61,7 @@ const HomeView = {
       </div>
       <div v-if="banners.length > 1" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
         <button v-for="(b, i) in banners" :key="b.id" @click="bannerIdx = i"
-                class="w-2 h-2 rounded-full transition" :class="i === bannerIdx ? 'bg-white dark:bg-gray-900' : 'bg-white/50 dark:bg-gray-900/50'"></button>
+                class="w-2 h-2 rounded-full transition" :class="i === bannerIdx ? 'bg-white' : 'bg-white/50'"></button>
       </div>
     </section>
     <!-- Flash sale -->
@@ -73,7 +73,7 @@ const HomeView = {
       </div>
       <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
         <div v-for="p in flash" :key="p.id" @click="openProduct(p.id)"
-             class="flex-shrink-0 w-32 sm:w-36 bg-white dark:bg-gray-900 border rounded-2xl overflow-hidden cursor-pointer hover:shadow-md flex flex-col">
+             class="flex-shrink-0 w-32 sm:w-36 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md flex flex-col">
           <blur-img :src="imgOf(p)" cls="aspect-square" :alt="p.name"></blur-img>
           <div class="p-2 flex flex-col flex-1">
             <div class="text-xs font-medium clamp2" style="min-height:2.4em">{{ p.name }}</div>
@@ -85,17 +85,17 @@ const HomeView = {
 
     <!-- Filter chips -->
     <div class="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
-      <button @click="setCat('all')" :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', !f.cat || f.cat==='all' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border']">Semua</button>
+      <button @click="setCat('all')" :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', !f.cat || f.cat==='all' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700']">Semua</button>
       <button v-for="c in store.cats" :key="c.id" @click="setCat(c.id)"
-              :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', f.cat===c.id ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border']">{{ c.icon }} {{ c.label }}</button>
+              :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', f.cat===c.id ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700']">{{ c.icon }} {{ c.label }}</button>
       <button v-for="t in tags" :key="t" @click="setTag(t)"
-              :class="['text-xs px-3 py-1.5 rounded-full whitespace-nowrap', f.tag===t ? 'bg-indigo-100 text-primary border border-primary' : 'bg-indigo-50 text-primary']">#{{ t }}</button>
+              :class="['text-xs px-3 py-1.5 rounded-full whitespace-nowrap', f.tag===t ? 'bg-indigo-100 text-primary border border-primary' : 'bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300']">#{{ t }}</button>
     </div>
 
     <!-- Sort + count -->
     <div class="flex items-center justify-between">
       <span class="text-sm text-gray-500 dark:text-gray-400">{{ list.length }} produk</span>
-      <select v-model="f.sort" class="text-sm border rounded-xl px-3 py-1.5 bg-white dark:bg-gray-900 outline-none">
+      <select v-model="f.sort" class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 bg-white dark:bg-gray-900 outline-none">
         <option value="pop">Populer</option>
         <option value="murah">Termurah</option>
         <option value="mahal">Termahal</option>
@@ -106,7 +106,7 @@ const HomeView = {
     <!-- Grid produk -->
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
       <div v-for="p in list" :key="p.id" @click="openProduct(p.id)"
-           class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
+           class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
         <div class="relative aspect-square">
           <blur-img :src="imgOf(p)" cls="w-full h-full" :alt="p.name"></blur-img>
           <span class="absolute top-2 left-2 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: catColor(p.category) }">{{ catLabel(p.category) }}</span>
@@ -114,13 +114,13 @@ const HomeView = {
         </div>
         <div class="p-2.5 flex flex-col flex-1">
           <div class="text-[13px] font-medium leading-snug clamp2">{{ p.name }}</div>
-          <div class="text-[10px] text-gray-400 mt-0.5">{{ catLabel(p.category) || '' }}</div>
+          <div class="text-[10px] text-gray-400 dark:text-gray-300 mt-0.5">{{ catLabel(p.category) || '' }}</div>
           <div class="flex items-center justify-between mt-auto pt-1.5">
             <div class="text-accent font-extrabold text-sm">{{ rp(p.price) }}</div>
           </div>
           <div class="flex items-center justify-between mt-0.5">
-            <div class="text-[10px] text-gray-400">{{ p.review_count ? p.review_count + ' Terjual' : 'Baru' }}</div>
-            <div class="text-[10px] text-gray-500 dark:text-gray-400">⭐ <b class="text-gray-700 dark:text-gray-300">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
+            <div class="text-[10px] text-gray-400 dark:text-gray-300">{{ p.review_count ? p.review_count + ' Terjual' : 'Baru' }}</div>
+            <div class="text-[10px] text-gray-500 dark:text-gray-300">⭐ <b class="text-gray-700 dark:text-gray-200">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
           </div>
           <button @click.stop="buyNow(p.id)" :disabled="p.stock < 1"
                   class="mt-2 w-full text-[11px] font-bold bg-primary text-white rounded-xl py-1.5 hover:bg-indigo-700 disabled:opacity-40">🛒 Beli</button>

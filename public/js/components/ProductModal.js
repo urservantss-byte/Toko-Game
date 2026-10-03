@@ -54,7 +54,7 @@ const ProductModal = {
             <button @click="gal(idx - 1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">‹</button>
             <button @click="gal(idx + 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">›</button>
           </template>
-          <button @click="close" class="absolute top-2 right-2 w-8 h-8 bg-white/90 dark:bg-gray-900/90 rounded-full shadow text-gray-600 dark:text-gray-400">✕</button>
+          <button @click="close" class="absolute top-2 right-2 w-8 h-8 bg-white/90 dark:bg-gray-700/90 hover:dark:bg-gray-600 rounded-full shadow text-gray-600 dark:text-white">✕</button>
         </div>
         <div v-if="imgs.length > 1" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
           <img v-for="(im, j) in imgs" :key="j" :src="im.url" loading="lazy" @click="idx = j"
@@ -70,7 +70,7 @@ const ProductModal = {
           <div class="text-accent font-extrabold text-2xl mt-2">{{ rp(p.price) }}</div>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed whitespace-pre-line">{{ p.description }}</p>
           <div class="flex flex-wrap gap-1.5 mt-3">
-            <span v-for="t in tags()" :key="t" class="text-xs bg-indigo-50 text-primary rounded-full px-3 py-1 font-medium">#{{ t }}</span>
+            <span v-for="t in tags()" :key="t" class="text-xs bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300 rounded-full px-3 py-1 font-medium">#{{ t }}</span>
           </div>
           <div :class="['text-xs mt-3 font-medium', p.stock > 0 ? 'text-emerald-600' : 'text-red-500']">
             {{ p.stock > 0 ? 'Stok tersedia: ' + p.stock : 'Stok habis' }}
