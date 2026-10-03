@@ -19,12 +19,13 @@ const SettingsView = {
         toast('Profil disimpan ✅');
       } catch (e) { toast(e.message, false); }
     },
-    onAvatar(e) {
+    async onAvatar(e) {
       const f = e.target.files[0];
       if (!f) return;
       if (f.size > 2 * 1024 * 1024) return toast('Maksimal 2MB', false);
+      const cf = await compressImage(f, 512, 0.85);
       const fd = new FormData();
-      fd.append('avatar', f);
+      fd.append('avatar', cf);
       fetch('/api/users/me/avatar', { method: 'POST', headers: { 'Authorization': 'Bearer ' + store.token }, body: fd })
         .then(async r => {
           const d = await r.json();

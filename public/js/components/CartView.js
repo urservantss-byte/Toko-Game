@@ -90,12 +90,13 @@ const CheckoutView = {
         this.voucherOk = `Voucher ${code.toUpperCase()} aktif! Hemat ${rp(d.discount)} 🎉`;
       } catch (e) { this.voucherErr = e.message; }
     },
-    onProof(e) {
+    async onProof(e) {
       const f = e.target.files[0];
       if (!f) return;
       if (f.size > 5 * 1024 * 1024) return toast('Maksimal 5MB', false);
-      store.proofFile = f;
-      this.proofPreview = URL.createObjectURL(f);
+      const cf = await compressImage(f);
+      store.proofFile = cf;
+      this.proofPreview = URL.createObjectURL(cf);
     },
     async submit() {
       if (!store.cart.length) return;
@@ -129,12 +130,13 @@ const CheckoutView = {
       } catch (e) { toast(e.message, false); }
       finally { this.loading = false; }
     },
-    onQrisProof(e) {
+    async onQrisProof(e) {
       const f = e.target.files[0];
       if (!f) return;
       if (f.size > 5 * 1024 * 1024) return toast('Maksimal 5MB', false);
-      this.qrisProof = f;
-      this.qrisProofPreview = URL.createObjectURL(f);
+      const cf = await compressImage(f);
+      this.qrisProof = cf;
+      this.qrisProofPreview = URL.createObjectURL(cf);
     },
     async confirmQrisPaid() {
       if (!this.qrisProof) return toast('Upload bukti pembayaran dulu 📎', false);
@@ -156,7 +158,15 @@ const CheckoutView = {
   },
   template: `
   <div class="max-w-3xl mx-auto px-4 py-4">
-    <h2 class="text-xl font-bold mb-4">💳 Checkout</h2>
+    <h2 class="text-xl font-bold mb-3">💳 Checkout</h2>
+    <!-- Progress indicator -->
+    <div class="flex items-center justify-center mb-5 text-[11px] font-semibold">
+      <div class="flex items-center gap-1.5 text-primary"><span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-bold">1</span>Keranjang</div>
+      <div class="w-8 sm:w-14 h-0.5 bg-primary mx-2 rounded"></div>
+      <div class="flex items-center gap-1.5 text-primary"><span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-bold">2</span>Bayar</div>
+      <div class="w-8 sm:w-14 h-0.5 bg-gray-200 dark:bg-gray-700 mx-2 rounded"></div>
+      <div class="flex items-center gap-1.5 text-gray-400 dark:text-gray-500"><span class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300 flex items-center justify-center text-[11px] font-bold">3</span>Selesai</div>
+    </div>
     <div class="space-y-2 mb-4">
       <div v-for="m in payOpts" :key="m.id" @click="setMethod(m.id)"
            :class="['cursor-pointer border-2 rounded-2xl p-4 bg-white dark:bg-gray-900', store.payMethod === m.id ? 'border-primary bg-indigo-50/50' : 'border-gray-100 dark:border-gray-800']">
@@ -184,15 +194,17 @@ const CheckoutView = {
       <p v-if="voucherOk" class="text-xs text-green-600 mt-1.5">{{ voucherOk }}</p>
       <p v-if="voucherErr" class="text-xs text-red-500 mt-1.5">{{ voucherErr }}</p>
     </div>
-    <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 mb-4">
+    <div class="sticky bottom-20 md:static z-30 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 mb-4 shadow-lg md:shadow-none">
       <div class="flex items-center justify-between text-sm mb-1"><span class="text-gray-500 dark:text-gray-400">Subtotal</span><span>{{ rp(subtotal) }}</span></div>
       <div v-if="voucherDiscount > 0" class="flex items-center justify-between text-sm mb-1"><span class="text-green-600">Diskon voucher</span><span class="text-green-600 font-bold">-{{ rp(voucherDiscount) }}</span></div>
       <div class="flex items-center justify-between"><span class="font-semibold text-sm">Total bayar</span><span class="text-accent font-extrabold text-lg">{{ rp(total) }}</span></div>
+      <button @click="submit" :disabled="loading || !cart.length" class="mt-3 w-full bg-primary text-white font-bold rounded-2xl py-3 hover:bg-indigo-700 disabled:opacity-50">
+        {{ loading ? 'Memproses...' : 'Buat Pesanan' }}
+      </button>
     </div>
-    <button @click="submit" :disabled="loading || !cart.length" class="w-full bg-primary text-white font-bold rounded-2xl py-3 hover:bg-indigo-700 disabled:opacity-50">
-      {{ loading ? 'Memproses...' : 'Buat Pesanan' }}
-    </button>
-    <!-- Modal QRIS -->
+    <div class="flex items-center justify-center gap-2 mt-4 mb-2 text-[11px] text-gray-400 dark:text-gray-500">
+      <span>🔒 Pembayaran aman & terenkripsi</span><span>·</span><span>⚡ Proses kilat</span><span>·</span><span>💬 CS siap membantu</span>
+    </div>
     <div v-if="qris" class="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4" @click.self="closeQris">
       <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-sm w-full text-center relative">
         <button @click="closeQris" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-lg leading-none" title="Tutup">✕</button>

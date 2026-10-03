@@ -1,14 +1,16 @@
 /* ===== Vue app: registrasi komponen + mount ===== */
 const app = Vue.createApp({
-  data: () => ({ waCs: '' }),
+  data: () => ({ waCs: '', payList: null }),
   computed: {
     page: () => store.page,
     store: () => store,
     isAuthPage() { return ['login', 'register', 'forgot', 'reset'].includes(this.page); },
+    payOpts() { return this.payList || PAYMETHODS; },
   },
   mounted() {
     fetch('/api/settings/public').then(r => r.json()).then(d => {
       this.waCs = d.wa_cs || '';
+      this.payList = d.pay_methods || null;
       setCats(d.categories || []);
       if (d.store_name) store.siteName = d.store_name;
       store.announcement = d.announcement || '';
@@ -35,7 +37,12 @@ const app = Vue.createApp({
     </main>
     <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
       <div class="border-t dark:border-gray-800 pt-6">🎮 {{ store.siteName }} — Akun, Voucher & Topup Digital · Pembayaran aman · Proses kilat</div>
-      <div class="mt-2"><a @click="goTrack" class="cursor-pointer text-primary font-semibold hover:underline">🔍 Lacak Pesanan</a></div>
+      <!-- Strip metode pembayaran + badge keamanan -->
+      <div class="flex flex-wrap items-center justify-center gap-1.5 mt-4">
+        <span v-for="m in payOpts" :key="m.id" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{{ m.label }}</span>
+        <span class="px-2.5 py-1 rounded-lg bg-green-50 dark:bg-green-900/20 text-[10px] font-bold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">🔒 100% Aman</span>
+      </div>
+      <div class="mt-3"><a @click="goTrack" class="cursor-pointer text-primary font-semibold hover:underline">🔍 Lacak Pesanan</a></div>
     </footer>
     <a v-if="waCs" :href="waLink()" target="_blank"
        class="fixed bottom-20 md:bottom-6 right-4 z-40 w-14 h-14 rounded-full bg-green-500 shadow-xl flex items-center justify-center text-2xl hover:scale-105 transition"

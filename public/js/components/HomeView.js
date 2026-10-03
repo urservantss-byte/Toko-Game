@@ -24,7 +24,7 @@ const HomeView = {
         (!store.f.tag || String(p.tags || '').toLowerCase().includes(store.f.tag.toLowerCase())) &&
         (!q || (p.name + ' ' + (p.description || '') + ' ' + (p.tags || '')).toLowerCase().includes(q)));
       const sorters = {
-        pop: (a, b) => (b.review_count || 0) - (a.review_count || 0),
+        pop: (a, b) => (b.sold_count || 0) - (a.sold_count || 0),
         murah: (a, b) => a.price - b.price,
         mahal: (a, b) => b.price - a.price,
         rating: (a, b) => (Number(b.avg_rating) || 0) - (Number(a.avg_rating) || 0)
@@ -119,14 +119,19 @@ const HomeView = {
             <div class="text-accent font-extrabold text-sm">{{ rp(p.price) }}</div>
           </div>
           <div class="flex items-center justify-between mt-0.5">
-            <div class="text-[10px] text-gray-400 dark:text-gray-300">{{ p.review_count ? p.review_count + ' Terjual' : 'Baru' }}</div>
+            <div class="text-[10px] text-gray-400 dark:text-gray-300">{{ p.sold_count ? p.sold_count + ' Terjual' : 'Baru' }}</div>
             <div class="text-[10px] text-gray-500 dark:text-gray-300">⭐ <b class="text-gray-700 dark:text-gray-200">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
           </div>
           <button @click.stop="buyNow(p.id)" :disabled="p.stock < 1"
                   class="mt-2 w-full text-[11px] font-bold bg-primary text-white rounded-xl py-1.5 hover:bg-indigo-700 disabled:opacity-40">🛒 Beli</button>
         </div>
       </div>
-      <div v-if="!list.length" class="col-span-full text-center text-gray-400 py-10 text-sm">Produk tidak ditemukan 😢</div>
+      <div v-if="!list.length" class="col-span-full text-center py-14">
+        <div class="text-5xl mb-3">🔍</div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Produk tidak ditemukan 😢</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Coba kata kunci lain atau lihat semua produk</p>
+        <button @click="f.q=''; f.cat='all'; f.tag=''" class="bg-primary text-white text-sm font-bold rounded-xl px-6 py-2.5">Lihat Semua Produk</button>
+      </div>
     </div>
   </div>`
 };

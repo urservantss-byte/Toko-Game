@@ -30,3 +30,30 @@ const StatusBadge = {
   },
   template: `<span :class="['text-xs font-semibold px-2.5 py-1 rounded-full', cls]">{{ lbl }}</span>`
 };
+
+/* Kompresi gambar client-side: resize maks 1280px, kualitas 0.8, output JPEG */
+function compressImage(file, maxDim = 1280, quality = 0.8) {
+  return new Promise((resolve) => {
+    if (!file || !file.type.startsWith('image/')) return resolve(file);
+    // file kecil (<300KB) tidak perlu dikompresi
+    if (file.size < 300 * 1024) return resolve(file);
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let { width: w, height: h } = img;
+      if (w > maxDim || h > maxDim) {
+        const r = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * r); h = Math.round(h * r);
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      c.toBlob((blob) => {
+        resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }) : file);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}

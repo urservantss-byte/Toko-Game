@@ -65,7 +65,8 @@ const OrdersView = {
       inp.onchange = async () => {
         const f = inp.files[0]; if (!f) return;
         if (f.size > 5 * 1024 * 1024) return toast('Maksimal 5MB', false);
-        const fd = new FormData(); fd.append('bukti', f);
+        const cf = await compressImage(f);
+        const fd = new FormData(); fd.append('bukti', cf);
         try {
           const r = await fetch('/api/orders/' + id + '/proof', { method: 'POST', headers: { 'Authorization': 'Bearer ' + store.token }, body: fd });
           const d = await r.json();
@@ -85,7 +86,12 @@ const OrdersView = {
   template: `
   <div class="max-w-3xl mx-auto px-4 py-4">
     <h2 class="text-xl font-bold mb-4">📦 Pesanan Saya</h2>
-    <div v-if="!orders.length" class="text-gray-400 text-sm text-center py-8">Belum ada pesanan.</div>
+    <div v-if="!orders.length" class="text-center py-14">
+      <div class="text-5xl mb-3">📦</div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Belum ada pesanan</p>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Yuk mulai belanja, prosesnya cepat!</p>
+      <button @click="go('home')" class="bg-primary text-white text-sm font-bold rounded-xl px-6 py-2.5">Mulai Belanja</button>
+    </div>
     <div class="space-y-4">
       <div v-for="o in orders" :key="o.id" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
         <div class="flex items-center justify-between text-sm">

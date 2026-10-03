@@ -765,10 +765,15 @@ app.get('/api/products', (req, res) => {
   const limit = Math.min(Math.max(parseInt(req.query.limit) || 60, 1), 200);
   const rows = db.prepare(`SELECT * FROM products ${where} ${order} LIMIT ?`).all(...params, limit);
   const aggStmt = db.prepare('SELECT COUNT(*) c, AVG(rating) a FROM reviews WHERE product_id = ?');
+  const soldRows = db.prepare(`SELECT CAST(json_extract(j.value,'$.product_id') AS INTEGER) pid,
+      SUM(CAST(json_extract(j.value,'$.qty') AS INTEGER)) sold
+    FROM orders o, json_each(o.items_json) j WHERE o.status IN ('delivery','selesai') GROUP BY pid`).all();
+  const soldMap = {}; for (const r of soldRows) soldMap[r.pid] = r.sold;
   const products = rows.map(p => {
     const agg = aggStmt.get(p.id);
     p.review_count = agg.c;
     p.avg_rating = agg.a ? Math.round(agg.a * 10) / 10 : 0;
+    p.sold_count = soldMap[p.id] || 0;
     return attachImages(p);
   });
   res.json({ products });
@@ -778,9 +783,12 @@ app.get('/api/products/:id', (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Produk tidak ditemukan' });
   const agg = db.prepare('SELECT COUNT(*) c, AVG(rating) a FROM reviews WHERE product_id = ?').get(p.id);
+  const sold = db.prepare(`SELECT SUM(CAST(json_extract(j.value,'$.qty') AS INTEGER)) s FROM orders o, json_each(o.items_json) j
+    WHERE o.status IN ('delivery','selesai') AND CAST(json_extract(j.value,'$.product_id') AS INTEGER) = ?`).get(p.id);
   const prod = attachImages(p);
   prod.review_count = agg.c;
   prod.avg_rating = agg.a ? Math.round(agg.a * 10) / 10 : 0;
+  prod.sold_count = sold.s || 0;
   res.json({ product: prod });
 });
 

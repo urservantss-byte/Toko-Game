@@ -162,16 +162,17 @@ const ProductFormModal = {
       this.err = msg || '';
       if (msg) setTimeout(() => { this.err = ''; }, 4000);
     },
-    handleFiles(fileList) {
+    async handleFiles(fileList) {
       this.photoErr('');
       const room = 10 - this.total;
       if (room <= 0) return this.photoErr('Maksimal 10 foto');
       let added = 0;
       for (const f of fileList) {
         if (added >= room) break;
-        if (f.size > 1024 * 1024) { this.photoErr(`"${f.name}" lebih dari 1MB, dilewati`); continue; }
         if (!/^image\/(jpeg|png|webp|gif)$/.test(f.type)) { this.photoErr(`"${f.name}" bukan gambar valid`); continue; }
-        this.pending.push(f); added++;
+        const cf = await compressImage(f);
+        if (cf.size > 1024 * 1024) { this.photoErr(`"${f.name}" lebih dari 1MB setelah kompresi, dilewati`); continue; }
+        this.pending.push(cf); added++;
       }
     },
     onDrop(e) { this.dragOver = false; this.handleFiles(e.dataTransfer.files); },

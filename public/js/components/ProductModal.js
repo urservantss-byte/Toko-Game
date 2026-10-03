@@ -65,7 +65,7 @@ const ProductModal = {
           <h3 class="text-lg font-bold mt-2 leading-snug">{{ p.name }}</h3>
           <div class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
             <stars :value="Number(p.avg_rating) || 0"></stars>
-            <b class="text-gray-700 dark:text-gray-300">{{ Number(p.avg_rating || 0).toFixed(1) }}</b> | {{ p.review_count || 0 }} terjual
+            <b class="text-gray-700 dark:text-gray-300">{{ Number(p.avg_rating || 0).toFixed(1) }}</b> | {{ p.review_count || 0 }} ulasan | Terjual {{ p.sold_count || 0 }}
           </div>
           <div class="text-accent font-extrabold text-2xl mt-2">{{ rp(p.price) }}</div>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed whitespace-pre-line">{{ p.description }}</p>
