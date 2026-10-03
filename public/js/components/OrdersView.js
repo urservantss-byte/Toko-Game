@@ -59,6 +59,28 @@ const OrdersView = {
       } catch (e) { toast(e.message, false); }
     },
     complain(id) { store.ticketOrderId = id; go('tickets'); },
+    async buyAgain(o) {
+      let items = [];
+      try { items = JSON.parse(o.items_json || '[]'); } catch {}
+      if (!items.length) return toast('Tidak ada item di pesanan ini', false);
+      let added = 0;
+      for (const it of items) {
+        try {
+          const d = await api('/api/products/' + it.product_id);
+          const p = d.product;
+          if (!p) continue;
+          const key = it.variant_id ? p.id + '_v' + it.variant_id : String(p.id);
+          const c = store.cart.find(x => x.key === key);
+          const img = (p.images && p.images[0] && p.images[0].url) || p.image_url;
+          if (c) c.qty += it.qty;
+          else store.cart.push({ key, id: p.id, variant_id: it.variant_id || null, name: it.name || p.name, price: it.price || p.price, image_url: img, qty: it.qty });
+          added++;
+        } catch {}
+      }
+      saveCart();
+      if (added) { toast(added + ' produk dimasukkan keranjang'); go('cart'); }
+      else toast('Produk sudah tidak tersedia', false);
+    },
     uploadProof(id) {
       const inp = document.createElement('input');
       inp.type = 'file'; inp.accept = 'image/*';
@@ -154,6 +176,8 @@ const OrdersView = {
              class="text-xs font-bold px-3 py-2.5 rounded-xl text-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">📎 Bukti Bayar</a>
           <button v-if="o.status === 'pending'" @click="cancelOrder(o.id)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20">❌ Batalkan</button>
+          <button @click="buyAgain(o)"
+                  class="text-xs font-bold px-3 py-2.5 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20">🔁 Beli Lagi</button>
           <button @click="complain(o.id)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">💬 Komplain</button>
           <button v-for="e in eligFor(o.id)" :key="e.product_id" @click="openReview(e)"

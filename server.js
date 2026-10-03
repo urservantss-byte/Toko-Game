@@ -61,6 +61,21 @@ CREATE TABLE IF NOT EXISTS product_images (
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS product_variants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  label TEXT NOT NULL DEFAULT '',
+  price INTEGER NOT NULL DEFAULT 0,
+  stock INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS wishlist (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, product_id)
+);
 CREATE TABLE IF NOT EXISTS reviews (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -241,6 +256,10 @@ function categoryIds() { return allCategories().map(c => c.id); }
     console.log(`[repair] ${t}: FK dikembalikan ke products`);
   }
 })();
+// Kolom tambahan products (idempoten untuk DB lama)
+for (const [col, def] of [['process_time', `TEXT NOT NULL DEFAULT ''`]]) {
+  try { db.exec(`ALTER TABLE products ADD COLUMN ${col} ${def}`); } catch {}
+}
 // Kolom tambahan orders (idempoten untuk DB lama)
 for (const [col, def] of [['discount', 'REAL NOT NULL DEFAULT 0'], ['voucher_code', 'TEXT']]) {
   try { db.exec(`ALTER TABLE orders ADD COLUMN ${col} ${def}`); } catch {}
@@ -434,6 +453,13 @@ function attachImages(p) {
   if (!p) return p;
   p.images = getImages(p.id);
   if (p.images.length) p.image_url = p.images[0].url;
+  return p;
+}
+function attachVariants(p) {
+  if (!p) return p;
+  try {
+    p.variants = db.prepare('SELECT id, label, price, stock, sort_order FROM product_variants WHERE product_id = ? ORDER BY sort_order, id').all(p.id);
+  } catch { p.variants = []; }
   return p;
 }
 function syncFirstImage(productId) {
@@ -789,6 +815,7 @@ app.get('/api/products/:id', (req, res) => {
   prod.review_count = agg.c;
   prod.avg_rating = agg.a ? Math.round(agg.a * 10) / 10 : 0;
   prod.sold_count = sold.s || 0;
+  attachVariants(prod);
   res.json({ product: prod });
 });
 
@@ -801,25 +828,25 @@ app.get('/api/tags', (req, res) => {
 
 // ---- Products (admin) ----
 app.post('/api/products', auth, requireAdmin, (req, res) => {
-  const { name, description = '', price = 0, image_url = '', category = 'voucher', tags = '', stock = 0 } = req.body || {};
+  const { name, description = '', price = 0, image_url = '', category = 'voucher', tags = '', stock = 0, process_time = '' } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Nama produk wajib diisi' });
   if (!categoryIds().includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
-  const info = db.prepare('INSERT INTO products (name,description,price,image_url,category,tags,stock) VALUES (?,?,?,?,?,?,?)')
-    .run(name, description, Number(price) || 0, image_url, category, tags, Number(stock) || 0);
+  const info = db.prepare('INSERT INTO products (name,description,price,image_url,category,tags,stock,process_time) VALUES (?,?,?,?,?,?,?,?)')
+    .run(name, description, Number(price) || 0, image_url, category, tags, Number(stock) || 0, String(process_time || ''));
   res.status(201).json({ product: db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid) });
 });
 
 app.put('/api/products/:id', auth, requireAdmin, (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Produk tidak ditemukan' });
-  const { name, description, price, image_url, category, tags, stock } = req.body || {};
+  const { name, description, price, image_url, category, tags, stock, process_time } = req.body || {};
   if (category && !categoryIds().includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
   db.prepare(`UPDATE products SET
     name=COALESCE(?,name), description=COALESCE(?,description), price=COALESCE(?,price),
     image_url=COALESCE(?,image_url), category=COALESCE(?,category), tags=COALESCE(?,tags),
-    stock=COALESCE(?,stock) WHERE id=?`)
+    stock=COALESCE(?,stock), process_time=COALESCE(?,process_time) WHERE id=?`)
     .run(name ?? null, description ?? null, price ?? null, image_url ?? null,
-      category ?? null, tags ?? null, stock ?? null, req.params.id);
+      category ?? null, tags ?? null, stock ?? null, process_time ?? null, req.params.id);
   syncCodeStock(req.params.id); // produk berkode: stok selalu ngikutin jumlah kode
   res.json({ product: db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id) });
 });
@@ -1170,6 +1197,34 @@ app.delete('/api/admin/products/:id/codes/:cid', auth, requireAdmin, (req, res) 
   res.json({ ok: true });
 });
 
+// ---- Varian produk ----
+app.get('/api/products/:id/variants', (req, res) => {
+  try {
+    res.json({ variants: db.prepare('SELECT id, label, price, stock, sort_order FROM product_variants WHERE product_id = ? ORDER BY sort_order, id').all(req.params.id) });
+  } catch { res.json({ variants: [] }); }
+});
+app.post('/api/products/:id/variants', auth, requireAdmin, (req, res) => {
+  const { label = '', price = 0, stock = 0 } = req.body || {};
+  if (!label) return res.status(400).json({ error: 'Label varian wajib diisi' });
+  const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order),-1) m FROM product_variants WHERE product_id = ?').get(req.params.id).m;
+  const info = db.prepare('INSERT INTO product_variants (product_id,label,price,stock,sort_order) VALUES (?,?,?,?,?)')
+    .run(req.params.id, String(label), Number(price) || 0, Number(stock) || 0, maxOrder + 1);
+  res.status(201).json({ variant: db.prepare('SELECT * FROM product_variants WHERE id = ?').get(info.lastInsertRowid) });
+});
+app.put('/api/products/:id/variants/:vid', auth, requireAdmin, (req, res) => {
+  const { label, price, stock, sort_order } = req.body || {};
+  const r = db.prepare(`UPDATE product_variants SET label=COALESCE(?,label), price=COALESCE(?,price),
+    stock=COALESCE(?,stock), sort_order=COALESCE(?,sort_order) WHERE id = ? AND product_id = ?`)
+    .run(label ?? null, price ?? null, stock ?? null, sort_order ?? null, req.params.vid, req.params.id);
+  if (!r.changes) return res.status(404).json({ error: 'Varian tidak ditemukan' });
+  res.json({ variant: db.prepare('SELECT * FROM product_variants WHERE id = ?').get(req.params.vid) });
+});
+app.delete('/api/products/:id/variants/:vid', auth, requireAdmin, (req, res) => {
+  const r = db.prepare('DELETE FROM product_variants WHERE id = ? AND product_id = ?').run(req.params.vid, req.params.id);
+  if (!r.changes) return res.status(404).json({ error: 'Varian tidak ditemukan' });
+  res.json({ ok: true });
+});
+
 // Coba kirim otomatis: jika SEMUA item punya kode otomatis cukup (non-topup),
 // claim kode + return array delivery. Return null jika butuh input manual.
 function tryAutoDeliver(orderId) {
@@ -1452,6 +1507,27 @@ app.get('/api/orders/:id/qris', auth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message || 'Gagal membuat QR' }); }
 });
 
+// ---- Wishlist ----
+app.get('/api/wishlist', auth, (req, res) => {
+  try {
+    const rows = db.prepare(`SELECT p.* FROM wishlist w JOIN products p ON p.id = w.product_id
+      WHERE w.user_id = ? ORDER BY w.created_at DESC`).all(req.user.id);
+    res.json({ products: rows.map(p => attachImages(p)) });
+  } catch { res.json({ products: [] }); }
+});
+app.post('/api/wishlist/:pid', auth, (req, res) => {
+  try {
+    db.prepare('INSERT OR IGNORE INTO wishlist (user_id, product_id) VALUES (?,?)').run(req.user.id, req.params.pid);
+    res.json({ ok: true });
+  } catch { res.status(400).json({ error: 'Gagal menambah wishlist' }); }
+});
+app.delete('/api/wishlist/:pid', auth, (req, res) => {
+  try {
+    db.prepare('DELETE FROM wishlist WHERE user_id = ? AND product_id = ?').run(req.user.id, req.params.pid);
+    res.json({ ok: true });
+  } catch { res.status(400).json({ error: 'Gagal menghapus wishlist' }); }
+});
+
 app.post('/api/orders', auth, (req, res) => {
   const { items, payment_method, voucher_code } = req.body || {};
   if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'items wajib diisi' });
@@ -1466,10 +1542,19 @@ app.post('/api/orders', auth, (req, res) => {
       const p = db.prepare('SELECT * FROM products WHERE id = ?').get(it.product_id);
       if (!p) throw { status: 400, msg: `Produk ${it.product_id} tidak ditemukan` };
       const qty = Math.max(1, parseInt(it.qty) || 1);
-      if (p.stock < qty) throw { status: 400, msg: `Stok "${p.name}" tidak cukup (sisa ${p.stock})` };
-      db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?').run(qty, p.id);
-      snapshot.push({ product_id: p.id, name: p.name, price: p.price, qty, image_url: p.image_url });
-      total += p.price * qty;
+      let price = p.price, vlabel = '';
+      if (it.variant_id) {
+        const v = db.prepare('SELECT * FROM product_variants WHERE id = ? AND product_id = ?').get(it.variant_id, p.id);
+        if (!v) throw { status: 400, msg: `Varian tidak ditemukan` };
+        if (v.stock < qty) throw { status: 400, msg: `Stok varian "${v.label}" tidak cukup (sisa ${v.stock})` };
+        db.prepare('UPDATE product_variants SET stock = stock - ? WHERE id = ?').run(qty, v.id);
+        price = v.price; vlabel = v.label;
+      } else {
+        if (p.stock < qty) throw { status: 400, msg: `Stok "${p.name}" tidak cukup (sisa ${p.stock})` };
+        db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?').run(qty, p.id);
+      }
+      snapshot.push({ product_id: p.id, variant_id: it.variant_id || null, variant_label: vlabel, name: vlabel ? `${p.name} (${vlabel})` : p.name, price, qty, image_url: p.image_url });
+      total += price * qty;
     }
     let discount = 0, vcode = null;
     if (voucher_code) {
@@ -1589,7 +1674,8 @@ app.patch('/api/orders/:id/status', auth, requireAdmin, (req, res) => {
     // 2. Kembalikan stok produk non-kode (kecuali sudah delivery = barang sudah dikirim)
     if (['pending', 'proses'].includes(fromStatus)) {
       for (const it of items) {
-        if (!hasVoucherCodes(it.product_id))
+        if (it.variant_id) db.prepare('UPDATE product_variants SET stock = stock + ? WHERE id = ?').run(it.qty, it.variant_id);
+        else if (!hasVoucherCodes(it.product_id))
           db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(it.qty, it.product_id);
       }
     }
@@ -1625,7 +1711,8 @@ app.post('/api/orders/:id/cancel', auth, (req, res) => {
   const affected = db.prepare('SELECT DISTINCT product_id FROM voucher_codes WHERE order_id = ?').all(order.id).map(r => r.product_id);
   if (affected.length) db.prepare('UPDATE voucher_codes SET used = 0, order_id = NULL WHERE order_id = ?').run(order.id);
   for (const it of items) {
-    if (!hasVoucherCodes(it.product_id))
+    if (it.variant_id) db.prepare('UPDATE product_variants SET stock = stock + ? WHERE id = ?').run(it.qty, it.variant_id);
+    else if (!hasVoucherCodes(it.product_id))
       db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(it.qty, it.product_id);
   }
   const pids = [...new Set([...affected, ...items.filter(i => hasVoucherCodes(i.product_id)).map(i => i.product_id)])];

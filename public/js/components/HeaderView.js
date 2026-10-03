@@ -49,6 +49,7 @@ const HeaderView = {
               <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
             </div>
             <a @click="menuOpen=false; go('orders')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">📦 Pesananku</a>
+            <a @click="menuOpen=false; go('wishlist')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">❤️ Wishlist</a>
             <a @click="menuOpen=false; go('tickets')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">🎫 Bantuan</a>
             <a @click="menuOpen=false; go('settings')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">⚙️ Pengaturan</a>
             <a v-if="user.role==='admin'" @click="menuOpen=false; go('admin')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">🛠️ Admin Panel</a>

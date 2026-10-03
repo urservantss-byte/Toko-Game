@@ -1,8 +1,8 @@
 /* Modal detail produk: galeri + ulasan */
 const ProductModal = {
   components: { BlurImg, Stars },
-  data: () => ({ zoom: false }),
-  mounted() { this._bo = document.body.style.overflow; document.body.style.overflow = 'hidden'; },
+  data: () => ({ zoom: false, selVariant: null }),
+  mounted() { this._bo = document.body.style.overflow; document.body.style.overflow = 'hidden'; this.selVariant = null; },
   beforeUnmount() { document.body.style.overflow = this._bo || ''; },
   computed: {
     p: () => store.product,
@@ -12,6 +12,11 @@ const ProductModal = {
       set: v => { store.galIdx = v; }
     },
     reviews: () => store.reviews,
+    variants() { return (this.p && this.p.variants) || []; },
+    hasVariants() { return this.variants.length > 0; },
+    curPrice() { return this.selVariant ? this.selVariant.price : (this.p ? this.p.price : 0); },
+    curStock() { return this.selVariant ? this.selVariant.stock : (this.p ? this.p.stock : 0); },
+    wished() { return store.wishlist.includes(this.p && this.p.id); },
   },
   methods: {
     rp, CATLABEL, CATCOLOR,
@@ -21,16 +26,35 @@ const ProductModal = {
       if (!n) return;
       store.galIdx = (i + n) % n;
     },
+    pickVariant(v) { this.selVariant = (this.selVariant && this.selVariant.id === v.id) ? null : v; },
     addCart(goCheckout) {
       const p = this.p;
-      if (!p || p.stock < 1) return;
-      const c = store.cart.find(x => x.id === p.id);
+      if (!p) return;
+      if (this.hasVariants && !this.selVariant) return toast('Pilih varian dulu', false);
+      if (this.curStock < 1) return;
+      const key = this.selVariant ? p.id + '_v' + this.selVariant.id : String(p.id);
+      const c = store.cart.find(x => x.key === key);
       const img = (p.images && p.images[0] && p.images[0].url) || p.image_url;
+      const label = this.selVariant ? `${p.name} (${this.selVariant.label})` : p.name;
       if (c) c.qty++;
-      else store.cart.push({ id: p.id, name: p.name, price: p.price, image_url: img, qty: 1 });
+      else store.cart.push({ key, id: p.id, variant_id: this.selVariant ? this.selVariant.id : null, name: label, price: this.curPrice, image_url: img, qty: 1 });
       saveCart();
       this.close();
       go(goCheckout ? 'checkout' : 'cart');
+    },
+    async toggleWish() {
+      const p = this.p;
+      if (!p) return;
+      if (!store.user) { this.close(); go('login'); return toast('Masuk dulu untuk wishlist', false); }
+      try {
+        if (this.wished) {
+          await api('/api/wishlist/' + p.id, { method: 'DELETE' });
+          store.wishlist = store.wishlist.filter(id => id !== p.id);
+        } else {
+          await api('/api/wishlist/' + p.id, { method: 'POST' });
+          store.wishlist.push(p.id);
+        }
+      } catch (e) { toast(e.message, false); }
     },
     openReview() {
       if (!store.user) { this.close(); go('login'); return toast('Masuk dulu untuk memberi ulasan', false); }
@@ -55,6 +79,7 @@ const ProductModal = {
             <button @click="gal(idx + 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">›</button>
           </template>
           <button @click="close" class="absolute top-2 right-2 w-8 h-8 bg-white/90 dark:bg-gray-700/90 hover:dark:bg-gray-600 rounded-full shadow text-gray-600 dark:text-white">✕</button>
+          <button @click="toggleWish" :class="['absolute top-2 left-2 w-8 h-8 rounded-full shadow text-lg', wished ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-700/90 text-gray-400']" :title="wished ? 'Hapus dari wishlist' : 'Tambah ke wishlist'">{{ wished ? '❤️' : '🤍' }}</button>
         </div>
         <div v-if="imgs.length > 1" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
           <img v-for="(im, j) in imgs" :key="j" :src="im.url" loading="lazy" @click="idx = j"
@@ -67,13 +92,25 @@ const ProductModal = {
             <stars :value="Number(p.avg_rating) || 0"></stars>
             <b class="text-gray-700 dark:text-gray-300">{{ Number(p.avg_rating || 0).toFixed(1) }}</b> | {{ p.review_count || 0 }} ulasan | Terjual {{ p.sold_count || 0 }}
           </div>
-          <div class="text-accent font-extrabold text-2xl mt-2">{{ rp(p.price) }}</div>
+          <div class="text-accent font-extrabold text-2xl mt-2">{{ rp(curPrice) }}</div>
+          <div v-if="p.process_time" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">⚡ Rata-rata diproses dalam {{ p.process_time }}</div>
+          <!-- Varian produk -->
+          <div v-if="hasVariants" class="mt-3">
+            <div class="text-xs font-bold mb-2 text-gray-600 dark:text-gray-300">Pilih varian:</div>
+            <div class="flex flex-wrap gap-2">
+              <button v-for="v in variants" :key="v.id" @click="pickVariant(v)" :disabled="v.stock < 1"
+                :class="['px-3.5 py-2 rounded-xl text-xs font-bold border-2 transition disabled:opacity-40',
+                  selVariant && selVariant.id === v.id ? 'border-primary bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300']">
+                {{ v.label }}<span class="block font-normal text-[10px] mt-0.5">{{ rp(v.price) }}</span>
+              </button>
+            </div>
+          </div>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed whitespace-pre-line">{{ p.description }}</p>
           <div class="flex flex-wrap gap-1.5 mt-3">
             <span v-for="t in tags()" :key="t" class="text-xs bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300 rounded-full px-3 py-1 font-medium">#{{ t }}</span>
           </div>
-          <div :class="['text-xs mt-3 font-medium', p.stock > 0 ? 'text-emerald-600' : 'text-red-500']">
-            {{ p.stock > 0 ? 'Stok tersedia: ' + p.stock : 'Stok habis' }}
+          <div :class="['text-xs mt-3 font-medium', curStock > 0 ? 'text-emerald-600' : 'text-red-500']">
+            {{ curStock > 0 ? 'Stok tersedia: ' + curStock : 'Stok habis' }}
           </div>
           <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
             <div class="flex items-center justify-between mb-3">
@@ -93,8 +130,8 @@ const ProductModal = {
             </div>
           </div>
           <div class="flex gap-2 mt-4">
-            <button @click="addCart(false)" :disabled="p.stock < 1" class="flex-1 border-2 border-primary text-primary font-bold rounded-xl py-2.5 text-sm disabled:opacity-40">+ Keranjang</button>
-            <button @click="addCart(true)" :disabled="p.stock < 1" class="flex-1 bg-primary text-white font-bold rounded-xl py-2.5 text-sm hover:bg-indigo-700 disabled:opacity-40">Beli Sekarang</button>
+            <button @click="addCart(false)" :disabled="curStock < 1" class="flex-1 border-2 border-primary text-primary font-bold rounded-xl py-2.5 text-sm disabled:opacity-40">+ Keranjang</button>
+            <button @click="addCart(true)" :disabled="curStock < 1" class="flex-1 bg-primary text-white font-bold rounded-xl py-2.5 text-sm hover:bg-indigo-700 disabled:opacity-40">Beli Sekarang</button>
           </div>
         </div>
       </div>

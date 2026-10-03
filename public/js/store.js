@@ -5,7 +5,8 @@ const store = reactive({
   page: 'home',            // home | login | register | forgot | reset | cart | checkout | orders | settings | admin
   user: null,
   token: localStorage.getItem('tg_token') || '',
-  cart: JSON.parse(localStorage.getItem('cart') || '[]'),
+  cart: (() => { try { const c = JSON.parse(localStorage.getItem('cart') || '[]'); return c.map(x => ({ key: x.key || String(x.id), ...x })); } catch { return []; } })(),
+  wishlist: [],
   products: [],
   f: { q: '', cat: 'all', tag: '', sort: 'pop' },
   // product modal
@@ -50,7 +51,7 @@ function setToken(t) {
   else localStorage.removeItem('tg_token');
 }
 
-const VALID_PAGES = ['home', 'login', 'register', 'forgot', 'reset', 'cart', 'checkout', 'orders', 'tickets', 'settings', 'admin', 'track'];
+const VALID_PAGES = ['home', 'login', 'register', 'forgot', 'reset', 'cart', 'checkout', 'orders', 'tickets', 'settings', 'admin', 'track', 'wishlist', 'faq'];
 const ADMIN_TABS = ['dash', 'orders', 'products', 'vouchers', 'banners', 'tickets', 'users', 'settings'];
 
 // Hash routing: halaman tersimpan di URL (#/orders, #/admin/products, ...)
@@ -101,11 +102,20 @@ async function refreshMe() {
   try {
     const d = await api('/api/auth/me');
     store.user = d.user;
+    loadWishlist();
   } catch (e) { setToken(''); store.user = null; }
 }
 
+async function loadWishlist() {
+  if (!store.token) { store.wishlist = []; return; }
+  try {
+    const d = await api('/api/wishlist');
+    store.wishlist = (d.products || []).map(p => p.id);
+  } catch { store.wishlist = []; }
+}
+
 function logout() {
-  setToken(''); store.user = null; store.cart = []; saveCart();
+  setToken(''); store.user = null; store.cart = []; store.wishlist = []; saveCart();
   go('home');
   toast('Sudah keluar 👋');
 }

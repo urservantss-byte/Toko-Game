@@ -39,11 +39,25 @@ const HomeView = {
     addCart(id) {
       const p = store.products.find(x => x.id === id);
       if (!p || p.stock < 1) return toast('Stok habis', false);
-      const c = store.cart.find(x => x.id === id);
+      const c = store.cart.find(x => x.key === String(id));
       if (c) c.qty++;
-      else store.cart.push({ id: p.id, name: p.name, price: p.price, image_url: this.imgOf(p), qty: 1 });
+      else store.cart.push({ key: String(id), id: p.id, variant_id: null, name: p.name, price: p.price, image_url: this.imgOf(p), qty: 1 });
       saveCart();
       toast('Ditambahkan ke keranjang 🛒');
+    },
+    isWished(id) { return store.wishlist.includes(id); },
+    async toggleWish(id) {
+      if (!store.user) { go('login'); return toast('Masuk dulu untuk wishlist', false); }
+      try {
+        if (this.isWished(id)) {
+          await api('/api/wishlist/' + id, { method: 'DELETE' });
+          store.wishlist = store.wishlist.filter(x => x !== id);
+        } else {
+          await api('/api/wishlist/' + id, { method: 'POST' });
+          store.wishlist.push(id);
+          toast('Ditambah ke wishlist ❤️');
+        }
+      } catch (e) { toast(e.message, false); }
     },
     buyNow(id) { this.addCart(id); go('checkout'); },
     setCat(c) { store.f.cat = c; store.f.tag = ''; },
@@ -63,6 +77,14 @@ const HomeView = {
         <button v-for="(b, i) in banners" :key="b.id" @click="bannerIdx = i"
                 class="w-2 h-2 rounded-full transition" :class="i === bannerIdx ? 'bg-white' : 'bg-white/50'"></button>
       </div>
+    </section>
+    <!-- Promo lacak pesanan -->
+    <section class="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl p-4 flex items-center justify-between text-white mb-1">
+      <div>
+        <div class="font-bold text-sm">📦 Sudah pesan? Lacak di sini!</div>
+        <div class="text-[11px] opacity-90 mt-0.5">Pantau status pesananmu secara real-time</div>
+      </div>
+      <button @click="go('track')" class="bg-white text-indigo-600 text-xs font-bold rounded-xl px-4 py-2.5 shrink-0">Lacak 🔍</button>
     </section>
     <!-- Flash sale -->
     <section v-if="flash.length">
@@ -110,6 +132,7 @@ const HomeView = {
         <div class="relative aspect-square">
           <blur-img :src="imgOf(p)" cls="w-full h-full" :alt="p.name"></blur-img>
           <span class="absolute top-2 left-2 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: catColor(p.category) }">{{ catLabel(p.category) }}</span>
+          <button @click.stop="toggleWish(p.id)" :class="['absolute top-2 right-2 w-7 h-7 rounded-full shadow text-sm flex items-center justify-center', isWished(p.id) ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-800/90 text-gray-400']" :title="isWished(p.id) ? 'Hapus dari wishlist' : 'Tambah ke wishlist'">{{ isWished(p.id) ? '❤️' : '🤍' }}</button>
           <span v-if="(p.images||[]).length > 1" class="absolute bottom-2 right-2 text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full">📷 {{ p.images.length }}</span>
         </div>
         <div class="p-2.5 flex flex-col flex-1">

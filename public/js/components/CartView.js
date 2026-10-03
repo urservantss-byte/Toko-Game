@@ -29,7 +29,7 @@ const CartView = {
       <button @click="go('home')" class="mt-4 bg-primary text-white text-sm font-bold rounded-xl px-6 py-2.5">Belanja Sekarang</button>
     </div>
     <div v-else class="space-y-3">
-      <div v-for="(c, i) in cart" :key="c.id" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 flex gap-3 items-center">
+      <div v-for="(c, i) in cart" :key="c.key" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 flex gap-3 items-center">
         <blur-img :src="c.image_url" cls="w-16 h-16 rounded-xl shrink-0" :alt="c.name"></blur-img>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-medium truncate">{{ c.name }}</div>
@@ -104,7 +104,7 @@ const CheckoutView = {
       this.loading = true;
       try {
         const d = await api('/api/orders', { method: 'POST', body: JSON.stringify({
-          items: store.cart.map(c => ({ product_id: c.id, qty: c.qty })),
+          items: store.cart.map(c => ({ product_id: c.id, variant_id: c.variant_id || null, qty: c.qty })),
           payment_method: store.payMethod,
           voucher_code: this.voucherDiscount > 0 ? this.voucherCode.trim().toUpperCase() : undefined
         }) });

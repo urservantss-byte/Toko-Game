@@ -31,6 +31,8 @@ const app = Vue.createApp({
       <checkout-view v-if="page === 'checkout'"></checkout-view>
       <orders-view v-if="page === 'orders'"></orders-view>
       <tickets-view v-if="page === 'tickets'"></tickets-view>
+      <wishlist-view v-if="page === 'wishlist'"></wishlist-view>
+      <faq-view v-if="page === 'faq'"></faq-view>
       <settings-view v-if="page === 'settings'"></settings-view>
       <admin-view v-if="page === 'admin'"></admin-view>
       <track-view v-if="page === 'track'"></track-view>
@@ -42,7 +44,11 @@ const app = Vue.createApp({
         <span v-for="m in payOpts" :key="m.id" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{{ m.label }}</span>
         <span class="px-2.5 py-1 rounded-lg bg-green-50 dark:bg-green-900/20 text-[10px] font-bold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">🔒 100% Aman</span>
       </div>
-      <div class="mt-3"><a @click="goTrack" class="cursor-pointer text-primary font-semibold hover:underline">🔍 Lacak Pesanan</a></div>
+      <div class="mt-3 flex items-center justify-center gap-4">
+        <a @click="goTrack" class="cursor-pointer text-primary font-semibold hover:underline">🔍 Lacak Pesanan</a>
+        <span class="text-gray-300 dark:text-gray-700">|</span>
+        <a @click="go('faq')" class="cursor-pointer text-primary font-semibold hover:underline">❓ Cara Beli & FAQ</a>
+      </div>
     </footer>
     <a v-if="waCs" :href="waLink()" target="_blank"
        class="fixed bottom-20 md:bottom-6 right-4 z-40 w-14 h-14 rounded-full bg-green-500 shadow-xl flex items-center justify-center text-2xl hover:scale-105 transition"
@@ -65,6 +71,8 @@ app.component('checkout-view', CheckoutView);
 app.component('orders-view', OrdersView);
 app.component('track-view', TrackView);
 app.component('tickets-view', TicketsView);
+app.component('wishlist-view', WishlistView);
+app.component('faq-view', FaqView);
 app.component('settings-view', SettingsView);
 app.component('auth-view', AuthView);
 app.component('admin-view', AdminView);

@@ -129,12 +129,14 @@ const AdminProducts = {
 /* Modal form produk + photo manager */
 const ProductFormModal = {
   data: () => ({
-    form: { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '' },
+    form: { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '', process_time: '' },
     existing: [],   // foto yg sudah tersimpan [{id, url, sort_order}]
     pending: [],    // File baru
     err: '',
     saving: false,
     dragOver: false,
+    variants: [],
+    nv: { label: '', price: '', stock: '' },
   }),
   computed: {
     show: () => !!store.productForm,
@@ -148,13 +150,14 @@ const ProductFormModal = {
     close() { store.productForm = null; },
     async init() {
       const pf = store.productForm;
-      this.existing = []; this.pending = []; this.err = '';
-      this.form = { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '' };
+      this.existing = []; this.pending = []; this.err = ''; this.variants = []; this.nv = { label: '', price: '', stock: '' };
+      this.form = { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '', process_time: '' };
       if (pf && pf.id) {
         try {
           const { product: p } = await api('/api/products/' + pf.id);
-          this.form = { name: p.name || '', description: p.description || '', price: p.price || '', stock: p.stock ?? '', category: p.category || 'voucher', tags: p.tags || '' };
+          this.form = { name: p.name || '', description: p.description || '', price: p.price || '', stock: p.stock ?? '', category: p.category || 'voucher', tags: p.tags || '', process_time: p.process_time || '' };
           this.existing = (p.images || []).slice();
+          this.variants = (p.variants || []).slice();
         } catch (e) { toast(e.message, false); this.close(); }
       }
     },
@@ -178,6 +181,31 @@ const ProductFormModal = {
     onDrop(e) { this.dragOver = false; this.handleFiles(e.dataTransfer.files); },
     onPick(e) { this.handleFiles(e.target.files); e.target.value = ''; },
     rmPending(i) { this.pending.splice(i, 1); },
+    async saveVariant(v) {
+      try {
+        await api(`/api/products/${this.pid}/variants/${v.id}`, { method: 'PUT',
+          body: JSON.stringify({ label: v.label, price: Number(v.price) || 0, stock: Number(v.stock) || 0 }) });
+        toast('Varian disimpan');
+      } catch (e) { toast(e.message, false); }
+    },
+    async addVariant() {
+      if (!this.nv.label.trim()) return toast('Label varian wajib diisi', false);
+      try {
+        const d = await api(`/api/products/${this.pid}/variants`, { method: 'POST',
+          body: JSON.stringify({ label: this.nv.label.trim(), price: Number(this.nv.price) || 0, stock: Number(this.nv.stock) || 0 }) });
+        this.variants.push(d.variant);
+        this.nv = { label: '', price: '', stock: '' };
+        toast('Varian ditambah ✅');
+      } catch (e) { toast(e.message, false); }
+    },
+    async delVariant(vid) {
+      if (!confirm('Hapus varian ini?')) return;
+      try {
+        await api(`/api/products/${this.pid}/variants/${vid}`, { method: 'DELETE' });
+        this.variants = this.variants.filter(v => v.id !== vid);
+        toast('Varian dihapus');
+      } catch (e) { toast(e.message, false); }
+    },
     preview(f) { return URL.createObjectURL(f); },
     async delPhoto(imageId) {
       if (!confirm('Hapus foto ini?')) return;
@@ -202,7 +230,7 @@ const ProductFormModal = {
       const b = {
         name: this.form.name.trim(), description: this.form.description.trim(),
         price: Number(this.form.price) || 0, stock: Number(this.form.stock) || 0,
-        category: this.form.category, tags: this.form.tags.trim()
+        category: this.form.category, tags: this.form.tags.trim(), process_time: this.form.process_time.trim()
       };
       if (!b.name || b.price < 0) return toast('Nama & harga wajib diisi', false);
       this.saving = true;
@@ -237,6 +265,7 @@ const ProductFormModal = {
           <input v-model="form.price" type="number" placeholder="Harga (Rp)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
           <input v-model="form.stock" type="number" placeholder="Stok" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
         </div>
+        <input v-model="form.process_time" placeholder="Estimasi proses (mis: 5 menit)" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
         <select v-model="form.category" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
           <option v-for="c in store.cats" :key="c.id" :value="c.id">{{ c.icon }} {{ c.label }}</option>
         </select>
@@ -267,6 +296,23 @@ const ProductFormModal = {
             </div>
           </div>
           <div v-if="err" class="text-xs text-red-500 mt-1.5">{{ err }}</div>
+        </div>
+        <!-- Varian produk (hanya saat edit) -->
+        <div v-if="pid" class="mt-4">
+          <label class="block font-semibold mb-2">Varian Produk <span class="text-xs font-normal text-gray-400">(mis: 50rb / 100rb / 200rb)</span></label>
+          <div v-for="v in variants" :key="v.id" class="flex gap-2 mb-2 items-center">
+            <input v-model="v.label" @change="saveVariant(v)" placeholder="Label" class="flex-1 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
+            <input v-model.number="v.price" @change="saveVariant(v)" type="number" placeholder="Harga" class="w-28 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
+            <input v-model.number="v.stock" @change="saveVariant(v)" type="number" placeholder="Stok" class="w-20 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
+            <button @click="delVariant(v.id)" class="text-red-500 font-bold px-2">✕</button>
+          </div>
+          <div class="flex gap-2 items-center">
+            <input v-model="nv.label" placeholder="Label varian baru" class="flex-1 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
+            <input v-model.number="nv.price" type="number" placeholder="Harga" class="w-28 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
+            <input v-model.number="nv.stock" type="number" placeholder="Stok" class="w-20 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
+            <button @click="addVariant" class="bg-primary text-white text-sm font-bold rounded-xl px-4 py-2">+ Tambah</button>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1.5">Kalau ada varian, pembeli wajib pilih varian & harga/stok ngikutin varian yang dipilih.</p>
         </div>
       </div>
       <div class="flex gap-2 mt-5">
