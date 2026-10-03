@@ -104,7 +104,7 @@ const HomeView = {
     </div>
 
     <!-- Grid produk -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
       <div v-for="p in list" :key="p.id" @click="openProduct(p.id)"
            class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
         <div class="relative aspect-square">
@@ -112,18 +112,18 @@ const HomeView = {
           <span class="absolute top-2 left-2 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: CATCOLOR[p.category] }">{{ CATLABEL[p.category] }}</span>
           <span v-if="(p.images||[]).length > 1" class="absolute bottom-2 right-2 text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full">📷 {{ p.images.length }}</span>
         </div>
-        <div class="p-3 flex flex-col flex-1">
-          <div class="text-sm font-medium leading-snug clamp2">{{ p.name }}</div>
-          <div class="text-[11px] text-gray-400 mt-1">{{ CATLABEL[p.category] || '' }}</div>
-          <div class="flex items-center justify-between mt-auto pt-2">
-            <div class="text-accent font-extrabold text-[15px]">{{ rp(p.price) }}</div>
+        <div class="p-2.5 flex flex-col flex-1">
+          <div class="text-[13px] font-medium leading-snug clamp2">{{ p.name }}</div>
+          <div class="text-[10px] text-gray-400 mt-0.5">{{ CATLABEL[p.category] || '' }}</div>
+          <div class="flex items-center justify-between mt-auto pt-1.5">
+            <div class="text-accent font-extrabold text-sm">{{ rp(p.price) }}</div>
           </div>
-          <div class="flex items-center justify-between mt-1">
-            <div class="text-[11px] text-gray-400">{{ p.review_count ? p.review_count + ' Terjual' : 'Baru' }}</div>
-            <div class="text-[11px] text-gray-500 dark:text-gray-400">⭐ <b class="text-gray-700 dark:text-gray-300">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
+          <div class="flex items-center justify-between mt-0.5">
+            <div class="text-[10px] text-gray-400">{{ p.review_count ? p.review_count + ' Terjual' : 'Baru' }}</div>
+            <div class="text-[10px] text-gray-500 dark:text-gray-400">⭐ <b class="text-gray-700 dark:text-gray-300">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
           </div>
           <button @click.stop="buyNow(p.id)" :disabled="p.stock < 1"
-                  class="mt-2.5 w-full text-xs font-bold bg-primary text-white rounded-xl py-2 hover:bg-indigo-700 disabled:opacity-40">🛒 Beli</button>
+                  class="mt-2 w-full text-[11px] font-bold bg-primary text-white rounded-xl py-1.5 hover:bg-indigo-700 disabled:opacity-40">🛒 Beli</button>
         </div>
       </div>
       <div v-if="!list.length" class="col-span-full text-center text-gray-400 py-10 text-sm">Produk tidak ditemukan 😢</div>
