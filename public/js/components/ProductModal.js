@@ -70,7 +70,7 @@ const ProductModal = {
   template: `
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="close">
     <div class="absolute inset-0 bg-black/50" @click="close"></div>
-    <div class="relative bg-white dark:bg-surface w-full max-w-md sm:max-w-lg rounded-3xl border dark:border-line max-h-[86vh] overflow-y-auto overscroll-contain">
+    <div class="relative bg-white dark:bg-rcard w-full max-w-md sm:max-w-lg rounded-3xl border dark:border-rline max-h-[86vh] overflow-y-auto overscroll-contain">
       <div class="p-5">
         <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
           <div @click="zoom = true" class="cursor-zoom-in">
