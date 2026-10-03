@@ -593,29 +593,6 @@ async function sendVerificationEmail(user) {
   return { sent, link };
 }
 
-// [SEMENTARA - hapus setelah cleanup QA 2026-10-03] Bersihkan data uji QA
-app.post('/api/admin/cleanup-qa', auth, requireAdmin, (req, res) => {
-  const out = {};
-  const tx = db.transaction(() => {
-    for (const oid of [5, 6]) {
-      out['order_' + oid] = db.prepare('DELETE FROM orders WHERE id = ?').run(oid).changes;
-    }
-    out.ticket_msgs_5 = db.prepare('DELETE FROM ticket_messages WHERE ticket_id = 5').run().changes;
-    out.ticket_5 = db.prepare('DELETE FROM tickets WHERE id = 5').run().changes;
-    for (const em of ['test-qa-x7k9@test.id', 'pentest7741@test.id']) {
-      const u = db.prepare('SELECT id FROM users WHERE email = ?').get(em);
-      if (u) {
-        db.prepare('DELETE FROM ticket_messages WHERE user_id = ?').run(u.id);
-        db.prepare('DELETE FROM reviews WHERE user_id = ?').run(u.id);
-        out['user_' + em] = db.prepare('DELETE FROM users WHERE id = ?').run(u.id).changes;
-      } else out['user_' + em] = 0;
-    }
-    out.user_demo_reset = db.prepare("UPDATE users SET name = 'User Demo' WHERE email = 'user@toko.id'").run().changes;
-  });
-  tx();
-  res.json({ ok: true, cleaned: out });
-});
-
 app.post('/api/auth/register', rateLimit({ max: 5, msg: 'Terlalu banyak pendaftaran. Coba lagi nanti.' }), async (req, res) => {
   const { name, email, password } = req.body || {};
   if (!name || !email || !password) return res.status(400).json({ error: 'name, email, password wajib diisi' });
