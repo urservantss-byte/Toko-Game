@@ -1116,7 +1116,7 @@ app.put('/api/admin/settings', auth, requireAdmin, (req, res) => {
 app.post('/api/admin/pay-methods', auth, requireAdmin, (req, res) => {
   const { id, label, details = '', kind = 'transfer' } = req.body || {};
   const rawId = id || label || '';
-  const nid = String(rawId).trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40);
+  const nid = String(rawId).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').replace(/_+/g, '_').slice(0, 40);
   if (!nid || nid.length < 3) return res.status(400).json({ error: 'ID minimal 3 karakter (huruf/angka/_)' });
   if (!label || !String(label).trim()) return res.status(400).json({ error: 'Label wajib diisi' });
   if (!['qris', 'transfer'].includes(kind)) return res.status(400).json({ error: 'Jenis tidak valid' });
