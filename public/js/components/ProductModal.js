@@ -148,7 +148,7 @@ const ReviewModal = {
       <textarea v-model="store.reviewComment" rows="3" placeholder="Ulasanmu (opsional)..."
                 class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200"></textarea>
       <div class="flex gap-2 mt-4">
-        <button @click="close" class="flex-1 border rounded-xl py-2.5 text-sm font-semibold">Batal</button>
+        <button @click="close" class="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2.5 text-sm font-semibold">Batal</button>
         <button @click="submit" class="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-bold">Kirim Ulasan</button>
       </div>
     </div>

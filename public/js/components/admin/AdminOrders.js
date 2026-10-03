@@ -93,7 +93,7 @@ const AdminOrders = {
               <div class="flex flex-col gap-1.5 items-start">
                 <template v-if="o.status === 'pending'">
                   <button @click="process(o.id)" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-blue-700 whitespace-nowrap">⚙️ Proses</button>
-                  <button @click="cancel(o.id)" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-xl font-semibold hover:bg-red-100 whitespace-nowrap">Batalkan</button>
+                  <button @click="cancel(o.id)" class="text-xs bg-red-500/10 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-xl font-semibold hover:bg-red-500/20 whitespace-nowrap">Batalkan</button>
                 </template>
                 <template v-if="o.status === 'proses'">
                   <button @click="openDeliver(o.id)" class="text-xs bg-primary text-white px-3 py-1.5 rounded-xl font-bold hover:bg-indigo-700 whitespace-nowrap">📤 Input Data & Delivery</button>
@@ -163,12 +163,12 @@ const DeliverModal = {
           <template v-if="it.category === 'topup'">
             <div class="font-bold text-sm mb-1">💎 {{ it.name }} <span class="text-[10px] font-normal text-gray-400">×{{ it.qty }}</span></div>
             <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">Upload bukti sukses topup (gambar) + isi TRX ID.</p>
-            <input type="file" accept="image/*" @change="onFile(it, $event)" class="w-full text-xs mb-2 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-indigo-100 file:text-primary file:font-bold">
+            <input type="file" accept="image/*" @change="onFile(it, $event)" class="w-full text-xs mb-2 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-indigo-100 dark:file:bg-indigo-500/20 file:text-primary dark:file:text-indigo-300 file:font-bold">
             <input v-model="it.trx" placeholder="TRX ID (contoh: TRX123456)" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:outline-none">
           </template>
           <template v-else>
             <div class="font-bold text-sm mb-1">{{ it.category === 'akun' ? '👤' : '🎟️' }} {{ it.name }} <span class="text-[10px] font-normal text-gray-400">×{{ it.qty }}</span></div>
-            <div v-if="autoFor(it)" class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-700">
+            <div v-if="autoFor(it)" class="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 rounded-xl p-3 text-xs text-emerald-700 dark:text-emerald-300">
               ⚡ {{ it.auto_codes }} kode otomatis tersedia — akan dikirim otomatis, tidak perlu isi manual.
             </div>
             <template v-else>

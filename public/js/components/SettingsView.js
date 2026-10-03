@@ -49,7 +49,7 @@ const SettingsView = {
   <div class="max-w-2xl mx-auto px-4 py-4 space-y-4">
     <h2 class="text-xl font-bold">⚙️ Pengaturan Akun</h2>
 
-    <div class="bg-white dark:bg-gray-900 border rounded-3xl p-6">
+    <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6">
       <h3 class="font-bold text-sm mb-4">Profil</h3>
       <div class="flex items-center gap-4 mb-4">
         <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center text-3xl shrink-0">
@@ -70,8 +70,8 @@ const SettingsView = {
         <div>
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
           <div class="flex items-center gap-2 mt-1">
-            <input :value="user && user.email" disabled class="flex-1 border rounded-xl px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-            <span v-if="user" :class="['text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap', user.email_verified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700']">
+            <input :value="user && user.email" disabled class="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            <span v-if="user" :class="['text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap', user.email_verified ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300']">
               {{ user.email_verified ? '✓ Terverifikasi' : 'Belum verifikasi' }}
             </span>
           </div>
@@ -80,7 +80,7 @@ const SettingsView = {
       </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-900 border rounded-3xl p-6">
+    <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6">
       <h3 class="font-bold text-sm mb-4">🔑 Ganti Password</h3>
       <div class="space-y-3">
         <input v-model="pwCur" type="password" placeholder="Password saat ini" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200">

@@ -1,6 +1,9 @@
 /* Admin: kelola produk + form produk + photo manager */
 const AdminProducts = {
-  data: () => ({ products: [], codesModal: null, codes: [], codesInput: '', codesMsg: '' }),
+  data: () => ({ products: [], codesModal: null, codes: [], codesInput: '', codesMsg: '', sel: [], bulkVal: '' }),
+  computed: {
+    allChecked() { return this.products.length > 0 && this.sel.length === this.products.length; },
+  },
   mounted() { this.load(); },
   methods: {
     rp,
@@ -9,6 +12,21 @@ const AdminProducts = {
     async load() {
       try { this.products = (await api('/api/products?limit=100')).products || []; }
       catch (e) { toast(e.message, false); }
+    },
+    toggleAll(v) { this.sel = v ? this.products.map(p => p.id) : []; },
+    async bulkStock(mode) {
+      const n = Number(this.bulkVal);
+      if (!this.sel.length) return toast('Pilih produk dulu ☑️', false);
+      if (!(n >= 0)) return toast('Isi jumlah stok dulu', false);
+      const label = mode === 'set' ? `Set stok ${this.sel.length} produk jadi ${n}` : `Tambah stok ${this.sel.length} produk +${n}`;
+      if (!confirm(label + '?')) return;
+      try {
+        const d = await api('/api/admin/products/bulk-stock', { method: 'POST',
+          body: JSON.stringify({ ids: this.sel, mode, value: n }) });
+        toast(d.message || 'Stok diperbarui ✅');
+        this.sel = []; this.bulkVal = '';
+        this.load(); loadHome();
+      } catch (e) { toast(e.message, false); }
     },
     async restock(id) {
       try {
@@ -51,15 +69,25 @@ const AdminProducts = {
   template: `
   <div>
     <button @click="openForm(null)" class="mb-3 bg-primary text-white text-sm font-bold rounded-xl px-5 py-2.5">➕ Tambah Produk</button>
+    <div v-if="sel.length" class="mb-3 flex flex-wrap items-center gap-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/25 rounded-2xl px-4 py-2.5 text-sm">
+      <b class="text-primary dark:text-indigo-300">{{ sel.length }} dipilih</b>
+      <input v-model="bulkVal" type="number" min="0" placeholder="Jumlah stok"
+             class="w-32 border rounded-xl px-3 py-1.5 text-sm outline-none focus:border-primary">
+      <button @click="bulkStock('set')" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Set stok</button>
+      <button @click="bulkStock('add')" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-700">+ Tambah</button>
+      <button @click="sel = []; bulkVal = ''" class="text-xs text-gray-500 dark:text-gray-400 font-semibold hover:underline ml-auto">Batal</button>
+    </div>
     <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-x-auto shadow-sm">
       <table class="w-full text-sm">
         <thead><tr class="text-left text-gray-400 border-b text-xs uppercase">
+          <th class="p-3 w-10"><input type="checkbox" :checked="allChecked" @change="toggleAll($event.target.checked)" class="w-4 h-4 accent-indigo-600 cursor-pointer"></th>
           <th class="p-3">Produk</th><th class="p-3">Foto</th><th class="p-3">Kategori</th><th class="p-3">Harga</th><th class="p-3">Stok</th><th class="p-3">Aksi</th>
         </tr></thead>
         <tbody>
-          <tr v-for="p in products" :key="p.id" :class="['border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800', p.stock < 5 ? 'bg-red-50/50' : '']">
+          <tr v-for="p in products" :key="p.id" :class="['border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800', p.stock < 5 ? 'bg-red-50/50 dark:bg-red-500/10' : '']">
+            <td class="p-3"><input type="checkbox" :value="p.id" v-model="sel" class="w-4 h-4 accent-indigo-600 cursor-pointer"></td>
             <td class="p-3 font-medium">{{ p.name }}<div v-if="p.stock < 5" class="text-[10px] text-red-500 font-bold mt-0.5">⚠️ Stok rendah!</div></td>
-            <td class="p-3"><span class="text-xs bg-indigo-50 text-primary px-2 py-1 rounded-full font-bold">{{ (p.images || []).length }} foto</span></td>
+            <td class="p-3"><span class="text-xs bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300 px-2 py-1 rounded-full font-bold">{{ (p.images || []).length }} foto</span></td>
             <td class="p-3"><span class="text-[10px] font-bold px-2 py-1 rounded-full text-white uppercase" :style="{ background: catBg(p.category) }">{{ catLbl(p.category) }}</span></td>
             <td class="p-3 font-bold text-accent">{{ rp(p.price) }}</td>
             <td class="p-3">

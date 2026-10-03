@@ -780,6 +780,21 @@ app.put('/api/products/:id', auth, requireAdmin, (req, res) => {
   res.json({ product: db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id) });
 });
 
+// ---- Bulk edit stok produk (admin): set atau tambah stok banyak produk sekaligus ----
+app.post('/api/admin/products/bulk-stock', auth, requireAdmin, (req, res) => {
+  const { ids, mode, value } = req.body || {};
+  if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'Pilih produk dulu' });
+  const n = Number(value);
+  if (!(n >= 0) || !['set', 'add'].includes(mode)) return res.status(400).json({ error: 'Nilai tidak valid' });
+  const clean = [...new Set(ids.map(Number).filter(x => x > 0))].slice(0, 500);
+  if (!clean.length) return res.status(400).json({ error: 'ID produk tidak valid' });
+  const upd = mode === 'set'
+    ? db.prepare('UPDATE products SET stock = ? WHERE id = ?')
+    : db.prepare('UPDATE products SET stock = MAX(0, stock + ?) WHERE id = ?');
+  db.transaction((list) => { for (const id of list) { upd.run(n, id); syncCodeStock(id); } })(clean);
+  res.json({ message: `Stok ${clean.length} produk diperbarui ✅`, updated: clean.length });
+});
+
 // ---- Foto produk (admin): POST upload, DELETE hapus, PUT reorder ----
 app.post('/api/products/:id/images', auth, requireAdmin, async (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);

@@ -38,7 +38,7 @@ const AdminTickets = {
       toast(s === 'closed' ? 'Tiket ditutup' : 'Tiket dibuka kembali');
     },
     stCls(s) {
-      return s === 'open' ? 'bg-red-100 text-red-700' : s === 'answered' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500';
+      return s === 'open' ? 'bg-red-500/15 text-red-600 dark:text-red-300' : s === 'answered' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-300' : 'bg-gray-500/15 text-gray-500 dark:text-gray-400';
     },
     stLbl(s) { return s === 'open' ? 'Butuh Balasan' : s === 'answered' ? 'Terjawab' : 'Ditutup'; },
   },

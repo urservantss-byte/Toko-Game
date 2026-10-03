@@ -77,8 +77,8 @@ const AuthView = {
   },
   template: `
   <div class="min-h-[75vh] flex items-center justify-center px-4 py-12 relative">
-    <div class="absolute -top-20 -right-20 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-    <div class="absolute -bottom-20 -left-20 w-80 h-80 bg-violet-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+    <div class="absolute -top-20 -right-20 w-80 h-80 bg-indigo-100 dark:opacity-20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+    <div class="absolute -bottom-20 -left-20 w-80 h-80 bg-violet-100 dark:opacity-20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 
     <div class="w-full max-w-md relative">
       <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8" style="box-shadow:0 12px 40px -12px rgba(79,70,229,.12)">
@@ -95,7 +95,7 @@ const AuthView = {
         <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ page==='register' ? 'Buat akun baru' : page==='forgot' ? 'Lupa password?' : page==='reset' ? 'Buat password baru' : 'Masuk ke akunmu' }}</h2>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6">{{ page==='register' ? 'Daftar gratis, cuma butuh semenit.' : page==='forgot' ? 'Kami kirim link reset ke emailmu.' : page==='reset' ? 'Pilih password yang kuat.' : 'Senang melihatmu kembali.' }}</p>
 
-        <div v-if="notice" class="bg-amber-50 border border-amber-200/70 text-amber-800 text-sm rounded-xl px-4 py-3 mb-5">
+        <div v-if="notice" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-500/25 text-amber-800 dark:text-amber-200 text-sm rounded-xl px-4 py-3 mb-5">
           <span v-html="notice"></span>
           <div v-if="devLink" class="mt-2 break-all">
             <span class="text-xs text-gray-500 dark:text-gray-400">Mode demo — link:</span><br>

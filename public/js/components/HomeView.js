@@ -69,7 +69,7 @@ const HomeView = {
       <div class="flex items-center gap-2 mb-2">
         <span class="text-xl">⚡</span>
         <h2 class="font-extrabold text-base">Flash Sale</h2>
-        <span class="text-xs bg-red-100 text-red-600 font-bold px-2 py-0.5 rounded-full">Diskon!</span>
+        <span class="text-xs bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-300 font-bold px-2 py-0.5 rounded-full">Diskon!</span>
       </div>
       <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
         <div v-for="p in flash" :key="p.id" @click="openProduct(p.id)"

@@ -70,7 +70,7 @@ const AdminBanners = {
           <button @click="move(b, -1)" class="text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-2.5 py-1.5 rounded-lg" title="Naik">↑</button>
           <button @click="move(b, 1)" class="text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-2.5 py-1.5 rounded-lg" title="Turun">↓</button>
           <button @click="toggle(b)" class="text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-2.5 py-1.5 rounded-lg font-semibold">{{ b.active ? 'Off' : 'On' }}</button>
-          <button @click="del(b)" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-2.5 py-1.5 rounded-lg font-semibold">Hapus</button>
+          <button @click="del(b)" class="text-xs bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 px-2.5 py-1.5 rounded-lg font-semibold">Hapus</button>
         </div>
       </div>
       <div v-if="!list.length" class="bg-white dark:bg-gray-900 border rounded-2xl p-8 text-center text-gray-400 text-sm">Belum ada banner</div>

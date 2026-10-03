@@ -154,11 +154,11 @@ const AdminDash = {
       const s = this.stats;
       if (!s) return [];
       return [
-        { ic: '💰', lb: 'Total Pendapatan', v: rp(s.revenue_total), cls: 'text-emerald-700' },
-        { ic: '🧾', lb: 'Pesanan Hari Ini', v: s.orders_today + ' (' + rp(s.revenue_today) + ')', cls: 'text-blue-700' },
-        { ic: '⏳', lb: 'Perlu Diproses', v: s.pending_orders + ' pending', cls: 'text-amber-700' },
-        { ic: '📦', lb: 'Total Produk', v: String(s.total_products), cls: 'text-violet-700', warn: s.low_stock ? ` (${s.low_stock} !)` : '' },
-        { ic: '👥', lb: 'Total Pembeli', v: String(s.total_users), cls: 'text-pink-700' },
+        { ic: '💰', lb: 'Total Pendapatan', v: rp(s.revenue_total), cls: 'text-emerald-700 dark:text-emerald-400' },
+        { ic: '🧾', lb: 'Pesanan Hari Ini', v: s.orders_today + ' (' + rp(s.revenue_today) + ')', cls: 'text-blue-700 dark:text-blue-400' },
+        { ic: '⏳', lb: 'Perlu Diproses', v: s.pending_orders + ' pending', cls: 'text-amber-700 dark:text-amber-400' },
+        { ic: '📦', lb: 'Total Produk', v: String(s.total_products), cls: 'text-violet-700 dark:text-violet-400', warn: s.low_stock ? ` (${s.low_stock} !)` : '' },
+        { ic: '👥', lb: 'Total Pembeli', v: String(s.total_users), cls: 'text-pink-700 dark:text-pink-400' },
       ];
     },
   },
@@ -179,7 +179,7 @@ const AdminDash = {
           <div class="flex items-end gap-1 md:gap-2 h-28 md:h-32">
             <div v-for="x in stats.sales_7d" :key="x.d" class="flex-1 flex flex-col items-center gap-1">
               <div class="text-[10px] font-bold text-gray-600 dark:text-gray-400">{{ x.t > 0 ? shortRp(x.t) : '' }}</div>
-              <div class="w-full bg-indigo-100 rounded-t-lg relative" :style="{ height: barH(x.t, maxSale) + 'px' }">
+              <div class="w-full bg-indigo-100 dark:bg-gray-800 rounded-t-lg relative" :style="{ height: barH(x.t, maxSale) + 'px' }">
                 <div class="absolute bottom-0 inset-x-0 bg-primary rounded-t-lg" style="height:100%"></div>
               </div>
               <div class="text-[10px] text-gray-400">{{ dayName(x.d) }}</div>
@@ -245,7 +245,7 @@ const AdminDash = {
             <div class="grid grid-cols-2 gap-2">
               <input v-model="pmForm.label" :disabled="!!pmEdit" placeholder="Label, mis: 🏦 Transfer BRI" class="border rounded-xl px-3 py-2 text-xs outline-none focus:border-primary col-span-2">
               <input v-model="pmForm.details" placeholder="Detail rekening, mis: BRI 1234 0100 5678 901 a.n. TokoGame" class="border rounded-xl px-3 py-2 text-xs outline-none focus:border-primary col-span-2">
-              <select v-model="pmForm.kind" class="border rounded-xl px-3 py-2 text-xs outline-none focus:border-primary bg-white dark:bg-gray-900">
+              <select v-model="pmForm.kind" class="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs outline-none focus:border-primary bg-white dark:bg-gray-900">
                 <option value="transfer">Transfer (upload bukti)</option>
                 <option value="qris">QRIS (scan QR)</option>
               </select>
