@@ -41,29 +41,31 @@ const AdminReports = {
   },
   template: `
   <div>
-    <div class="flex flex-wrap items-center gap-2 mb-4">
+    <div class="grid grid-cols-3 gap-2 mb-3">
       <button @click="preset(7)" class="text-xs font-bold px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700">7 hari</button>
       <button @click="preset(30)" class="text-xs font-bold px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700">30 hari</button>
       <button @click="preset(90)" class="text-xs font-bold px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700">90 hari</button>
-      <input v-model="from" type="date" class="text-xs border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 bg-white dark:bg-gray-900">
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <input v-model="from" type="date" class="flex-1 min-w-[130px] text-xs border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 bg-white dark:bg-gray-900">
       <span class="text-xs text-gray-400">s/d</span>
-      <input v-model="to" type="date" class="text-xs border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 bg-white dark:bg-gray-900">
+      <input v-model="to" type="date" class="flex-1 min-w-[130px] text-xs border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 bg-white dark:bg-gray-900">
       <button @click="load" class="text-xs font-bold px-4 py-2 rounded-xl bg-primary text-white hover:bg-indigo-700">Tampilkan</button>
       <button @click="downloadCsv" class="text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">📥 Export CSV</button>
     </div>
     <div v-if="loading" class="text-center text-gray-400 py-10 text-sm">Memuat laporan...</div>
     <div v-else-if="r">
-      <div class="grid grid-cols-3 gap-3 mb-4">
-        <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
-          <div class="text-2xl font-extrabold text-primary">{{ r.summary.orders }}</div>
+      <div class="grid grid-cols-3 gap-2 md:gap-3 mb-4">
+        <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 md:p-4 text-center min-w-0">
+          <div class="text-lg md:text-2xl font-extrabold text-primary truncate">{{ r.summary.orders }}</div>
           <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Pesanan</div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
-          <div class="text-2xl font-extrabold text-emerald-600">{{ rp(r.summary.revenue) }}</div>
+        <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 md:p-4 text-center min-w-0">
+          <div class="text-base md:text-2xl font-extrabold text-emerald-600 break-words leading-tight">{{ rp(r.summary.revenue) }}</div>
           <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Total Omzet</div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
-          <div class="text-2xl font-extrabold text-accent">{{ rp(Math.round(r.summary.avg_order)) }}</div>
+        <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 md:p-4 text-center min-w-0">
+          <div class="text-base md:text-2xl font-extrabold text-accent break-words leading-tight">{{ rp(Math.round(r.summary.avg_order)) }}</div>
           <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Rata-rata/Pesanan</div>
         </div>
       </div>

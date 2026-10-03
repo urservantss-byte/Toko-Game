@@ -308,17 +308,17 @@ const ProductFormModal = {
         <!-- Varian produk (hanya saat edit) -->
         <div v-if="pid" class="mt-4">
           <label class="block font-semibold mb-2">Varian Produk <span class="text-xs font-normal text-gray-400">(mis: 50rb / 100rb / 200rb)</span></label>
-          <div v-for="v in variants" :key="v.id" class="flex gap-2 mb-2 items-center">
-            <input v-model="v.label" @change="saveVariant(v)" placeholder="Label" class="flex-1 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
-            <input v-model.number="v.price" @change="saveVariant(v)" type="number" placeholder="Harga" class="w-28 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
-            <input v-model.number="v.stock" @change="saveVariant(v)" type="number" placeholder="Stok" class="w-20 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
-            <button @click="delVariant(v.id)" class="text-red-500 font-bold px-2">✕</button>
+          <div v-for="v in variants" :key="v.id" class="grid grid-cols-12 gap-2 mb-2 items-center">
+            <input v-model="v.label" @change="saveVariant(v)" placeholder="Label" class="col-span-5 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none min-w-0">
+            <input v-model.number="v.price" @change="saveVariant(v)" type="number" placeholder="Harga" class="col-span-3 border rounded-xl px-2 py-2 text-sm focus:border-primary focus:outline-none min-w-0">
+            <input v-model.number="v.stock" @change="saveVariant(v)" type="number" placeholder="Stok" class="col-span-3 border rounded-xl px-2 py-2 text-sm focus:border-primary focus:outline-none min-w-0">
+            <button @click="delVariant(v.id)" class="col-span-1 text-red-500 font-bold text-lg">✕</button>
           </div>
-          <div class="flex gap-2 items-center">
-            <input v-model="nv.label" placeholder="Label varian baru" class="flex-1 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
-            <input v-model.number="nv.price" type="number" placeholder="Harga" class="w-28 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
-            <input v-model.number="nv.stock" type="number" placeholder="Stok" class="w-20 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none">
-            <button @click="addVariant" class="bg-primary text-white text-sm font-bold rounded-xl px-4 py-2">+ Tambah</button>
+          <div class="grid grid-cols-12 gap-2 items-center">
+            <input v-model="nv.label" placeholder="Label varian baru" class="col-span-5 border rounded-xl px-3 py-2 text-sm focus:border-primary focus:outline-none min-w-0">
+            <input v-model.number="nv.price" type="number" placeholder="Harga" class="col-span-3 border rounded-xl px-2 py-2 text-sm focus:border-primary focus:outline-none min-w-0">
+            <input v-model.number="nv.stock" type="number" placeholder="Stok" class="col-span-3 border rounded-xl px-2 py-2 text-sm focus:border-primary focus:outline-none min-w-0">
+            <button @click="addVariant" class="col-span-1 bg-primary text-white text-sm font-bold rounded-xl py-2" title="Tambah varian">+</button>
           </div>
           <p class="text-[11px] text-gray-400 mt-1.5">Kalau ada varian, pembeli wajib pilih varian & harga/stok ngikutin varian yang dipilih.</p>
         </div>
