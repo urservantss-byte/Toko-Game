@@ -71,7 +71,7 @@ const HomeView = {
         <h2 class="font-extrabold text-base">Flash Sale</h2>
         <span class="text-xs bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-300 font-bold px-2 py-0.5 rounded-full">Diskon!</span>
       </div>
-      <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+      <div class="flex gap-3 overflow-x-auto styled-scroll pb-2 -mx-4 px-4">
         <div v-for="p in flash" :key="p.id" @click="openProduct(p.id)"
              class="flex-shrink-0 w-32 sm:w-36 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md flex flex-col">
           <blur-img :src="imgOf(p)" cls="aspect-square" :alt="p.name"></blur-img>
@@ -84,7 +84,7 @@ const HomeView = {
     </section>
 
     <!-- Filter chips -->
-    <div class="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+    <div class="flex gap-2 overflow-x-auto styled-scroll pb-1 -mx-4 px-4">
       <button @click="setCat('all')" :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', !f.cat || f.cat==='all' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700']">Semua</button>
       <button v-for="c in store.cats" :key="c.id" @click="setCat(c.id)"
               :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', f.cat===c.id ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700']">{{ c.icon }} {{ c.label }}</button>

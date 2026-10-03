@@ -23,6 +23,13 @@ html,body{overflow-x:clip}
 .dark input::placeholder,.dark textarea::placeholder{color:#6b7280}
 .dark select option{background-color:#111827;color:#e5e7eb}
 .dark input[type=file]::file-selector-button{background-color:#374151;color:#e5e7eb;border:1px solid #4b5563;border-radius:.5rem;padding:.25rem .75rem;font-size:.75rem;font-weight:600}
+/* Scrollbar horizontal yg selaras tema (chip filter, flash sale) */
+.styled-scroll{scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}
+.dark .styled-scroll{scrollbar-width:thin;scrollbar-color:#4b5563 transparent}
+.styled-scroll::-webkit-scrollbar{height:6px;width:6px}
+.styled-scroll::-webkit-scrollbar-track{background:transparent}
+.styled-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+.dark .styled-scroll::-webkit-scrollbar-thumb{background:#4b5563;border-radius:3px}
 /* Blur-up lazy image: shimmer placeholder -> gambar tajam saat loaded */
 .blurwrap{position:relative;overflow:hidden;background:#edf0f5}
 .dark .blurwrap{background:#1f2937}
