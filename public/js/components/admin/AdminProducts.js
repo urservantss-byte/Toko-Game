@@ -31,6 +31,7 @@ const AdminProducts = {
     async restock(id) {
       try {
         const { product: p } = await api('/api/products/' + id);
+        if ((p.variants || []).length) return toast('Produk ini pakai varian — ubah stok lewat tiap varian', false);
         await api('/api/products/' + id, { method: 'PUT', body: JSON.stringify({
           name: p.name, description: p.description, price: p.price, stock: (p.stock || 0) + 10, category: p.category, tags: p.tags }) });
         toast('Stok ditambah +10 ✅');
@@ -229,10 +230,12 @@ const ProductFormModal = {
     async save() {
       const b = {
         name: this.form.name.trim(), description: this.form.description.trim(),
-        price: Number(this.form.price) || 0, stock: Number(this.form.stock) || 0,
+        price: Number(this.form.price) || 0,
         category: this.form.category, tags: this.form.tags.trim(), process_time: this.form.process_time.trim(),
         discount: Math.max(0, Math.min(100, Number(this.form.discount) || 0))
       };
+      // Stok manual hanya untuk produk tanpa varian
+      if (!this.variants.length) b.stock = Number(this.form.stock) || 0;
       if (!b.name || b.price < 0) return toast('Nama & harga wajib diisi', false);
       this.saving = true;
       try {
@@ -264,8 +267,9 @@ const ProductFormModal = {
         <textarea v-model="form.description" placeholder="Deskripsi" rows="3" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none"></textarea>
         <div class="grid grid-cols-2 gap-3">
           <input v-model="form.price" type="number" placeholder="Harga (Rp)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
-          <input v-model="form.stock" type="number" placeholder="Stok" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
+          <input v-model="form.stock" type="number" placeholder="Stok" :disabled="variants.length > 0" :title="variants.length ? 'Stok mengikuti total varian' : ''" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400">
         </div>
+        <p v-if="variants.length" class="text-[11px] text-gray-400">Stok produk = total stok varian ({{ variants.reduce((a, v) => a + (Number(v.stock) || 0), 0) }}). Ubah stok lewat tiap varian di bawah.</p>
         <div class="grid grid-cols-2 gap-3">
           <input v-model="form.discount" type="number" min="0" max="100" placeholder="Diskon % (flash sale)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
           <input v-model="form.process_time" placeholder="Estimasi proses (mis: 5 menit)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">

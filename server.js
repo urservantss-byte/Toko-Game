@@ -463,6 +463,8 @@ function attachVariants(p) {
   if (!p) return p;
   try {
     p.variants = db.prepare('SELECT id, label, price, stock, sort_order FROM product_variants WHERE product_id = ? ORDER BY sort_order, id').all(p.id);
+    // Stok produk mengikuti total stok varian
+    if (p.variants.length) p.stock = p.variants.reduce((a, v) => a + (Number(v.stock) || 0), 0);
   } catch { p.variants = []; }
   return p;
 }
@@ -793,7 +795,9 @@ app.get('/api/products', (req, res) => {
   else if (sort === 'termahal') order = 'ORDER BY price DESC';
   else if (sort === 'terbaru') order = 'ORDER BY id DESC';
   const limit = Math.min(Math.max(parseInt(req.query.limit) || 60, 1), 200);
-  const rows = db.prepare(`SELECT * FROM products ${where} ${order} LIMIT ?`).all(...params, limit);
+  const rows = db.prepare(`SELECT p.*, COALESCE(vs.total_stock, p.stock) AS stock, COALESCE(vs.cnt, 0) AS variant_count
+    FROM products p LEFT JOIN (SELECT product_id, SUM(stock) total_stock, COUNT(*) cnt FROM product_variants GROUP BY product_id) vs
+    ON vs.product_id = p.id ${where} ${order} LIMIT ?`).all(...params, limit);
   const aggStmt = db.prepare('SELECT COUNT(*) c, AVG(rating) a FROM reviews WHERE product_id = ?');
   const soldRows = db.prepare(`SELECT CAST(json_extract(j.value,'$.product_id') AS INTEGER) pid,
       SUM(CAST(json_extract(j.value,'$.qty') AS INTEGER)) sold
@@ -1551,6 +1555,8 @@ app.post('/api/orders', auth, (req, res) => {
       const p = db.prepare('SELECT * FROM products WHERE id = ?').get(it.product_id);
       if (!p) throw { status: 400, msg: `Produk ${it.product_id} tidak ditemukan` };
       const qty = Math.max(1, parseInt(it.qty) || 1);
+      const hasVar = db.prepare('SELECT COUNT(*) c FROM product_variants WHERE product_id = ?').get(p.id).c > 0;
+      if (hasVar && !it.variant_id) throw { status: 400, msg: `Pilih varian untuk "${p.name}"` };
       let price = p.price, vlabel = '';
       if (it.variant_id) {
         const v = db.prepare('SELECT * FROM product_variants WHERE id = ? AND product_id = ?').get(it.variant_id, p.id);

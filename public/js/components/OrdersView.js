@@ -176,7 +176,7 @@ const OrdersView = {
              class="text-xs font-bold px-3 py-2.5 rounded-xl text-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">📎 Bukti Bayar</a>
           <button v-if="o.status === 'pending'" @click="cancelOrder(o.id)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20">❌ Batalkan</button>
-          <button @click="buyAgain(o)"
+          <button v-if="o.status === 'selesai'" @click="buyAgain(o)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20">🔁 Beli Lagi</button>
           <button @click="complain(o.id)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">💬 Komplain</button>
