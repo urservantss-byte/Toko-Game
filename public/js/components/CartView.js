@@ -67,8 +67,8 @@ const CheckoutView = {
     cart: () => store.cart,
     subtotal: () => cartTotal.value,
     total() { return Math.max(0, this.subtotal - this.voucherDiscount); },
-    method() { const l = this.methods(); return l.find(m => m.id === store.payMethod); },
-    methods() { return this.payList || PAYMETHODS.map(m => ({ ...m, kind: m.id === 'qris' ? 'qris' : 'transfer' })); },
+    method() { const l = this.payOpts; return l.find(m => m.id === store.payMethod); },
+    payOpts() { return this.payList || PAYMETHODS.map(m => ({ ...m, kind: m.id === 'qris' ? 'qris' : 'transfer' })); },
     needProof() { const m = this.method(); return m ? m.kind === 'transfer' : store.payMethod.startsWith('transfer'); },
     isQris() { const m = this.method(); return m ? m.kind === 'qris' : store.payMethod === 'qris'; },
     PAYMETHODS: () => PAYMETHODS,
@@ -155,7 +155,7 @@ const CheckoutView = {
   <div class="max-w-3xl mx-auto px-4 py-4">
     <h2 class="text-xl font-bold mb-4">💳 Checkout</h2>
     <div class="space-y-2 mb-4">
-      <div v-for="m in methods()" :key="m.id" @click="setMethod(m.id)"
+      <div v-for="m in payOpts" :key="m.id" @click="setMethod(m.id)"
            :class="['cursor-pointer border-2 rounded-2xl p-4 bg-white dark:bg-gray-900', store.payMethod === m.id ? 'border-primary bg-indigo-50/50' : 'border-gray-100 dark:border-gray-800']">
         <div class="font-bold text-sm">{{ m.label }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ m.desc }}</div>
@@ -167,7 +167,7 @@ const CheckoutView = {
     </div>
     <div v-else class="bg-white dark:bg-gray-900 border rounded-2xl p-4 mb-4">
       <div class="text-sm font-semibold mb-2">📤 Upload Bukti Pembayaran <span class="text-red-500">*</span></div>
-      <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">Transfer ke: <b>{{ method.desc }}</b> sebesar <b class="text-accent">{{ rp(total) }}</b></div>
+      <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">Transfer ke: <b>{{ method ? method.desc : '' }}</b> sebesar <b class="text-accent">{{ rp(total) }}</b></div>
       <input type="file" ref="proofInput" accept="image/*" class="hidden" @change="onProof">
       <button @click="$refs.proofInput.click()" class="w-full border-2 border-dashed rounded-2xl p-6 text-sm text-gray-500 dark:text-gray-400 hover:border-primary">📁 Klik untuk pilih gambar (maks 5MB)</button>
       <img v-if="proofPreview" :src="proofPreview" class="mt-2 rounded-xl max-h-40">
