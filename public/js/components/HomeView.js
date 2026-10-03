@@ -91,29 +91,29 @@ const HomeView = {
       </div>
     </section>
     <!-- Promo lacak pesanan -->
-    <section class="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl p-4 flex items-center justify-between text-white mb-1">
+    <section class="g-panel p-4 flex items-center justify-between mb-1">
       <div>
-        <div class="font-bold text-sm">📦 Sudah pesan? Lacak di sini!</div>
-        <div class="text-[11px] opacity-90 mt-0.5">Pantau status pesananmu secara real-time</div>
+        <div class="font-bold text-sm dark:text-slate-100">📦 Sudah pesan? Lacak di sini!</div>
+        <div class="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">Pantau status pesananmu secara real-time</div>
       </div>
-      <button @click="go('track')" class="bg-white text-indigo-600 text-xs font-bold rounded-xl px-4 py-2.5 shrink-0">Lacak 🔍</button>
+      <button @click="go('track')" class="btn-buy text-xs px-4 py-2.5 shrink-0">Lacak 🔍</button>
     </section>
     <!-- Flash sale -->
     <section v-if="flash.length">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="text-xl">⚡</span>
-        <h2 class="font-extrabold text-base">Flash Sale</h2>
-        <span class="text-xs bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-300 font-bold px-2 py-0.5 rounded-full">Diskon!</span>
-        <span v-if="countdown" class="ml-auto text-xs font-mono font-bold bg-gray-900 dark:bg-gray-700 text-white px-2.5 py-1 rounded-lg">⏰ {{ countdown }}</span>
+      <div class="sec-head">
+        <span class="bar"></span>
+        <h2>⚡ Flash Sale</h2>
+        <span class="text-[10px] bg-red-500/15 text-red-400 font-bold px-2 py-0.5 rounded-full">Diskon!</span>
+        <span v-if="countdown" class="ml-auto text-xs font-mono font-bold bg-surface border border-line text-slate-200 px-2.5 py-1 rounded-lg">⏰ {{ countdown }}</span>
       </div>
       <div class="flex gap-3 overflow-x-auto styled-scroll pb-2 -mx-4 px-4">
         <div v-for="p in flash" :key="p.id" @click="openProduct(p.id)"
-             class="flex-shrink-0 w-32 sm:w-36 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md flex flex-col">
+             class="g-card flex-shrink-0 w-32 sm:w-36 overflow-hidden cursor-pointer flex flex-col">
           <blur-img :src="imgOf(p)" cls="aspect-square" :alt="p.name"></blur-img>
           <div class="p-2 flex flex-col flex-1">
-            <div class="text-xs font-medium clamp2" style="min-height:2.4em">{{ p.name }}</div>
-            <div class="mt-1"><span class="text-accent font-extrabold text-sm">{{ rp(finalPrice(p)) }}</span>
-              <span v-if="p.discount > 0" class="text-[10px] text-gray-400 line-through ml-1">{{ rp(p.price) }}</span></div>
+            <div class="text-xs font-medium clamp2 dark:text-slate-200" style="min-height:2.4em">{{ p.name }}</div>
+            <div class="mt-1"><span class="price text-sm">{{ rp(finalPrice(p)) }}</span>
+              <span v-if="p.discount > 0" class="text-[10px] text-slate-500 line-through ml-1">{{ rp(p.price) }}</span></div>
           </div>
         </div>
       </div>
@@ -121,11 +121,11 @@ const HomeView = {
 
     <!-- Filter chips -->
     <div class="flex gap-2 overflow-x-auto styled-scroll pb-1 -mx-4 px-4">
-      <button @click="setCat('all')" :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', !f.cat || f.cat==='all' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700']">Semua</button>
+      <button @click="setCat('all')" :class="['chip text-xs px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap', !f.cat || f.cat==='all' ? 'on' : '']">Semua</button>
       <button v-for="c in store.cats" :key="c.id" @click="setCat(c.id)"
-              :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', f.cat===c.id ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700']">{{ c.icon }} {{ c.label }}</button>
+              :class="['chip text-xs px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap', f.cat===c.id ? 'on' : '']">{{ c.icon }} {{ c.label }}</button>
       <button v-for="t in tags" :key="t" @click="setTag(t)"
-              :class="['text-xs px-3 py-1.5 rounded-full whitespace-nowrap', f.tag===t ? 'bg-indigo-100 text-primary border border-primary' : 'bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300']">#{{ t }}</button>
+              :class="['text-xs px-3 py-1.5 rounded-full whitespace-nowrap border', f.tag===t ? 'bg-primary text-white border-primary' : 'chip']">#{{ t }}</button>
     </div>
 
     <!-- Sort + count -->
@@ -142,27 +142,27 @@ const HomeView = {
     <!-- Grid produk -->
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
       <div v-for="p in list" :key="p.id" @click="openProduct(p.id)"
-           class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
+           class="g-card overflow-hidden cursor-pointer flex flex-col">
         <div class="relative aspect-square">
           <blur-img :src="imgOf(p)" cls="w-full h-full" :alt="p.name"></blur-img>
           <span class="absolute top-2 left-2 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: catColor(p.category) }">{{ catLabel(p.category) }}</span>
-          <button @click.stop="toggleWish(p.id)" :class="['absolute top-2 right-2 w-7 h-7 rounded-full shadow text-sm flex items-center justify-center', isWished(p.id) ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-800/90 text-gray-400']" :title="isWished(p.id) ? 'Hapus dari wishlist' : 'Tambah ke wishlist'">{{ isWished(p.id) ? '❤️' : '🤍' }}</button>
+          <button @click.stop="toggleWish(p.id)" :class="['absolute top-2 right-2 w-7 h-7 rounded-full shadow text-sm flex items-center justify-center', isWished(p.id) ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-surface2/90 text-gray-400']" :title="isWished(p.id) ? 'Hapus dari wishlist' : 'Tambah ke wishlist'">{{ isWished(p.id) ? '❤️' : '🤍' }}</button>
           <span v-if="(p.images||[]).length > 1" class="absolute bottom-2 right-2 text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full">📷 {{ p.images.length }}</span>
         </div>
         <div class="p-2.5 flex flex-col flex-1">
-          <div class="text-[13px] font-medium leading-snug clamp2">{{ p.name }}</div>
-          <div class="text-[10px] text-gray-400 dark:text-gray-300 mt-0.5">{{ catLabel(p.category) || '' }}</div>
+          <div class="text-[13px] font-medium leading-snug clamp2 dark:text-slate-100">{{ p.name }}</div>
+          <div class="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">{{ catLabel(p.category) || '' }}</div>
           <div class="flex items-center justify-between mt-auto pt-1.5">
-            <div><span class="text-accent font-extrabold text-sm">{{ rp(finalPrice(p)) }}</span>
-              <span v-if="p.discount > 0" class="text-[10px] text-gray-400 line-through ml-1">{{ rp(p.price) }}</span></div>
-            <span v-if="p.discount > 0" class="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded">-{{ Math.round(p.discount) }}%</span>
+            <div><span class="price text-sm">{{ rp(finalPrice(p)) }}</span>
+              <span v-if="p.discount > 0" class="text-[10px] text-slate-500 line-through ml-1">{{ rp(p.price) }}</span></div>
+            <span v-if="p.discount > 0" class="text-[10px] font-bold bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded">-{{ Math.round(p.discount) }}%</span>
           </div>
           <div class="flex items-center justify-between mt-0.5">
-            <div class="text-[10px] text-gray-400 dark:text-gray-300">{{ p.sold_count ? p.sold_count + ' Terjual' : 'Baru' }}</div>
-            <div class="text-[10px] text-gray-500 dark:text-gray-300">⭐ <b class="text-gray-700 dark:text-gray-200">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
+            <div class="text-[10px] text-gray-400 dark:text-slate-500">{{ p.sold_count ? p.sold_count + ' Terjual' : 'Baru' }}</div>
+            <div class="text-[10px] text-gray-500 dark:text-slate-400">⭐ <b class="text-gray-700 dark:text-slate-200">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
           </div>
           <button @click.stop="buyNow(p.id)" :disabled="p.stock < 1"
-                  class="mt-2 w-full text-[11px] font-bold bg-primary text-white rounded-xl py-1.5 hover:bg-indigo-700 disabled:opacity-40">🛒 Beli</button>
+                  class="btn-buy mt-2 w-full text-[11px] py-1.5 disabled:opacity-40">🛒 Beli</button>
         </div>
       </div>
       <div v-if="!list.length" class="col-span-full text-center py-14">
@@ -174,18 +174,18 @@ const HomeView = {
     </div>
     <!-- Testimoni pembeli -->
     <section v-if="testimonials.length" class="mt-8">
-      <div class="flex items-center gap-2 mb-3">
-        <span class="text-xl">⭐</span>
-        <h2 class="font-extrabold text-base">Kata Mereka</h2>
-        <span class="text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold px-2 py-0.5 rounded-full">Testimoni asli</span>
+      <div class="sec-head">
+        <span class="bar"></span>
+        <h2>⭐ Kata Mereka</h2>
+        <span class="text-[10px] bg-amber-500/15 text-amber-400 font-bold px-2 py-0.5 rounded-full">Testimoni asli</span>
       </div>
       <div class="flex gap-3 overflow-x-auto styled-scroll pb-2 -mx-4 px-4">
-        <div v-for="(t, i) in testimonials" :key="i" class="flex-shrink-0 w-64 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl p-4">
-          <div class="text-amber-400 text-sm mb-1.5">{{ '★'.repeat(t.rating) }}<span class="text-gray-300 dark:text-gray-600">{{ '★'.repeat(5 - t.rating) }}</span></div>
-          <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed clamp2" style="min-height:2.6em">"{{ t.comment }}"</p>
-          <div class="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-gray-800">
-            <div class="text-xs font-bold">{{ t.user_name }}</div>
-            <div class="text-[10px] text-gray-400">beli {{ t.product_name }}</div>
+        <div v-for="(t, i) in testimonials" :key="i" class="g-card flex-shrink-0 w-64 p-4">
+          <div class="text-amber-400 text-sm mb-1.5">{{ '★'.repeat(t.rating) }}<span class="text-slate-600">{{ '★'.repeat(5 - t.rating) }}</span></div>
+          <p class="text-xs text-gray-600 dark:text-slate-300 leading-relaxed clamp2" style="min-height:2.6em">"{{ t.comment }}"</p>
+          <div class="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-line">
+            <div class="text-xs font-bold dark:text-slate-100">{{ t.user_name }}</div>
+            <div class="text-[10px] text-gray-400 dark:text-slate-500">beli {{ t.product_name }}</div>
           </div>
         </div>
       </div>

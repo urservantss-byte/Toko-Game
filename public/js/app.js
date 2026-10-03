@@ -41,8 +41,8 @@ const app = Vue.createApp({
       <div class="border-t dark:border-gray-800 pt-6">🎮 {{ store.siteName }} — Akun, Voucher & Topup Digital · Pembayaran aman · Proses kilat</div>
       <!-- Strip metode pembayaran + badge keamanan -->
       <div class="flex flex-wrap items-center justify-center gap-1.5 mt-4">
-        <span v-for="m in payOpts" :key="m.id" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{{ m.label }}</span>
-        <span class="px-2.5 py-1 rounded-lg bg-green-50 dark:bg-green-900/20 text-[10px] font-bold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">🔒 100% Aman</span>
+        <span v-for="m in payOpts" :key="m.id" class="chip px-2.5 py-1 rounded-lg text-[10px] font-bold">{{ m.label }}</span>
+        <span class="px-2.5 py-1 rounded-lg bg-green-500/10 text-[10px] font-bold text-green-600 dark:text-green-400 border border-green-500/20">🔒 100% Aman</span>
       </div>
       <div class="mt-3 flex items-center justify-center gap-4">
         <a @click="goTrack" class="cursor-pointer text-primary font-semibold hover:underline">🔍 Lacak Pesanan</a>
