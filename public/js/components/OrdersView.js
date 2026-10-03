@@ -60,8 +60,7 @@ const OrdersView = {
     },
     complain(id) { store.ticketOrderId = id; go('tickets'); },
     async buyAgain(o) {
-      let items = [];
-      try { items = JSON.parse(o.items_json || '[]'); } catch {}
+      const items = Array.isArray(o.items) ? o.items : [];
       if (!items.length) return toast('Tidak ada item di pesanan ini', false);
       let added = 0;
       for (const it of items) {
