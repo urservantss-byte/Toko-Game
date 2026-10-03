@@ -32,6 +32,7 @@ const AdminProducts = {
       try {
         const { product: p } = await api('/api/products/' + id);
         if ((p.variants || []).length) return toast('Produk ini pakai varian — ubah stok lewat tiap varian', false);
+        if (p.category === 'voucher') return toast('Stok voucher mengikuti jumlah kode — kelola lewat 🎫 Kode', false);
         await api('/api/products/' + id, { method: 'PUT', body: JSON.stringify({
           name: p.name, description: p.description, price: p.price, stock: (p.stock || 0) + 10, category: p.category, tags: p.tags }) });
         toast('Stok ditambah +10 ✅');
@@ -97,7 +98,7 @@ const AdminProducts = {
             </td>
             <td class="p-3 whitespace-nowrap">
               <button @click="openForm(p.id)" class="text-primary font-semibold hover:underline mr-3">Edit</button>
-              <button v-if="p.category !== 'topup'" @click="openCodes(p)" class="text-amber-600 font-semibold hover:underline mr-3">🎫 Kode</button>
+              <button v-if="p.category === 'voucher'" @click="openCodes(p)" class="text-amber-600 font-semibold hover:underline mr-3">🎫 Kode</button>
               <button @click="del(p.id)" class="text-red-500 font-semibold hover:underline">Hapus</button>
             </td>
           </tr>
@@ -234,8 +235,8 @@ const ProductFormModal = {
         category: this.form.category, tags: this.form.tags.trim(), process_time: this.form.process_time.trim(),
         discount: Math.max(0, Math.min(100, Number(this.form.discount) || 0))
       };
-      // Stok manual hanya untuk produk tanpa varian
-      if (!this.variants.length) b.stock = Number(this.form.stock) || 0;
+      // Stok manual hanya untuk produk tanpa varian dan bukan voucher (voucher ngikutin jumlah kode)
+      if (!this.variants.length && this.form.category !== 'voucher') b.stock = Number(this.form.stock) || 0;
       if (!b.name || b.price < 0) return toast('Nama & harga wajib diisi', false);
       this.saving = true;
       try {
@@ -267,9 +268,10 @@ const ProductFormModal = {
         <textarea v-model="form.description" placeholder="Deskripsi" rows="3" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none"></textarea>
         <div class="grid grid-cols-2 gap-3">
           <input v-model="form.price" type="number" placeholder="Harga (Rp)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
-          <input v-model="form.stock" type="number" placeholder="Stok" :disabled="variants.length > 0" :title="variants.length ? 'Stok mengikuti total varian' : ''" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400">
+          <input v-model="form.stock" type="number" placeholder="Stok" :disabled="variants.length > 0 || form.category === 'voucher'" :title="variants.length ? 'Stok mengikuti total varian' : (form.category === 'voucher' ? 'Stok mengikuti jumlah kode' : '')" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400">
         </div>
         <p v-if="variants.length" class="text-[11px] text-gray-400">Stok produk = total stok varian ({{ variants.reduce((a, v) => a + (Number(v.stock) || 0), 0) }}). Ubah stok lewat tiap varian di bawah.</p>
+        <p v-else-if="form.category === 'voucher'" class="text-[11px] text-gray-400">Stok otomatis mengikuti jumlah kode voucher yang tersedia. Kelola lewat tombol 🎫 Kode.</p>
         <div class="grid grid-cols-2 gap-3">
           <input v-model="form.discount" type="number" min="0" max="100" placeholder="Diskon % (flash sale)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
           <input v-model="form.process_time" placeholder="Estimasi proses (mis: 5 menit)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
