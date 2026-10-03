@@ -1,15 +1,15 @@
 /* Menu utama: katalog produk + flash sale + filter */
 const HomeView = {
   components: { BlurImg, Stars },
-  data: () => ({ banners: [], bannerIdx: 0, bannerTimer: null, flashEnds: '', now: Date.now(), cdTimer: null, testimonials: [] }),
+  data: () => ({ banners: [], bannersLoading: true, bannerIdx: 0, bannerTimer: null, flashEnds: '', now: Date.now(), cdTimer: null, testimonials: [], testimonialsLoading: true }),
   mounted() {
     fetch('/api/banners').then(r => r.json()).then(d => {
       this.banners = d.banners || [];
       if (this.banners.length > 1) {
         this.bannerTimer = setInterval(() => { this.bannerIdx = (this.bannerIdx + 1) % this.banners.length; }, 5000);
       }
-    }).catch(() => {});
-    fetch('/api/reviews/recent').then(r => r.json()).then(d => { this.testimonials = d.reviews || []; }).catch(() => {});
+    }).catch(() => {}).finally(() => { this.bannersLoading = false; });
+    fetch('/api/reviews/recent').then(r => r.json()).then(d => { this.testimonials = d.reviews || []; }).catch(() => {}).finally(() => { this.testimonialsLoading = false; });
     fetch('/api/settings/public').then(r => r.json()).then(d => {
       this.flashEnds = d.flash_sale_ends || '';
       if (this.flashEnds) this.cdTimer = setInterval(() => { this.now = Date.now(); }, 1000);
@@ -79,6 +79,9 @@ const HomeView = {
   template: `
   <div class="max-w-6xl mx-auto px-4 py-4 space-y-5">
     <!-- Banner promo -->
+    <section v-if="bannersLoading" class="relative overflow-hidden rounded-2xl">
+      <div class="skel w-full aspect-[16/6]" style="border-radius:1rem"></div>
+    </section>
     <section v-if="banners.length" class="relative overflow-hidden rounded-2xl">
       <div class="flex transition-transform duration-500" :style="{ transform: 'translateX(-' + bannerIdx * 100 + '%)' }">
         <a v-for="b in banners" :key="b.id" :href="b.link_url || undefined" @click="!b.link_url && $event.preventDefault()"
@@ -196,6 +199,16 @@ const HomeView = {
       </div>
     </div>
     <!-- Testimoni pembeli -->
+    <section v-if="testimonialsLoading" class="mt-8">
+      <div class="skel h-5 w-32 mb-3"></div>
+      <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+        <div v-for="i in 3" :key="'tsk'+i" class="flex-shrink-0 w-64 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 space-y-2">
+          <div class="skel h-3 w-24"></div>
+          <div class="skel h-3 w-full"></div>
+          <div class="skel h-3 w-2/3"></div>
+        </div>
+      </div>
+    </section>
     <section v-if="testimonials.length" class="mt-8">
       <div class="flex items-center gap-2 mb-3">
         <span class="text-xl">⭐</span>

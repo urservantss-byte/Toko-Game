@@ -165,6 +165,11 @@ const AdminDash = {
   template: `
   <div>
     <p v-if="err" class="text-red-400 text-sm">{{ err }}</p>
+    <div v-if="!stats && !err" class="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-5">
+      <div v-for="i in 5" :key="'dsk'+i" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 space-y-2">
+        <div class="skel h-3 w-2/3"></div><div class="skel h-6 w-1/2"></div>
+      </div>
+    </div>
     <template v-if="stats">
       <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-5">
         <div v-for="c in cards" :key="c.lb" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 shadow-sm min-w-0">

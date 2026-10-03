@@ -25,7 +25,12 @@ const WishlistView = {
   template: `
   <div class="max-w-6xl mx-auto px-4 py-4">
     <h2 class="text-xl font-bold mb-4">❤️ Wishlist Saya</h2>
-    <div v-if="loading" class="text-center text-gray-400 py-10 text-sm">Memuat...</div>
+    <div v-if="loading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div v-for="i in 6" :key="'wsk'+i" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+        <div class="skel aspect-square" style="border-radius:0"></div>
+        <div class="p-2.5 space-y-2"><div class="skel h-3.5 w-full"></div><div class="skel h-4 w-1/2"></div></div>
+      </div>
+    </div>
     <div v-else-if="!items.length" class="text-center py-14">
       <div class="text-5xl mb-3">🤍</div>
       <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Wishlist masih kosong</p>

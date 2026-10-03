@@ -3,14 +3,16 @@ const TicketsView = {
   data: () => ({
     list: [], cur: null, reply: '',
     form: { subject: '', order_id: '', message: '' },
-    showForm: false, loading: false,
+    showForm: false, loading: false, listLoading: true,
     myOrders: [],
   }),
   mounted() { this.load(); this.loadOrders(); },
   methods: {
     fmtDate,
     async load() {
+      this.listLoading = true;
       try { this.list = (await api('/api/tickets')).tickets || []; } catch (e) { toast(e.message, false); }
+      finally { this.listLoading = false; }
     },
     async loadOrders() {
       try { this.myOrders = (await api('/api/orders')).orders || []; } catch {}
@@ -85,6 +87,9 @@ const TicketsView = {
     <div class="grid md:grid-cols-[1fr_1.5fr] gap-3">
       <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
         <div class="divide-y divide-gray-100 dark:divide-gray-800 max-h-[60vh] overflow-y-auto">
+          <div v-if="listLoading" class="p-3 space-y-3">
+            <div v-for="i in 4" :key="'tskl'+i" class="space-y-1.5"><div class="skel h-4 w-3/4"></div><div class="skel h-3 w-1/2"></div></div>
+          </div>
           <div v-for="t in list" :key="t.id" @click="open(t); showForm = false" class="p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                :class="{ 'bg-indigo-50/50 dark:bg-indigo-900/20': cur && cur.id === t.id }">
             <div class="flex items-center justify-between gap-2 mb-1">
@@ -93,7 +98,7 @@ const TicketsView = {
             </div>
             <div class="text-xs text-gray-500 dark:text-gray-400">{{ t.order_id ? 'Order #' + t.order_id : 'Umum' }} · {{ fmtDate(t.updated_at) }} · {{ t.msg_count }} pesan</div>
           </div>
-          <div v-if="!list.length" class="p-8 text-center text-gray-400 text-sm">Belum ada tiket. Klik "Buat Tiket" jika butuh bantuan.</div>
+          <div v-if="!listLoading && !list.length" class="p-8 text-center text-gray-400 text-sm">Belum ada tiket. Klik "Buat Tiket" jika butuh bantuan.</div>
         </div>
       </div>
       <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 flex flex-col min-h-[50vh]">
