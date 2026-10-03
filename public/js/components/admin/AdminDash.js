@@ -3,7 +3,7 @@ const AdminDash = {
   components: { StatusBadge },
   data: () => ({ stats: null, err: '', qrisInput: '', qrisMerchant: '', qrisOk: false, qrisMsg: '',
     waInput: '', waSaved: '', waMsg: '',
-    em: { smtp_host: '', smtp_port: '587', smtp_user: '', smtp_pass: '', smtp_from: '', admin_email: '' },
+    em: { smtp_host: '', smtp_port: '587', smtp_user: '', smtp_pass: '', smtp_from: '', admin_email: '', brevo_api_key: '' },
     emMsg: '', emOk: false,
     gId: '', gSecret: '', gMsg: '', gOk: false, gSavedId: '' }),
   mounted() { this.load(); this.loadQris(); this.loadEmail(); this.loadGoogle(); },
@@ -50,8 +50,8 @@ const AdminDash = {
       try {
         const d = await api('/api/admin/email-settings');
         this.em = { smtp_host: d.smtp_host || '', smtp_port: d.smtp_port || '587', smtp_user: d.smtp_user || '',
-          smtp_pass: '', smtp_from: d.smtp_from || '', admin_email: d.admin_email || '' };
-        this.emOk = !!d.smtp_host;
+          smtp_pass: '', smtp_from: d.smtp_from || '', admin_email: d.admin_email || '', brevo_api_key: '' };
+        this.emOk = !!d.smtp_host || !!d.brevo_api_key_set;
       } catch {}
     },
     async saveEmail() {
@@ -59,7 +59,8 @@ const AdminDash = {
       try {
         await api('/api/admin/email-settings', { method: 'PUT', body: JSON.stringify(this.em) });
         this.em.smtp_pass = '';
-        this.emOk = !!this.em.smtp_host;
+        this.em.brevo_api_key = '';
+        this.emOk = !!this.em.smtp_host || this.emOk;
         this.emMsg = 'Pengaturan email tersimpan ✓';
       } catch (e) { this.emMsg = e.message; }
     },
@@ -162,8 +163,9 @@ const AdminDash = {
         </div>
         <div class="border-t mt-4 pt-3">
           <h4 class="font-bold text-xs mb-1">📧 Email Notifikasi (SMTP Gmail)</h4>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Status: <b :class="emOk ? 'text-green-600' : 'text-red-500'">{{ emOk ? 'Aktif' : 'Belum dikonfigurasi' }}</b> — dipakai untuk notifikasi pesanan ke pembeli & email ke admin saat pesanan dikirim. Untuk Gmail: buat <b>App Password</b> di myaccount.google.com → Keamanan → Verifikasi 2 langkah → Sandi aplikasi.</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Status: <b :class="emOk ? 'text-green-600' : 'text-red-500'">{{ emOk ? 'Aktif' : 'Belum dikonfigurasi' }}</b> — dipakai untuk notifikasi pesanan ke pembeli & email ke admin saat pesanan dikirim. Untuk Gmail: buat <b>App Password</b> di myaccount.google.com → Keamanan → Verifikasi 2 langkah → Sandi aplikasi. <b>Catatan:</b> kalau hosting memblokir SMTP (mis. Railway), isi <b>Brevo API Key</b> di bawah — email dikirim via HTTPS.</p>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <input v-model="em.brevo_api_key" type="password" placeholder="Brevo API Key (opsional, atasi blokir SMTP)" class="border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary col-span-2 md:col-span-3">
             <input v-model="em.smtp_host" placeholder="Host (smtp.gmail.com)" class="border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
             <input v-model="em.smtp_port" placeholder="Port (587)" class="border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
             <input v-model="em.smtp_user" placeholder="Email Gmail" class="border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">

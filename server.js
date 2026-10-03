@@ -228,7 +228,29 @@ function smtpFrom() {
   return getSetting('smtp_from') || process.env.SMTP_FROM || getSetting('smtp_user') || process.env.SMTP_USER;
 }
 // Kirim email. Return true jika terkirim via SMTP, false jika SMTP belum dikonfigurasi.
+async function sendBrevo(to, subject, html) {
+  const key = getSetting('brevo_api_key') || process.env.BREVO_API_KEY || '';
+  if (!key) return false;
+  const senderEmail = getSetting('smtp_user') || process.env.SMTP_USER || getSetting('admin_email') || '';
+  const senderName = getSetting('smtp_from') || process.env.SMTP_FROM || 'TokoGame';
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'accept': 'application/json', 'api-key': key, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
+      subject, htmlContent: html,
+    }),
+  });
+  if (!res.ok) throw new Error('Brevo ' + res.status + ': ' + (await res.text().catch(() => '')).slice(0, 120));
+  return true;
+}
+// Kirim email. Prioritas: Brevo API (HTTPS, lolos blokir SMTP Railway) -> SMTP.
 async function sendMail(to, subject, html) {
+  if (getSetting('brevo_api_key') || process.env.BREVO_API_KEY) {
+    try { return await sendBrevo(to, subject, html); }
+    catch (e) { console.log('[email] Brevo gagal, coba SMTP:', e.message); }
+  }
   const tx = smtpTransporter();
   if (!tx) return false;
   await tx.sendMail({ from: smtpFrom(), to, subject, html });
@@ -1056,10 +1078,11 @@ app.get('/api/admin/email-settings', auth, requireAdmin, (req, res) => {
     smtp_user: getSetting('smtp_user'), smtp_from: getSetting('smtp_from'),
     admin_email: getSetting('admin_email'),
     smtp_pass_set: !!getSetting('smtp_pass'),
+    brevo_api_key_set: !!(getSetting('brevo_api_key') || process.env.BREVO_API_KEY),
   });
 });
 app.put('/api/admin/email-settings', auth, requireAdmin, (req, res) => {
-  const { smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from, admin_email } = req.body || {};
+  const { smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from, admin_email, brevo_api_key } = req.body || {};
   const set = (k, v) => db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(k, v);
   if (smtp_host !== undefined) set('smtp_host', String(smtp_host).trim());
   if (smtp_port !== undefined) set('smtp_port', String(smtp_port).trim() || '587');
@@ -1067,6 +1090,7 @@ app.put('/api/admin/email-settings', auth, requireAdmin, (req, res) => {
   if (smtp_pass !== undefined && String(smtp_pass).trim()) set('smtp_pass', String(smtp_pass).trim());
   if (smtp_from !== undefined) set('smtp_from', String(smtp_from).trim());
   if (admin_email !== undefined) set('admin_email', String(admin_email).trim());
+  if (brevo_api_key !== undefined && String(brevo_api_key).trim()) set('brevo_api_key', String(brevo_api_key).trim());
   res.json({ ok: true });
 });
 app.post('/api/admin/email-test', auth, requireAdmin, async (req, res) => {
