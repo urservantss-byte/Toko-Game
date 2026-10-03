@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokoGame — Akun, Voucher & Topup Digital</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: '#4f46e5', accent: '#f59e0b' } } } };
+// Terapkan tema sebelum render (hindari kedip)
+try {
+  const t = localStorage.getItem('tg_theme');
+  if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+} catch (e) {}
+function toggleTheme() {
+  const dark = document.documentElement.classList.toggle('dark');
+  try { localStorage.setItem('tg_theme', dark ? 'dark' : 'light'); } catch (e) {}
+  return dark;
+}
+</script>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 pb-20 md:pb-0">
+<div id="toasts" class="fixed top-4 right-4 z-[100] space-y-2"></div>
+<div id="app"></div>
+
+<script src="/js/vendor/vue.global.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/components/shared.js"></script>
+<script src="/js/components/HeaderView.js"></script>
+<script src="/js/components/AuthView.js"></script>
+<script src="/js/components/HomeView.js"></script>
+<script src="/js/components/ProductModal.js"></script>
+<script src="/js/components/CartView.js"></script>
+<script src="/js/components/OrdersView.js"></script>
+<script src="/js/components/TrackView.js"></script>
+<script src="/js/components/TicketsView.js"></script>
+<script src="/js/components/SettingsView.js"></script>
+<script src="/js/components/admin/AdminDash.js"></script>
+<script src="/js/components/admin/AdminOrders.js"></script>
+<script src="/js/components/admin/AdminProducts.js"></script>
+<script src="/js/components/admin/AdminVouchers.js"></script>
+<script src="/js/components/admin/AdminBanners.js"></script>
+<script src="/js/components/admin/AdminTickets.js"></script>
+<script src="/js/components/admin/AdminUsers.js"></script>
+<script src="/js/components/AdminView.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

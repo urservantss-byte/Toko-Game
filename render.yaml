@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: toko-game
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server.js
+    disk:
+      name: toko-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DB_PATH
+        value: /data/toko.db
+      - key: UPLOAD_PATH
+        value: /data/uploads
+      - key: PORT
+        value: 3000

@@ -1,0 +1,141 @@
+/* Modal detail produk: galeri + ulasan */
+const ProductModal = {
+  components: { BlurImg, Stars },
+  computed: {
+    p: () => store.product,
+    imgs() { return (this.p && this.p.images) || []; },
+    idx: {
+      get: () => store.galIdx,
+      set: v => { store.galIdx = v; }
+    },
+    reviews: () => store.reviews,
+  },
+  methods: {
+    rp, CATLABEL, CATCOLOR,
+    close() { store.product = null; },
+    gal(i) {
+      const n = this.imgs.length;
+      if (!n) return;
+      store.galIdx = (i + n) % n;
+    },
+    addCart(goCheckout) {
+      const p = this.p;
+      if (!p || p.stock < 1) return;
+      const c = store.cart.find(x => x.id === p.id);
+      const img = (p.images && p.images[0] && p.images[0].url) || p.image_url;
+      if (c) c.qty++;
+      else store.cart.push({ id: p.id, name: p.name, price: p.price, image_url: img, qty: 1 });
+      saveCart();
+      this.close();
+      go(goCheckout ? 'checkout' : 'cart');
+    },
+    openReview() {
+      if (!store.user) { this.close(); go('login'); return toast('Masuk dulu untuk memberi ulasan', false); }
+      store.reviewFor = { productId: this.p.id, orderId: null };
+      store.reviewRating = 5; store.reviewComment = '';
+    },
+    tags() { return String(this.p.tags || '').split(',').map(t => t.trim()).filter(Boolean); },
+  },
+  template: `
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="close">
+    <div class="absolute inset-0 bg-black/50" @click="close"></div>
+    <div class="relative bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto">
+      <div class="p-5">
+        <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <blur-img :src="imgs[idx] && imgs[idx].url" cls="w-full aspect-[4/3]" :alt="p.name" :eager="true" :key="idx"></blur-img>
+          <span class="absolute bottom-3 right-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium">{{ idx + 1 }}/{{ imgs.length }}</span>
+          <template v-if="imgs.length > 1">
+            <button @click="gal(idx - 1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">‹</button>
+            <button @click="gal(idx + 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">›</button>
+          </template>
+          <button @click="close" class="absolute top-2 right-2 w-8 h-8 bg-white/90 dark:bg-gray-900/90 rounded-full shadow text-gray-600 dark:text-gray-400">✕</button>
+        </div>
+        <div v-if="imgs.length > 1" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
+          <img v-for="(im, j) in imgs" :key="j" :src="im.url" loading="lazy" @click="idx = j"
+               :class="['w-16 h-16 object-cover rounded-xl cursor-pointer bg-gray-100 dark:bg-gray-800 shrink-0', j === idx ? 'ring-2 ring-primary' : '']">
+        </div>
+        <div class="mt-4">
+          <span class="text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: CATCOLOR[p.category] }">{{ CATLABEL[p.category] }}</span>
+          <h3 class="text-lg font-bold mt-2 leading-snug">{{ p.name }}</h3>
+          <div class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+            <stars :value="Number(p.avg_rating) || 0"></stars>
+            <b class="text-gray-700 dark:text-gray-300">{{ Number(p.avg_rating || 0).toFixed(1) }}</b> | {{ p.review_count || 0 }} terjual
+          </div>
+          <div class="text-accent font-extrabold text-2xl mt-2">{{ rp(p.price) }}</div>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed whitespace-pre-line">{{ p.description }}</p>
+          <div class="flex flex-wrap gap-1.5 mt-3">
+            <span v-for="t in tags()" :key="t" class="text-xs bg-indigo-50 text-primary rounded-full px-3 py-1 font-medium">#{{ t }}</span>
+          </div>
+          <div :class="['text-xs mt-3 font-medium', p.stock > 0 ? 'text-emerald-600' : 'text-red-500']">
+            {{ p.stock > 0 ? 'Stok tersedia: ' + p.stock : 'Stok habis' }}
+          </div>
+          <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-bold text-sm">💬 Ulasan Pembeli</h4>
+              <button @click="openReview" class="text-xs font-semibold text-primary">+ Tulis ulasan</button>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div v-for="r in reviews" :key="r.id" class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                  <span class="font-semibold text-xs">{{ r.user_name }}</span>
+                  <span class="text-[10px] text-gray-400">{{ (r.created_at || '').slice(0, 10) }}</span>
+                </div>
+                <div class="mt-1"><stars :value="r.rating"></stars></div>
+                <p v-if="r.comment" class="text-xs text-gray-600 dark:text-gray-400 mt-1.5 leading-relaxed">{{ r.comment }}</p>
+              </div>
+              <div v-if="!reviews.length" class="text-gray-400 text-xs bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-center">Belum ada ulasan untuk produk ini.</div>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button @click="addCart(false)" :disabled="p.stock < 1" class="flex-1 border-2 border-primary text-primary font-bold rounded-xl py-2.5 text-sm disabled:opacity-40">+ Keranjang</button>
+            <button @click="addCart(true)" :disabled="p.stock < 1" class="flex-1 bg-primary text-white font-bold rounded-xl py-2.5 text-sm hover:bg-indigo-700 disabled:opacity-40">Beli Sekarang</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`
+};
+
+/* Modal tulis ulasan (dipakai dari detail produk & halaman pesanan) */
+const ReviewModal = {
+  components: { Stars },
+  computed: {
+    show: () => !!store.reviewFor,
+  },
+  methods: {
+    close() { store.reviewFor = null; },
+    setRating(n) { store.reviewRating = n; },
+    async submit() {
+      const rf = store.reviewFor;
+      if (!rf) return;
+      try {
+        const d = await api('/api/products/' + rf.productId + '/reviews',
+          { method: 'POST', body: JSON.stringify({ rating: store.reviewRating, comment: store.reviewComment, order_id: rf.orderId }) });
+        toast(d.order_completed ? 'Ulasan terkirim, pesanan selesai! 🎉' : 'Terima kasih atas ulasanmu! ⭐');
+        this.close();
+        if (store.product) {
+          store.reviews = (await api('/api/products/' + rf.productId + '/reviews')).reviews || [];
+        }
+        loadMyOrders();
+      } catch (e) { toast(e.message, false); }
+    },
+  },
+  template: `
+  <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="close">
+    <div class="absolute inset-0 bg-black/50" @click="close"></div>
+    <div class="relative bg-white dark:bg-gray-900 rounded-3xl p-6 w-full max-w-sm">
+      <h3 class="font-extrabold text-lg mb-1">⭐ Tulis Ulasan</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Ceritakan pengalamanmu dengan produk ini</p>
+      <div class="flex gap-1.5 justify-center text-3xl mb-4">
+        <span v-for="n in 5" :key="n" @click="setRating(n)" class="cursor-pointer"
+              :class="n <= store.reviewRating ? 'text-amber-400' : 'text-gray-300'">★</span>
+      </div>
+      <textarea v-model="store.reviewComment" rows="3" placeholder="Ulasanmu (opsional)..."
+                class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200"></textarea>
+      <div class="flex gap-2 mt-4">
+        <button @click="close" class="flex-1 border rounded-xl py-2.5 text-sm font-semibold">Batal</button>
+        <button @click="submit" class="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-bold">Kirim Ulasan</button>
+      </div>
+    </div>
+  </div>`
+};
