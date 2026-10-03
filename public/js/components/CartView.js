@@ -67,10 +67,10 @@ const CheckoutView = {
     cart: () => store.cart,
     subtotal: () => cartTotal.value,
     total() { return Math.max(0, this.subtotal - this.voucherDiscount); },
-    method() { const l = this.payOpts; return l.find(m => m.id === store.payMethod); },
+    method() { return this.payOpts.find(m => m.id === store.payMethod); },
     payOpts() { return this.payList || PAYMETHODS.map(m => ({ ...m, kind: m.id === 'qris' ? 'qris' : 'transfer' })); },
-    needProof() { const m = this.method(); return m ? m.kind === 'transfer' : store.payMethod.startsWith('transfer'); },
-    isQris() { const m = this.method(); return m ? m.kind === 'qris' : store.payMethod === 'qris'; },
+    needProof() { const m = this.method; return m ? m.kind === 'transfer' : String(store.payMethod).startsWith('transfer'); },
+    isQris() { const m = this.method; return m ? m.kind === 'qris' : store.payMethod === 'qris'; },
     PAYMETHODS: () => PAYMETHODS,
   },
   methods: {
