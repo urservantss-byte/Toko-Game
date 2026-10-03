@@ -54,12 +54,12 @@ const CartView = {
 /* Checkout: metode pembayaran + bukti transfer */
 const CheckoutView = {
   data: () => ({ loading: false, proofPreview: '', qris: null, qrisProof: null, qrisProofPreview: '',
-    voucherCode: '', voucherDiscount: 0, voucherErr: '', voucherOk: '', payIds: null }),
+    voucherCode: '', voucherDiscount: 0, voucherErr: '', voucherOk: '', payList: null }),
   mounted() {
     fetch('/api/settings/public').then(r => r.json()).then(d => {
       if (d.pay_methods && d.pay_methods.length) {
-        this.payIds = d.pay_methods;
-        if (!this.payIds.includes(store.payMethod)) this.setMethod(this.payIds[0]);
+        this.payList = d.pay_methods;
+        if (!this.payList.some(m => m.id === store.payMethod)) this.setMethod(this.payList[0].id);
       }
     }).catch(() => {});
   },
@@ -67,9 +67,10 @@ const CheckoutView = {
     cart: () => store.cart,
     subtotal: () => cartTotal.value,
     total() { return Math.max(0, this.subtotal - this.voucherDiscount); },
-    method() { return PAYMETHODS.find(m => m.id === store.payMethod); },
-    payList() { return this.payIds ? PAYMETHODS.filter(m => this.payIds.includes(m.id)) : PAYMETHODS; },
-    needProof() { return store.payMethod.startsWith('transfer'); },
+    method() { const l = this.methods(); return l.find(m => m.id === store.payMethod); },
+    methods() { return this.payList || PAYMETHODS.map(m => ({ ...m, kind: m.id === 'qris' ? 'qris' : 'transfer' })); },
+    needProof() { const m = this.method(); return m ? m.kind === 'transfer' : store.payMethod.startsWith('transfer'); },
+    isQris() { const m = this.method(); return m ? m.kind === 'qris' : store.payMethod === 'qris'; },
     PAYMETHODS: () => PAYMETHODS,
   },
   methods: {
@@ -113,7 +114,7 @@ const CheckoutView = {
           if (!r.ok) throw new Error(pd.error || 'Upload gagal');
         }
         store.cart = []; store.proofFile = null; saveCart();
-        if (store.payMethod === 'qris') {
+        if (this.isQris) {
           try {
             const q = await api('/api/orders/' + d.order.id + '/qris');
             this.qris = { ...q, orderId: d.order.id };
@@ -154,13 +155,13 @@ const CheckoutView = {
   <div class="max-w-3xl mx-auto px-4 py-4">
     <h2 class="text-xl font-bold mb-4">💳 Checkout</h2>
     <div class="space-y-2 mb-4">
-      <div v-for="m in payList" :key="m.id" @click="setMethod(m.id)"
+      <div v-for="m in methods()" :key="m.id" @click="setMethod(m.id)"
            :class="['cursor-pointer border-2 rounded-2xl p-4 bg-white dark:bg-gray-900', store.payMethod === m.id ? 'border-primary bg-indigo-50/50' : 'border-gray-100 dark:border-gray-800']">
         <div class="font-bold text-sm">{{ m.label }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ m.desc }}</div>
       </div>
     </div>
-    <div v-if="store.payMethod === 'qris'" class="bg-white dark:bg-gray-900 border rounded-2xl p-4 mb-4 text-sm">
+    <div v-if="isQris" class="bg-white dark:bg-gray-900 border rounded-2xl p-4 mb-4 text-sm">
       <div class="font-semibold mb-1">⚡ Bayar via QRIS</div>
       <div class="text-gray-500 dark:text-gray-400 text-xs">Klik "Buat Pesanan", lalu scan QR yang muncul. Nominal sudah otomatis sesuai total — tidak perlu ketik jumlah.</div>
     </div>

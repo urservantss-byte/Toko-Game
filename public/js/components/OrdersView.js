@@ -1,13 +1,25 @@
 /* Halaman pesanan user: timeline, data delivery, ulasan, selesaikan */
 const OrdersView = {
   components: { StatusBadge },
-  data: () => ({ eligible: [], qris: null }),
+  data: () => ({ eligible: [], qris: null, payKinds: {} }),
   computed: {
     orders: () => store.myOrders,
   },
-  mounted() { this.load(); },
+  mounted() {
+    this.load();
+    fetch('/api/settings/public').then(r => r.json()).then(d => {
+      const m = {};
+      for (const x of (d.pay_methods || [])) m[x.id] = x.kind;
+      this.payKinds = m;
+    }).catch(() => {});
+  },
   methods: {
     rp, fmtDate,
+    payKind(o) {
+      if (this.payKinds[o.payment_method]) return this.payKinds[o.payment_method];
+      if (o.payment_method === 'qris') return 'qris';
+      return 'transfer';
+    },
     async load() {
       await loadMyOrders();
       try { this.eligible = (await api('/api/reviews/eligible')).eligible || []; }
@@ -125,9 +137,9 @@ const OrdersView = {
                   class="text-xs bg-red-50 text-red-600 px-4 py-2 rounded-xl font-semibold hover:bg-red-100">Batalkan Pesanan</button>
           <button @click="complain(o.id)"
                   class="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700">💬 Komplain</button>
-          <button v-if="o.payment_method === 'qris' && o.status === 'pending' && !o.proof_path"
+          <button v-if="payKind(o) === 'qris' && o.status === 'pending' && !o.proof_path"
                   @click="showQris(o.id)" class="text-xs bg-primary text-white px-4 py-2 rounded-xl font-bold">⚡ Lihat QR Bayar</button>
-          <button v-if="(o.payment_method.startsWith('transfer') || o.payment_method === 'qris') && !o.proof_path && o.status !== 'dibatalkan' && o.status !== 'selesai'"
+          <button v-if="!o.proof_path && o.status !== 'dibatalkan' && o.status !== 'selesai'"
                   @click="uploadProof(o.id)" class="text-xs bg-primary text-white px-4 py-2 rounded-xl font-bold">Upload Bukti</button>
           <button v-for="e in eligFor(o.id)" :key="e.product_id" @click="openReview(e)"
                   class="text-xs bg-amber-400 text-white px-4 py-2 rounded-xl font-bold hover:bg-amber-500">⭐ Ulas: {{ e.product_name.slice(0, 20) }}</button>

@@ -3,13 +3,8 @@ const AdminDash = {
   components: { StatusBadge },
   data: () => ({ stats: null, err: '', qrisInput: '', qrisMerchant: '', qrisOk: false, qrisMsg: '',
     waInput: '', waSaved: '', waMsg: '', waOn: true,
-    pay: { qris: true, transfer_bca: true, transfer_mandiri: true, transfer_dana: true },
-    payLabels: [
-      { id: 'qris', label: '⚡ QRIS' },
-      { id: 'transfer_bca', label: '🏦 Transfer BCA' },
-      { id: 'transfer_mandiri', label: '🏦 Transfer Mandiri' },
-      { id: 'transfer_dana', label: '📱 DANA' },
-    ],
+    payMethods: [], pmMsg: '',
+    pmForm: { id: '', label: '', details: '', kind: 'transfer' }, pmEdit: null,
     em: { smtp_host: '', smtp_port: '587', smtp_user: '', smtp_pass: '', smtp_from: '', admin_email: '', brevo_api_key: '' },
     emMsg: '', emOk: false,
     gId: '', gSecret: '', gMsg: '', gOk: false, gSavedId: '' }),
@@ -36,7 +31,7 @@ const AdminDash = {
         this.qrisMerchant = d.qris_merchant || '';
         this.waSaved = d.wa_cs || '';
         this.waOn = d.wa_cs_enabled !== false;
-        if (d.pay) for (const k of Object.keys(this.pay)) this.pay[k] = d.pay[k] !== false;
+        this.payMethods = d.pay_methods || [];
       } catch {}
     },
     async saveQris() {
@@ -60,10 +55,53 @@ const AdminDash = {
       try { await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ wa_cs_enabled: this.waOn }) }); }
       catch (e) { this.waOn = !this.waOn; toast(e.message, false); }
     },
-    async togglePay(id) {
-      this.pay[id] = !this.pay[id];
-      try { await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ pay: { [id]: this.pay[id] } }) }); }
-      catch (e) { this.pay[id] = !this.pay[id]; toast(e.message, false); }
+    async togglePay(m) {
+      const nv = !m.active;
+      try {
+        const d = await api('/api/admin/pay-methods/' + m.id, { method: 'PUT', body: JSON.stringify({ active: nv }) });
+        m.active = d.method.active;
+      } catch (e) { toast(e.message, false); }
+    },
+    async addPay() {
+      this.pmMsg = '';
+      const f = this.pmForm;
+      if (!f.label.trim()) { this.pmMsg = 'Label wajib diisi'; return; }
+      try {
+        const d = await api('/api/admin/pay-methods', { method: 'POST',
+          body: JSON.stringify({ id: f.id || f.label, label: f.label, details: f.details, kind: f.kind }) });
+        this.payMethods.push(d.method);
+        this.pmForm = { id: '', label: '', details: '', kind: 'transfer' };
+        this.pmMsg = 'Metode ditambahkan ✓';
+      } catch (e) { this.pmMsg = e.message; }
+    },
+    startEditPay(m) {
+      this.pmEdit = m.id;
+      this.pmForm = { id: m.id, label: m.label, details: m.details || '', kind: m.kind };
+      this.pmMsg = '';
+    },
+    async saveEditPay() {
+      this.pmMsg = '';
+      const f = this.pmForm;
+      try {
+        const d = await api('/api/admin/pay-methods/' + this.pmEdit, { method: 'PUT',
+          body: JSON.stringify({ label: f.label, details: f.details, kind: f.kind }) });
+        const i = this.payMethods.findIndex(x => x.id === this.pmEdit);
+        if (i >= 0) this.payMethods.splice(i, 1, d.method);
+        this.pmEdit = null;
+        this.pmForm = { id: '', label: '', details: '', kind: 'transfer' };
+        this.pmMsg = 'Metode diperbarui ✓';
+      } catch (e) { this.pmMsg = e.message; }
+    },
+    cancelEditPay() {
+      this.pmEdit = null;
+      this.pmForm = { id: '', label: '', details: '', kind: 'transfer' };
+    },
+    async delPay(m) {
+      if (!confirm('Hapus metode "' + m.label + '"?')) return;
+      try {
+        await api('/api/admin/pay-methods/' + m.id, { method: 'DELETE' });
+        this.payMethods = this.payMethods.filter(x => x.id !== m.id);
+      } catch (e) { toast(e.message, false); }
     },
     async loadEmail() {
       try {
@@ -187,15 +225,39 @@ const AdminDash = {
           <span class="text-xs" :class="waMsg.includes('✓') ? 'text-green-600' : 'text-red-500'">{{ waMsg }}</span>
         </div>
         <div class="border-t mt-4 pt-3">
-          <h4 class="font-bold text-xs mb-1">💳 Metode Pembayaran Aktif</h4>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Metode yang dimatikan tidak tampil di checkout & ditolak server.</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label v-for="m in payLabels" :key="m.id" class="flex items-center gap-2 text-xs cursor-pointer select-none bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">
-              <button @click="togglePay(m.id)" :class="['w-10 h-6 rounded-full relative transition-colors shrink-0', pay[m.id] ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700']">
-                <span :class="['absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all', pay[m.id] ? 'left-[18px]' : 'left-0.5']"></span>
+          <h4 class="font-bold text-xs mb-1">💳 Metode Pembayaran</h4>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Kelola bank/e-wallet/QRIS. Yang nonaktif tidak tampil di checkout.</p>
+          <div class="space-y-2 mb-3">
+            <div v-for="m in payMethods" :key="m.id" class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">
+              <button @click="togglePay(m)" :class="['w-10 h-6 rounded-full relative transition-colors shrink-0', m.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700']">
+                <span :class="['absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all', m.active ? 'left-[18px]' : 'left-0.5']"></span>
               </button>
-              <span class="font-semibold">{{ m.label }}</span>
-            </label>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-bold truncate">{{ m.label }} <span class="font-normal text-gray-400">({{ m.kind === 'qris' ? 'QRIS' : 'Transfer' }})</span></div>
+                <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate">{{ m.details || '-' }}</div>
+              </div>
+              <button @click="startEditPay(m)" class="text-xs text-primary font-bold px-2 py-1">✏️</button>
+              <button @click="delPay(m)" class="text-xs text-red-500 font-bold px-2 py-1">🗑️</button>
+            </div>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+            <div class="text-xs font-bold mb-2">{{ pmEdit ? '✏️ Ubah metode' : '➕ Tambah metode baru' }}</div>
+            <div class="grid grid-cols-2 gap-2">
+              <input v-model="pmForm.label" :disabled="!!pmEdit" placeholder="Label, mis: 🏦 Transfer BRI" class="border rounded-xl px-3 py-2 text-xs outline-none focus:border-primary col-span-2">
+              <input v-model="pmForm.details" placeholder="Detail rekening, mis: BRI 1234 0100 5678 901 a.n. TokoGame" class="border rounded-xl px-3 py-2 text-xs outline-none focus:border-primary col-span-2">
+              <select v-model="pmForm.kind" class="border rounded-xl px-3 py-2 text-xs outline-none focus:border-primary bg-white dark:bg-gray-900">
+                <option value="transfer">Transfer (upload bukti)</option>
+                <option value="qris">QRIS (scan QR)</option>
+              </select>
+              <div class="flex gap-2">
+                <button v-if="!pmEdit" @click="addPay" class="flex-1 bg-primary text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-indigo-700">Tambah</button>
+                <template v-else>
+                  <button @click="saveEditPay" class="flex-1 bg-primary text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-indigo-700">Simpan</button>
+                  <button @click="cancelEditPay" class="bg-gray-200 dark:bg-gray-700 text-xs font-bold px-3 py-2 rounded-xl">Batal</button>
+                </template>
+              </div>
+            </div>
+            <span class="text-xs" :class="pmMsg.includes('✓') ? 'text-green-600' : 'text-red-500'">{{ pmMsg }}</span>
           </div>
         </div>
         </div>
