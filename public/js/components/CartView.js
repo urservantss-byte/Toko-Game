@@ -54,12 +54,21 @@ const CartView = {
 /* Checkout: metode pembayaran + bukti transfer */
 const CheckoutView = {
   data: () => ({ loading: false, proofPreview: '', qris: null, qrisProof: null, qrisProofPreview: '',
-    voucherCode: '', voucherDiscount: 0, voucherErr: '', voucherOk: '' }),
+    voucherCode: '', voucherDiscount: 0, voucherErr: '', voucherOk: '', payIds: null }),
+  mounted() {
+    fetch('/api/settings/public').then(r => r.json()).then(d => {
+      if (d.pay_methods && d.pay_methods.length) {
+        this.payIds = d.pay_methods;
+        if (!this.payIds.includes(store.payMethod)) this.setMethod(this.payIds[0]);
+      }
+    }).catch(() => {});
+  },
   computed: {
     cart: () => store.cart,
     subtotal: () => cartTotal.value,
     total() { return Math.max(0, this.subtotal - this.voucherDiscount); },
     method() { return PAYMETHODS.find(m => m.id === store.payMethod); },
+    payList() { return this.payIds ? PAYMETHODS.filter(m => this.payIds.includes(m.id)) : PAYMETHODS; },
     needProof() { return store.payMethod.startsWith('transfer'); },
     PAYMETHODS: () => PAYMETHODS,
   },
@@ -145,7 +154,7 @@ const CheckoutView = {
   <div class="max-w-3xl mx-auto px-4 py-4">
     <h2 class="text-xl font-bold mb-4">💳 Checkout</h2>
     <div class="space-y-2 mb-4">
-      <div v-for="m in PAYMETHODS" :key="m.id" @click="setMethod(m.id)"
+      <div v-for="m in payList" :key="m.id" @click="setMethod(m.id)"
            :class="['cursor-pointer border-2 rounded-2xl p-4 bg-white dark:bg-gray-900', store.payMethod === m.id ? 'border-primary bg-indigo-50/50' : 'border-gray-100 dark:border-gray-800']">
         <div class="font-bold text-sm">{{ m.label }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ m.desc }}</div>

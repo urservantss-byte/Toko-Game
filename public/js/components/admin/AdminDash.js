@@ -2,7 +2,14 @@
 const AdminDash = {
   components: { StatusBadge },
   data: () => ({ stats: null, err: '', qrisInput: '', qrisMerchant: '', qrisOk: false, qrisMsg: '',
-    waInput: '', waSaved: '', waMsg: '',
+    waInput: '', waSaved: '', waMsg: '', waOn: true,
+    pay: { qris: true, transfer_bca: true, transfer_mandiri: true, transfer_dana: true },
+    payLabels: [
+      { id: 'qris', label: '⚡ QRIS' },
+      { id: 'transfer_bca', label: '🏦 Transfer BCA' },
+      { id: 'transfer_mandiri', label: '🏦 Transfer Mandiri' },
+      { id: 'transfer_dana', label: '📱 DANA' },
+    ],
     em: { smtp_host: '', smtp_port: '587', smtp_user: '', smtp_pass: '', smtp_from: '', admin_email: '', brevo_api_key: '' },
     emMsg: '', emOk: false,
     gId: '', gSecret: '', gMsg: '', gOk: false, gSavedId: '' }),
@@ -28,6 +35,8 @@ const AdminDash = {
         this.qrisOk = d.qris_configured;
         this.qrisMerchant = d.qris_merchant || '';
         this.waSaved = d.wa_cs || '';
+        this.waOn = d.wa_cs_enabled !== false;
+        if (d.pay) for (const k of Object.keys(this.pay)) this.pay[k] = d.pay[k] !== false;
       } catch {}
     },
     async saveQris() {
@@ -45,6 +54,16 @@ const AdminDash = {
         this.waSaved = d.wa_cs || ''; this.waInput = '';
         this.waMsg = 'Nomor WA tersimpan ✓';
       } catch (e) { this.waMsg = e.message; }
+    },
+    async toggleWa() {
+      this.waOn = !this.waOn;
+      try { await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ wa_cs_enabled: this.waOn }) }); }
+      catch (e) { this.waOn = !this.waOn; toast(e.message, false); }
+    },
+    async togglePay(id) {
+      this.pay[id] = !this.pay[id];
+      try { await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ pay: { [id]: this.pay[id] } }) }); }
+      catch (e) { this.pay[id] = !this.pay[id]; toast(e.message, false); }
     },
     async loadEmail() {
       try {
@@ -159,7 +178,26 @@ const AdminDash = {
             <input v-model="waInput" placeholder="62812xxxxxxx" class="flex-1 min-w-0 border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
             <button @click="saveWa" class="bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-green-700">Simpan</button>
           </div>
+          <label class="flex items-center gap-2 mt-2 text-xs cursor-pointer select-none">
+            <button @click="toggleWa" :class="['w-10 h-6 rounded-full relative transition-colors', waOn ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700']">
+              <span :class="['absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all', waOn ? 'left-[18px]' : 'left-0.5']"></span>
+            </button>
+            <span>Tombol chat WA {{ waOn ? 'tampil' : 'disembunyikan' }}</span>
+          </label>
           <span class="text-xs" :class="waMsg.includes('✓') ? 'text-green-600' : 'text-red-500'">{{ waMsg }}</span>
+        </div>
+        <div class="border-t mt-4 pt-3">
+          <h4 class="font-bold text-xs mb-1">💳 Metode Pembayaran Aktif</h4>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Metode yang dimatikan tidak tampil di checkout & ditolak server.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label v-for="m in payLabels" :key="m.id" class="flex items-center gap-2 text-xs cursor-pointer select-none bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">
+              <button @click="togglePay(m.id)" :class="['w-10 h-6 rounded-full relative transition-colors shrink-0', pay[m.id] ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700']">
+                <span :class="['absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all', pay[m.id] ? 'left-[18px]' : 'left-0.5']"></span>
+              </button>
+              <span class="font-semibold">{{ m.label }}</span>
+            </label>
+          </div>
+        </div>
         </div>
         <div class="border-t mt-4 pt-3">
           <h4 class="font-bold text-xs mb-1">📧 Email Notifikasi (SMTP Gmail)</h4>

@@ -820,6 +820,13 @@ app.post('/api/tickets', auth, (req, res) => {
     .run(oid, req.user.id, String(subject).trim().slice(0, 200));
   db.prepare('INSERT INTO ticket_messages (ticket_id, user_id, is_admin, message) VALUES (?,?,0,?)')
     .run(info.lastInsertRowid, req.user.id, String(message).trim().slice(0, 2000));
+  // Notifikasi email ke admin HANYA saat tiket dibuat (balasan tidak dikirim email)
+  const tu = db.prepare('SELECT name, email FROM users WHERE id = ?').get(req.user.id);
+  notifyAdmin(`Tiket komplain baru #${info.lastInsertRowid}`,
+    `<p><b>${tu ? tu.name : 'User'} (${tu ? tu.email : '-'})</b> membuat tiket komplain:</p>` +
+    `<p><b>Subjek:</b> ${String(subject).trim().slice(0, 200)}${oid ? `<br><b>Pesanan:</b> #${oid}` : ''}</p>` +
+    `<p><b>Pesan:</b><br>${String(message).trim().slice(0, 500).replace(/\n/g, '<br>')}</p>` +
+    `<p>Balas dari tab 🎫 Tiket di dashboard admin.</p>`);
   res.status(201).json({ ticket: ticketWithMessages(db.prepare('SELECT * FROM tickets WHERE id = ?').get(info.lastInsertRowid)) });
 });
 // User: daftar tiket miliknya
@@ -1039,6 +1046,10 @@ function syncCodeStock(productId) {
 // ---- Orders ----
 const PAY_METHODS = ['transfer_bca', 'transfer_mandiri', 'transfer_dana', 'qris'];
 const TRANSFER_METHODS = ['transfer_bca', 'transfer_mandiri', 'transfer_dana'];
+// On/off metode pembayaran & tombol WA CS (default: nyala)
+function payEnabled(id) { const v = getSetting('pay_' + id); return v === '' ? true : v !== '0'; }
+function enabledPayMethods() { return PAY_METHODS.filter(payEnabled); }
+function waCsEnabled() { const v = getSetting('wa_cs_enabled'); return v === '' ? true : v !== '0'; }
 const NEXT_STATUS = { pending: ['proses', 'dibatalkan'], proses: ['delivery'], delivery: ['selesai'], selesai: [], dibatalkan: [] };
 
 // ---- Pengaturan QRIS (admin) ----
@@ -1049,10 +1060,12 @@ function getSetting(k) {
 function getQrisStatic() { return getSetting('qris_static'); }
 app.get('/api/admin/settings', auth, requireAdmin, (req, res) => {
   const s = getQrisStatic();
-  res.json({ qris_configured: !!s, qris_merchant: s ? merchantName(s) : '', wa_cs: getSetting('wa_cs') });
+  const pay = {};
+  for (const id of PAY_METHODS) pay[id] = payEnabled(id);
+  res.json({ qris_configured: !!s, qris_merchant: s ? merchantName(s) : '', wa_cs: getSetting('wa_cs'), wa_cs_enabled: waCsEnabled(), pay });
 });
 app.put('/api/admin/settings', auth, requireAdmin, (req, res) => {
-  const { qris_static, wa_cs } = req.body || {};
+  const { qris_static, wa_cs, wa_cs_enabled, pay } = req.body || {};
   let merchant = '';
   if (qris_static !== undefined) {
     const s = String(qris_static || '').trim();
@@ -1064,11 +1077,18 @@ app.put('/api/admin/settings', auth, requireAdmin, (req, res) => {
     const w = String(wa_cs || '').replace(/\D/g, '');
     db.prepare("INSERT INTO settings (key, value) VALUES ('wa_cs', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(w);
   }
-  res.json({ ok: true, qris_merchant: merchant, wa_cs: getSetting('wa_cs') });
+  const set = (k, v) => db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(k, v);
+  if (wa_cs_enabled !== undefined) set('wa_cs_enabled', wa_cs_enabled ? '1' : '0');
+  if (pay && typeof pay === 'object') {
+    for (const id of PAY_METHODS) if (pay[id] !== undefined) set('pay_' + id, pay[id] ? '1' : '0');
+  }
+  const payOut = {};
+  for (const id of PAY_METHODS) payOut[id] = payEnabled(id);
+  res.json({ ok: true, qris_merchant: merchant, wa_cs: getSetting('wa_cs'), wa_cs_enabled: waCsEnabled(), pay: payOut });
 });
 // Publik: nomor WA CS (untuk tombol chat)
 app.get('/api/settings/public', (req, res) => {
-  res.json({ wa_cs: getSetting('wa_cs') });
+  res.json({ wa_cs: waCsEnabled() ? getSetting('wa_cs') : '', pay_methods: enabledPayMethods() });
 });
 
 // ---- Pengaturan email/SMTP (admin) ----
@@ -1124,6 +1144,7 @@ app.post('/api/orders', auth, (req, res) => {
   const { items, payment_method, voucher_code } = req.body || {};
   if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'items wajib diisi' });
   if (!PAY_METHODS.includes(payment_method)) return res.status(400).json({ error: 'Metode pembayaran tidak valid' });
+  if (!payEnabled(payment_method)) return res.status(400).json({ error: 'Metode pembayaran ini sedang nonaktif' });
 
   const tx = db.transaction(() => {
     const snapshot = [];
