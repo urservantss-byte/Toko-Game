@@ -6,21 +6,7 @@
 <title>TokoGame — Akun, Voucher & Topup Digital</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
-  primary: '#4f46e5',
-  accent: '#f59e0b',
-  ink: '#0b0f1a',        // bg utama dark
-  surface: '#12172a',    // kartu dark
-  surface2: '#1a2138',   // kartu hover/elevated
-  line: '#232c4a',       // border halus dark
-  // Palet referensi "GAME TOPUP" (2026-10-03)
-  rbg: '#1b1b28',        // background utama
-  rcard: '#252534',      // kartu
-  rline: '#34344e',      // border kartu
-  rlav: '#8b7cf6',       // aksen lavender
-  rmuted: '#9a9ab5',     // teks sekunder
-  rpill: '#d4d4e2',      // pill kategori nonaktif
-} } } };
+tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: '#4f46e5', accent: '#f59e0b' } } } };
 // Terapkan tema sebelum render (hindari kedip)
 try {
   const t = localStorage.getItem('tg_theme');
@@ -34,7 +20,7 @@ function toggleTheme() {
 </script>
 <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="bg-gray-50 dark:bg-rbg text-gray-800 dark:text-slate-200 pb-28 md:pb-0 antialiased">
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 pb-24 md:pb-0">
 <div id="toasts" class="fixed top-4 right-4 z-[100] space-y-2"></div>
 <div id="app"></div>
 

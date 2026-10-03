@@ -74,111 +74,118 @@ const HomeView = {
     buyNow(id) { this.addCart(id); go('checkout'); },
     setCat(c) { store.f.cat = c; store.f.tag = ''; },
     setTag(t) { store.f.tag = store.f.tag === t ? '' : t; },
-    scrollToProducts() {
-      const el = document.getElementById('home-products');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    },
-    seeAll() { store.f.cat = 'all'; store.f.tag = ''; store.f.q = ''; this.scrollToProducts(); },
-    denomOf(p) {
-      if (p.variants && p.variants.length) return p.variants.length + ' pilihan';
-      if (p.category === 'voucher') return 'Kode voucher';
-      return this.catLabel(p.category) || 'Top up';
-    },
-    catIcon(cat) {
-      const c = (store.cats || []).find(x => x.id === cat || String(x.id) === String(cat));
-      return (c && c.icon) || '🎮';
-    },
-    quickAdd(p) {
-      if ((p.variants && p.variants.length) || p.stock < 1) { openProduct(p.id); return; }
-      this.addCart(p.id);
-    },
   },
   template: `
-  <div class="max-w-6xl mx-auto px-5 py-5 space-y-7">
-    <!-- Hero ala referensi -->
-    <section class="relative overflow-hidden rounded-2xl border border-rline"
-             style="background: linear-gradient(120deg, #23232f 0%, #1b1b28 60%, #1b1b28 100%);">
-      <div class="absolute inset-0 opacity-40" style="background: radial-gradient(ellipse at 85% 30%, rgba(139,124,246,.25) 0%, transparent 55%);"></div>
-      <div class="relative p-6 sm:p-8 min-h-[190px] flex flex-col justify-center max-w-[70%]">
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Top Up Your Game</h1>
-        <p class="text-sm text-rmuted mt-1.5">Instant • Secure • 24/7 Support</p>
-        <button @click="scrollToProducts" class="mt-4 self-start bg-rlav/90 hover:bg-rlav text-white text-sm font-semibold rounded-xl px-5 py-2.5 transition">Browse Offers</button>
+  <div class="max-w-6xl mx-auto px-4 py-4 space-y-5">
+    <!-- Banner promo -->
+    <section v-if="banners.length" class="relative overflow-hidden rounded-2xl">
+      <div class="flex transition-transform duration-500" :style="{ transform: 'translateX(-' + bannerIdx * 100 + '%)' }">
+        <a v-for="b in banners" :key="b.id" :href="b.link_url || undefined" @click="!b.link_url && $event.preventDefault()"
+           class="w-full shrink-0 block">
+          <img :src="b.image_url" class="w-full aspect-[16/6] object-cover" alt="Promo">
+        </a>
       </div>
-      <div class="absolute right-0 top-0 bottom-0 w-[45%] opacity-60 hidden sm:block" style="background: radial-gradient(ellipse at 70% 50%, rgba(139,124,246,.18) 0%, transparent 65%);"></div>
-    </section>
-
-    <!-- Categories ala referensi -->
-    <section id="home-categories">
-      <h2 class="text-lg font-bold text-white mb-3">Categories</h2>
-      <div class="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5">
-        <button @click="setCat('all')"
-                :class="['shrink-0 text-[13px] font-medium px-4 py-2 rounded-xl transition',
-                  !f.cat || f.cat==='all' ? 'bg-transparent border-[1.5px] border-rlav text-rlav' : 'bg-rpill text-gray-800 border-[1.5px] border-transparent']">Semua</button>
-        <button v-for="c in store.cats" :key="c.id" @click="setCat(c.id)"
-                :class="['shrink-0 text-[13px] font-medium px-4 py-2 rounded-xl transition',
-                  f.cat===c.id ? 'bg-transparent border-[1.5px] border-rlav text-rlav' : 'bg-rpill text-gray-800 border-[1.5px] border-transparent']">{{ c.label }}</button>
+      <div v-if="banners.length > 1" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+        <button v-for="(b, i) in banners" :key="b.id" @click="bannerIdx = i"
+                class="w-2 h-2 rounded-full transition" :class="i === bannerIdx ? 'bg-white' : 'bg-white/50'"></button>
       </div>
     </section>
-
-    <!-- Popular Top-ups ala referensi -->
-    <section id="home-products">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-bold text-white">Popular Top-ups</h2>
-        <button @click="seeAll" class="text-rlav text-sm font-medium">See all <span class="ml-0.5">›</span></button>
+    <!-- Promo lacak pesanan -->
+    <section class="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl p-4 flex items-center justify-between text-white mb-1">
+      <div>
+        <div class="font-bold text-sm">📦 Sudah pesan? Lacak di sini!</div>
+        <div class="text-[11px] opacity-90 mt-0.5">Pantau status pesananmu secara real-time</div>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-        <div v-for="p in list" :key="p.id"
-             class="bg-rcard border border-rline rounded-2xl p-4 flex flex-col cursor-pointer hover:border-[#4a4a68] transition"
-             @click="openProduct(p.id)">
-          <div class="w-11 h-11 rounded-xl bg-[#303044] border border-rline flex items-center justify-center overflow-hidden mb-3">
-            <img v-if="imgOf(p)" :src="imgOf(p)" class="w-full h-full object-cover" :alt="p.name">
-            <span v-else class="text-lg">{{ catIcon(p.category) }}</span>
-          </div>
-          <div class="text-[14px] font-bold text-white leading-snug clamp2" style="min-height:2.5em">{{ p.name }}</div>
-          <div class="text-xs text-rmuted mt-1">{{ denomOf(p) }}</div>
-          <div class="border-t border-rline mt-3 pt-3 flex items-center justify-between mt-auto">
-            <span class="text-[15px] font-extrabold text-white">{{ rp(finalPrice(p)) }}</span>
-            <button @click.stop="quickAdd(p)" :disabled="p.stock < 1"
-                    class="w-9 h-9 rounded-xl bg-rlav/90 hover:bg-rlav text-white text-xl font-medium flex items-center justify-center disabled:opacity-30 transition"
-                    title="Tambah ke keranjang">+</button>
-          </div>
-        </div>
-        <div v-if="!list.length" class="col-span-full text-center py-14">
-          <div class="text-5xl mb-3">🔍</div>
-          <p class="text-sm text-rmuted mb-1">Produk tidak ditemukan 😢</p>
-          <p class="text-xs text-rmuted/70 mb-4">Coba kata kunci lain atau lihat semua produk</p>
-          <button @click="f.q=''; f.cat='all'; f.tag=''" class="bg-rlav text-white text-sm font-semibold rounded-xl px-6 py-2.5">Lihat Semua Produk</button>
-        </div>
-      </div>
+      <button @click="go('track')" class="bg-white text-indigo-600 text-xs font-bold rounded-xl px-4 py-2.5 shrink-0">Lacak 🔍</button>
     </section>
-
-    <!-- Flash sale (dipertahankan, restyle) -->
+    <!-- Flash sale -->
     <section v-if="flash.length">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-bold text-white">⚡ Flash Sale</h2>
-        <span v-if="countdown" class="text-xs font-mono font-bold bg-rcard border border-rline text-white px-2.5 py-1 rounded-lg">⏰ {{ countdown }}</span>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xl">⚡</span>
+        <h2 class="font-extrabold text-base">Flash Sale</h2>
+        <span class="text-xs bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-300 font-bold px-2 py-0.5 rounded-full">Diskon!</span>
+        <span v-if="countdown" class="ml-auto text-xs font-mono font-bold bg-gray-900 dark:bg-gray-700 text-white px-2.5 py-1 rounded-lg">⏰ {{ countdown }}</span>
       </div>
-      <div class="flex gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-5 px-5">
+      <div class="flex gap-3 overflow-x-auto styled-scroll pb-2 -mx-4 px-4">
         <div v-for="p in flash" :key="p.id" @click="openProduct(p.id)"
-             class="bg-rcard border border-rline rounded-2xl p-4 flex-shrink-0 w-40 cursor-pointer">
-          <div class="text-[13px] font-bold text-white leading-snug clamp2" style="min-height:2.4em">{{ p.name }}</div>
-          <div class="mt-2"><span class="text-[15px] font-extrabold text-white">{{ rp(finalPrice(p)) }}</span>
-            <span class="text-[11px] text-rmuted line-through ml-1.5">{{ rp(p.price) }}</span></div>
-          <div class="text-[10px] font-bold text-red-400 mt-1">-{{ Math.round(p.discount) }}%</div>
+             class="flex-shrink-0 w-32 sm:w-36 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md flex flex-col">
+          <blur-img :src="imgOf(p)" cls="aspect-square" :alt="p.name"></blur-img>
+          <div class="p-2 flex flex-col flex-1">
+            <div class="text-xs font-medium clamp2" style="min-height:2.4em">{{ p.name }}</div>
+            <div class="mt-1"><span class="text-accent font-extrabold text-sm">{{ rp(finalPrice(p)) }}</span>
+              <span v-if="p.discount > 0" class="text-[10px] text-gray-400 line-through ml-1">{{ rp(p.price) }}</span></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Testimoni (dipertahankan, restyle) -->
-    <section v-if="testimonials.length">
-      <h2 class="text-lg font-bold text-white mb-3">⭐ Kata Mereka</h2>
-      <div class="flex gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-5 px-5">
-        <div v-for="(t, i) in testimonials" :key="i" class="bg-rcard border border-rline rounded-2xl p-4 flex-shrink-0 w-64">
-          <div class="text-amber-400 text-sm mb-1.5">{{ '★'.repeat(t.rating) }}<span class="text-[#4a4a68]">{{ '★'.repeat(5 - t.rating) }}</span></div>
-          <p class="text-xs text-slate-300 leading-relaxed clamp2" style="min-height:2.6em">"{{ t.comment }}"</p>
-          <div class="mt-2.5 pt-2.5 border-t border-rline">
-            <div class="text-xs font-bold text-white">{{ t.user_name }}</div>
-            <div class="text-[10px] text-rmuted">beli {{ t.product_name }}</div>
+    <!-- Filter chips -->
+    <div class="flex gap-2 overflow-x-auto styled-scroll pb-1 -mx-4 px-4">
+      <button @click="setCat('all')" :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', !f.cat || f.cat==='all' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700']">Semua</button>
+      <button v-for="c in store.cats" :key="c.id" @click="setCat(c.id)"
+              :class="['text-xs px-3 py-1.5 rounded-full font-semibold whitespace-nowrap', f.cat===c.id ? 'bg-primary text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700']">{{ c.icon }} {{ c.label }}</button>
+      <button v-for="t in tags" :key="t" @click="setTag(t)"
+              :class="['text-xs px-3 py-1.5 rounded-full whitespace-nowrap', f.tag===t ? 'bg-indigo-100 text-primary border border-primary' : 'bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300']">#{{ t }}</button>
+    </div>
+
+    <!-- Sort + count -->
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-gray-500 dark:text-gray-400">{{ list.length }} produk</span>
+      <select v-model="f.sort" class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 bg-white dark:bg-gray-900 outline-none">
+        <option value="pop">Populer</option>
+        <option value="murah">Termurah</option>
+        <option value="mahal">Termahal</option>
+        <option value="rating">Rating</option>
+      </select>
+    </div>
+
+    <!-- Grid produk -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div v-for="p in list" :key="p.id" @click="openProduct(p.id)"
+           class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
+        <div class="relative aspect-square">
+          <blur-img :src="imgOf(p)" cls="w-full h-full" :alt="p.name"></blur-img>
+          <span class="absolute top-2 left-2 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: catColor(p.category) }">{{ catLabel(p.category) }}</span>
+          <button @click.stop="toggleWish(p.id)" :class="['absolute top-2 right-2 w-7 h-7 rounded-full shadow text-sm flex items-center justify-center', isWished(p.id) ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-800/90 text-gray-400']" :title="isWished(p.id) ? 'Hapus dari wishlist' : 'Tambah ke wishlist'">{{ isWished(p.id) ? '❤️' : '🤍' }}</button>
+          <span v-if="(p.images||[]).length > 1" class="absolute bottom-2 right-2 text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full">📷 {{ p.images.length }}</span>
+        </div>
+        <div class="p-2.5 flex flex-col flex-1">
+          <div class="text-[13px] font-medium leading-snug clamp2">{{ p.name }}</div>
+          <div class="text-[10px] text-gray-400 dark:text-gray-300 mt-0.5">{{ catLabel(p.category) || '' }}</div>
+          <div class="flex items-center justify-between mt-auto pt-1.5">
+            <div><span class="text-accent font-extrabold text-sm">{{ rp(finalPrice(p)) }}</span>
+              <span v-if="p.discount > 0" class="text-[10px] text-gray-400 line-through ml-1">{{ rp(p.price) }}</span></div>
+            <span v-if="p.discount > 0" class="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded">-{{ Math.round(p.discount) }}%</span>
+          </div>
+          <div class="flex items-center justify-between mt-0.5">
+            <div class="text-[10px] text-gray-400 dark:text-gray-300">{{ p.sold_count ? p.sold_count + ' Terjual' : 'Baru' }}</div>
+            <div class="text-[10px] text-gray-500 dark:text-gray-300">⭐ <b class="text-gray-700 dark:text-gray-200">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
+          </div>
+          <button @click.stop="buyNow(p.id)" :disabled="p.stock < 1"
+                  class="mt-2 w-full text-[11px] font-bold bg-primary text-white rounded-xl py-1.5 hover:bg-indigo-700 disabled:opacity-40">🛒 Beli</button>
+        </div>
+      </div>
+      <div v-if="!list.length" class="col-span-full text-center py-14">
+        <div class="text-5xl mb-3">🔍</div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Produk tidak ditemukan 😢</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">Coba kata kunci lain atau lihat semua produk</p>
+        <button @click="f.q=''; f.cat='all'; f.tag=''" class="bg-primary text-white text-sm font-bold rounded-xl px-6 py-2.5">Lihat Semua Produk</button>
+      </div>
+    </div>
+    <!-- Testimoni pembeli -->
+    <section v-if="testimonials.length" class="mt-8">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xl">⭐</span>
+        <h2 class="font-extrabold text-base">Kata Mereka</h2>
+        <span class="text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold px-2 py-0.5 rounded-full">Testimoni asli</span>
+      </div>
+      <div class="flex gap-3 overflow-x-auto styled-scroll pb-2 -mx-4 px-4">
+        <div v-for="(t, i) in testimonials" :key="i" class="flex-shrink-0 w-64 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl p-4">
+          <div class="text-amber-400 text-sm mb-1.5">{{ '★'.repeat(t.rating) }}<span class="text-gray-300 dark:text-gray-600">{{ '★'.repeat(5 - t.rating) }}</span></div>
+          <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed clamp2" style="min-height:2.6em">"{{ t.comment }}"</p>
+          <div class="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-gray-800">
+            <div class="text-xs font-bold">{{ t.user_name }}</div>
+            <div class="text-[10px] text-gray-400">beli {{ t.product_name }}</div>
           </div>
         </div>
       </div>

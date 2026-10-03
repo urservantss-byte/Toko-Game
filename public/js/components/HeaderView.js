@@ -1,6 +1,6 @@
-/* Header + navigasi ala referensi GAME TOPUP */
+/* Header + navigasi */
 const HeaderView = {
-  data: () => ({ q: '', searchT: null, menuOpen: false, searchOpen: false }),
+  data: () => ({ q: '', searchT: null, menuOpen: false }),
   computed: {
     user: () => store.user,
     count: () => cartCount.value,
@@ -11,81 +11,59 @@ const HeaderView = {
       clearTimeout(this.searchT);
       this.searchT = setTimeout(() => { store.f.q = this.q; }, 250);
     },
-    goHome() { this.q = ''; store.f.q = ''; this.searchOpen = false; go('home'); },
-    toggleSearch() {
-      this.searchOpen = !this.searchOpen;
-      if (this.searchOpen) this.$nextTick(() => this.$refs.searchInput && this.$refs.searchInput.focus());
-      else { this.q = ''; store.f.q = ''; }
-    },
-    goCategories() {
-      go('home');
-      this.$nextTick(() => {
-        const el = document.getElementById('home-categories');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-    },
-    goProfile() {
-      if (this.user) go('settings');
-      else go('login');
-    },
+    goHome() { this.q = ''; store.f.q = ''; go('home'); },
     userBtn() {
       if (!store.user) { go('login'); return; }
       this.menuOpen = !this.menuOpen;
     },
-    navCls(p) {
-      const active = this.page === p;
-      return active ? 'text-rlav' : 'text-rmuted';
-    },
+    toggleDark() { toggleTheme(); this.$forceUpdate(); },
+    isDark() { return typeof document !== 'undefined' && document.documentElement.classList.contains('dark'); },
   },
   template: `
   <div>
-  <header class="sticky top-0 z-40 bg-rbg/95 backdrop-blur">
-    <div class="max-w-6xl mx-auto px-5">
-      <div class="flex items-center justify-between h-16">
-        <a @click="goHome" class="cursor-pointer">
-          <span class="text-[15px] font-semibold tracking-[0.25em] text-rmuted">{{ (store.siteName || 'GAME TOPUP').toUpperCase() }}</span>
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-100 dark:border-gray-800">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex items-center gap-3 h-16">
+        <a @click="goHome" class="cursor-pointer flex items-center gap-2 shrink-0">
+          <span class="text-2xl">🎮</span>
+          <span class="font-extrabold text-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent hidden sm:block">{{ store.siteName }}</span>
         </a>
-        <div class="flex items-center gap-5">
-          <button @click="toggleSearch" class="text-rmuted hover:text-white transition" title="Cari">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          </button>
-          <button @click="go('cart')" class="relative text-rmuted hover:text-white transition" title="Keranjang">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h15l-1.5 9h-12z"/><path d="M6 7l-1-4H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
-            <span v-if="count" class="absolute -top-1.5 -right-1.5 bg-rlav text-white text-[10px] font-bold min-w-[17px] h-[17px] rounded-full flex items-center justify-center px-1">{{ count }}</span>
-          </button>
+        <div class="flex-1 min-w-0 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2">
+          <span class="text-gray-400">🔍</span>
+          <input v-model="q" @input="onSearch" placeholder="Cari diamond, akun, voucher..."
+                 class="flex-1 min-w-0 bg-transparent outline-none text-sm dark:placeholder-gray-500">
         </div>
-      </div>
-      <div v-if="searchOpen" class="pb-3">
-        <div class="flex items-center gap-2 bg-rcard border border-rline rounded-full px-4 py-2.5">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a9ab5" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input ref="searchInput" v-model="q" @input="onSearch" placeholder="Cari diamond, akun, voucher..."
-                 class="flex-1 min-w-0 bg-transparent outline-none text-sm text-white placeholder-rmuted">
-          <button @click="toggleSearch" class="text-rmuted text-lg leading-none">✕</button>
+        <button @click="toggleDark" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-lg leading-none" :title="isDark() ? 'Mode terang' : 'Mode gelap'">{{ isDark() ? '☀️' : '🌙' }}</button>
+        <button v-if="user" @click="go('cart')" class="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+          <span class="text-xl">🛒</span>
+          <span v-if="count" class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">{{ count }}</span>
+        </button>
+        <div class="relative">
+          <button @click="userBtn" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+            <img v-if="user && user.avatar" :src="user.avatar" class="w-8 h-8 rounded-full object-cover">
+            <span v-else class="text-xl block w-8 h-8 leading-8 text-center">👤</span>
+          </button>
+          <div v-if="menuOpen && user" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 py-2 z-50">
+            <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
+              <p class="font-semibold text-sm truncate">{{ user.name }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+            </div>
+            <a @click="menuOpen=false; go('orders')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">📦 Pesananku</a>
+            <a @click="menuOpen=false; go('wishlist')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">❤️ Wishlist</a>
+            <a @click="menuOpen=false; go('tickets')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">🎫 Bantuan</a>
+            <a @click="menuOpen=false; go('settings')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">⚙️ Pengaturan</a>
+            <a v-if="user.role==='admin'" @click="menuOpen=false; go('admin')" class="cursor-pointer block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">🛠️ Admin Panel</a>
+            <a @click="menuOpen=false; logout()" class="cursor-pointer block px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800">🚪 Keluar</a>
+          </div>
         </div>
       </div>
     </div>
   </header>
-  <!-- Bottom nav floating ala referensi -->
-  <nav class="md:hidden fixed bottom-4 left-4 right-4 z-40">
-    <div class="bg-rcard border border-rline rounded-3xl shadow-2xl">
-      <div class="grid grid-cols-4 text-center py-2.5">
-        <a @click="goHome" class="cursor-pointer flex flex-col items-center gap-1 py-1" :class="navCls('home')">
-          <svg width="22" height="22" viewBox="0 0 24 24" :fill="page==='home' ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/></svg>
-          <span class="text-[11px] font-semibold">Home</span>
-        </a>
-        <a @click="goCategories" class="cursor-pointer flex flex-col items-center gap-1 py-1 text-rmuted">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2.4 7.2H22l-6 4.4 2.3 7.2-6.3-4.6-6.3 4.6L8 13.6 2 9.2h7.6z"/></svg>
-          <span class="text-[11px] font-semibold">Categories</span>
-        </a>
-        <a @click="go('cart')" class="cursor-pointer flex flex-col items-center gap-1 py-1" :class="navCls('cart')">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h15l-1.5 9h-12z"/><path d="M6 7l-1-4H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
-          <span class="text-[11px] font-semibold">Cart</span>
-        </a>
-        <a @click="goProfile" class="cursor-pointer flex flex-col items-center gap-1 py-1" :class="navCls('settings')">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
-          <span class="text-[11px] font-semibold">Profile</span>
-        </a>
-      </div>
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 z-40">
+    <div class="grid text-center text-[11px] font-medium text-gray-600 dark:text-gray-400" :class="user ? 'grid-cols-3' : 'grid-cols-2'">
+      <a @click="goHome" class="cursor-pointer py-2.5 flex flex-col items-center gap-0.5" :class="{ 'text-violet-600': page==='home' }"><span class="text-lg">🏠</span>Beranda</a>
+      <a v-if="user" @click="go('cart')" class="cursor-pointer py-2.5 flex flex-col items-center gap-0.5" :class="{ 'text-violet-600': page==='cart' }"><span class="text-lg">🛒</span>Keranjang</a>
+      <a @click="user ? go('orders') : go('login')" class="cursor-pointer py-2.5 flex flex-col items-center gap-0.5" :class="{ 'text-violet-600': page==='orders' }"><span class="text-lg">📦</span>Pesanan</a>
     </div>
   </nav>
   </div>`

@@ -37,17 +37,17 @@ const app = Vue.createApp({
       <admin-view v-if="page === 'admin'"></admin-view>
       <track-view v-if="page === 'track'"></track-view>
     </main>
-    <footer class="max-w-6xl mx-auto px-5 py-8 pb-28 md:pb-8 text-center text-xs text-rmuted">
-      <div class="border-t border-rline pt-6">🎮 {{ store.siteName }} — Akun, Voucher & Topup Digital · Pembayaran aman · Proses kilat</div>
+    <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
+      <div class="border-t dark:border-gray-800 pt-6">🎮 {{ store.siteName }} — Akun, Voucher & Topup Digital · Pembayaran aman · Proses kilat</div>
       <!-- Strip metode pembayaran + badge keamanan -->
       <div class="flex flex-wrap items-center justify-center gap-1.5 mt-4">
-        <span v-for="m in payOpts" :key="m.id" class="px-2.5 py-1 rounded-lg bg-rcard border border-rline text-[10px] font-bold text-rmuted">{{ m.label }}</span>
-        <span class="px-2.5 py-1 rounded-lg bg-green-500/10 text-[10px] font-bold text-green-400 border border-green-500/20">🔒 100% Aman</span>
+        <span v-for="m in payOpts" :key="m.id" class="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{{ m.label }}</span>
+        <span class="px-2.5 py-1 rounded-lg bg-green-50 dark:bg-green-900/20 text-[10px] font-bold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">🔒 100% Aman</span>
       </div>
       <div class="mt-3 flex items-center justify-center gap-4">
-        <a @click="goTrack" class="cursor-pointer text-rlav font-semibold hover:underline">🔍 Lacak Pesanan</a>
-        <span class="text-rline">|</span>
-        <a @click="go('faq')" class="cursor-pointer text-rlav font-semibold hover:underline">❓ Cara Beli & FAQ</a>
+        <a @click="goTrack" class="cursor-pointer text-primary font-semibold hover:underline">🔍 Lacak Pesanan</a>
+        <span class="text-gray-300 dark:text-gray-700">|</span>
+        <a @click="go('faq')" class="cursor-pointer text-primary font-semibold hover:underline">❓ Cara Beli & FAQ</a>
       </div>
     </footer>
     <a v-if="waCs" :href="waLink()" target="_blank"
