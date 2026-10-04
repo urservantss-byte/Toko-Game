@@ -71,7 +71,7 @@ const ProductModal = {
   template: `
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="close">
     <div class="absolute inset-0 bg-black/50" @click="close"></div>
-    <div class="relative bg-white dark:bg-gray-900 w-full max-w-md sm:max-w-lg rounded-3xl max-h-[86vh] overflow-y-auto overscroll-contain">
+    <div class="nv-modal relative bg-white dark:bg-nova-surface w-full max-w-md sm:max-w-lg max-h-[86vh] overflow-y-auto overscroll-contain">
       <div v-if="store.productLoading" class="p-5 space-y-4">
         <div class="skel w-full aspect-[4/3]" style="border-radius:1rem"></div>
         <div class="skel h-6 w-3/4"></div>
@@ -80,22 +80,22 @@ const ProductModal = {
         <div class="skel h-10 w-full" style="border-radius:.75rem"></div>
       </div>
       <div v-else class="p-5">
-        <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+        <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-nova-surface2">
           <div @click="zoom = true" class="cursor-zoom-in">
             <blur-img :src="imgs[idx] && imgs[idx].url" cls="w-full aspect-[4/3]" fit="contain" :alt="p.name" :eager="true" :key="idx"></blur-img>
           </div>
           <span class="absolute bottom-3 right-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium">{{ idx + 1 }}/{{ imgs.length }}</span>
           <span class="absolute bottom-3 left-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium pointer-events-none">🔍 ketuk untuk perbesar</span>
           <template v-if="imgs.length > 1">
-            <button @click="gal(idx - 1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">‹</button>
-            <button @click="gal(idx + 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-gray-900/90 rounded-full shadow font-bold">›</button>
+            <button @click="gal(idx - 1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-nova-surface/90 rounded-full shadow font-bold">‹</button>
+            <button @click="gal(idx + 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-nova-surface/90 rounded-full shadow font-bold">›</button>
           </template>
           <button @click="close" class="absolute top-2 right-2 w-8 h-8 bg-white/90 dark:bg-gray-700/90 hover:dark:bg-gray-600 rounded-full shadow text-gray-600 dark:text-white">✕</button>
           <button @click="toggleWish" :class="['absolute top-2 left-2 w-8 h-8 rounded-full shadow text-lg', wished ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-700/90 text-gray-400']" :title="wished ? 'Hapus dari wishlist' : 'Tambah ke wishlist'">{{ wished ? '❤️' : '🤍' }}</button>
         </div>
         <div v-if="imgs.length > 1" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
           <img v-for="(im, j) in imgs" :key="j" :src="im.url" loading="lazy" @click="idx = j"
-               :class="['w-16 h-16 object-cover rounded-xl cursor-pointer bg-gray-100 dark:bg-gray-800 shrink-0', j === idx ? 'ring-2 ring-primary' : '']">
+               :class="['w-16 h-16 object-cover rounded-xl cursor-pointer bg-gray-100 dark:bg-nova-surface2 shrink-0', j === idx ? 'ring-2 ring-primary' : '']">
         </div>
         <div class="mt-4">
           <span class="text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: catColor(p.category) }">{{ catLabel(p.category) }}</span>
@@ -115,7 +115,7 @@ const ProductModal = {
             <div class="flex flex-wrap gap-2">
               <button v-for="v in variants" :key="v.id" @click="pickVariant(v)" :disabled="v.stock < 1"
                 :class="['px-3.5 py-2 rounded-xl text-xs font-bold border-2 transition disabled:opacity-40',
-                  selVariant && selVariant.id === v.id ? 'border-primary bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300']">
+                  selVariant && selVariant.id === v.id ? 'border-primary bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300' : 'border-gray-200 dark:border-nova-line text-gray-600 dark:text-gray-300']">
                 {{ v.label }}<span class="block font-normal text-[10px] mt-0.5">{{ rp(finalPrice({ price: v.price, discount: p.discount })) }}</span>
               </button>
             </div>
@@ -127,13 +127,13 @@ const ProductModal = {
           <div :class="['text-xs mt-3 font-medium', curStock > 0 ? 'text-emerald-600' : 'text-red-500']">
             {{ curStock > 0 ? 'Stok tersedia: ' + curStock : 'Stok habis' }}
           </div>
-          <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div class="mt-5 pt-4 border-t border-gray-100 dark:border-nova-line">
             <div class="flex items-center justify-between mb-3">
               <h4 class="font-bold text-sm">💬 Ulasan Pembeli</h4>
               <button @click="openReview" class="text-xs font-semibold text-primary">+ Tulis ulasan</button>
             </div>
             <div class="space-y-3 text-sm">
-              <div v-for="r in reviews" :key="r.id" class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+              <div v-for="r in reviews" :key="r.id" class="bg-gray-50 dark:bg-nova-surface2 rounded-xl p-3">
                 <div class="flex items-center justify-between">
                   <span class="font-semibold text-xs">{{ r.user_name }}</span>
                   <span class="text-[10px] text-gray-400">{{ (r.created_at || '').slice(0, 10) }}</span>
@@ -141,7 +141,7 @@ const ProductModal = {
                 <div class="mt-1"><stars :value="r.rating"></stars></div>
                 <p v-if="r.comment" class="text-xs text-gray-600 dark:text-gray-400 mt-1.5 leading-relaxed">{{ r.comment }}</p>
               </div>
-              <div v-if="!reviews.length" class="text-gray-400 text-xs bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-center">Belum ada ulasan untuk produk ini.</div>
+              <div v-if="!reviews.length" class="text-gray-400 text-xs bg-gray-50 dark:bg-nova-surface2 rounded-xl p-4 text-center">Belum ada ulasan untuk produk ini.</div>
             </div>
           </div>
           <div class="flex gap-2 mt-4">
@@ -190,7 +190,7 @@ const ReviewModal = {
   template: `
   <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="close">
     <div class="absolute inset-0 bg-black/50" @click="close"></div>
-    <div class="relative bg-white dark:bg-gray-900 rounded-3xl p-6 w-full max-w-sm">
+    <div class="nv-modal relative bg-white dark:bg-nova-surface p-6 w-full max-w-sm">
       <h3 class="font-extrabold text-lg mb-1">⭐ Tulis Ulasan</h3>
       <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Ceritakan pengalamanmu dengan produk ini</p>
       <div class="flex gap-1.5 justify-center text-3xl mb-4">
@@ -200,7 +200,7 @@ const ReviewModal = {
       <textarea v-model="store.reviewComment" rows="3" placeholder="Ulasanmu (opsional)..."
                 class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-violet-200 dark:ring-violet-800"></textarea>
       <div class="flex gap-2 mt-4">
-        <button @click="close" class="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl py-2.5 text-sm font-semibold">Batal</button>
+        <button @click="close" class="flex-1 border border-gray-200 dark:border-nova-line rounded-xl py-2.5 text-sm font-semibold">Batal</button>
         <button @click="submit" class="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-bold">Kirim Ulasan</button>
       </div>
     </div>

@@ -80,7 +80,7 @@ const AdminSettings = {
   },
   template: `
   <div class="space-y-4">
-    <div class="bg-white dark:bg-gray-900 border rounded-2xl p-4">
+    <div class="bg-white dark:bg-nova-surface border rounded-2xl p-4">
       <h3 class="font-bold text-sm mb-3">🏪 Profil Toko</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
         <div>
@@ -111,11 +111,11 @@ const AdminSettings = {
       </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-900 border rounded-2xl p-4">
+    <div class="bg-white dark:bg-nova-surface border rounded-2xl p-4">
       <h3 class="font-bold text-sm mb-1">🗂️ Kategori Produk</h3>
       <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Kategori tampil sebagai filter di beranda & pilihan saat tambah produk.</p>
       <div class="space-y-2 mb-3">
-        <div v-for="c in cats" :key="c.id" class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">
+        <div v-for="c in cats" :key="c.id" class="flex items-center gap-2 bg-gray-50 dark:bg-nova-surface2 rounded-xl px-3 py-2">
           <button @click="toggleCat(c)" :class="['w-10 h-6 rounded-full relative transition-colors shrink-0', c.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700']">
             <span :class="['absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all', c.active ? 'left-[18px]' : 'left-0.5']"></span>
           </button>
@@ -126,7 +126,7 @@ const AdminSettings = {
           <button @click="delCat(c)" class="text-xs text-red-500 font-bold px-2 py-1">🗑️</button>
         </div>
       </div>
-      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+      <div class="bg-gray-50 dark:bg-nova-surface2 rounded-xl p-3">
         <div class="text-xs font-bold mb-2">{{ catEdit ? '✏️ Ubah kategori' : '➕ Tambah kategori baru' }}</div>
         <div class="flex gap-2">
           <input v-model="catForm.icon" placeholder="📦" class="w-14 border rounded-xl px-3 py-2 text-sm text-center outline-none focus:border-primary">

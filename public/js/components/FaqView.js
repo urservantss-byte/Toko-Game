@@ -11,22 +11,22 @@ const FaqView = {
 
     <!-- Cara beli bergambar -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-      <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
+      <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 text-center">
         <div class="text-4xl mb-2">🛍️</div>
         <div class="text-xs font-bold mb-1">1. Pilih Produk</div>
         <div class="text-[11px] text-gray-500 dark:text-gray-400">Cari voucher / topup favoritmu di katalog</div>
       </div>
-      <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
+      <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 text-center">
         <div class="text-4xl mb-2">💳</div>
         <div class="text-xs font-bold mb-1">2. Bayar</div>
         <div class="text-[11px] text-gray-500 dark:text-gray-400">Scan QRIS atau transfer, lalu upload bukti</div>
       </div>
-      <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
+      <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 text-center">
         <div class="text-4xl mb-2">⚡</div>
         <div class="text-xs font-bold mb-1">3. Diproses</div>
         <div class="text-[11px] text-gray-500 dark:text-gray-400">Admin verifikasi & kirim pesananmu</div>
       </div>
-      <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
+      <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 text-center">
         <div class="text-4xl mb-2">🎉</div>
         <div class="text-xs font-bold mb-1">4. Selesai</div>
         <div class="text-[11px] text-gray-500 dark:text-gray-400">Kode / akun dikirim, kasih ulasan ya!</div>
@@ -36,7 +36,7 @@ const FaqView = {
     <!-- FAQ accordion -->
     <h3 class="font-bold mb-3">Pertanyaan Umum</h3>
     <div class="space-y-2 mb-8">
-      <div v-for="(f, i) in faqs" :key="i" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
+      <div v-for="(f, i) in faqs" :key="i" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl overflow-hidden">
         <button @click="toggle(i)" class="w-full text-left px-4 py-3.5 text-sm font-semibold flex justify-between items-center">
           {{ f.q }}<span class="text-gray-400">{{ open === i ? '▲' : '▼' }}</span>
         </button>

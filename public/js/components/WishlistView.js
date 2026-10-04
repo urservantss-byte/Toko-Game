@@ -26,7 +26,7 @@ const WishlistView = {
   <div class="max-w-6xl mx-auto px-4 py-4">
     <h2 class="text-xl font-bold mb-4">❤️ Wishlist Saya</h2>
     <div v-if="loading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
-      <div v-for="i in 6" :key="'wsk'+i" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+      <div v-for="i in 6" :key="'wsk'+i" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl overflow-hidden">
         <div class="skel aspect-square" style="border-radius:0"></div>
         <div class="p-2.5 space-y-2"><div class="skel h-3.5 w-full"></div><div class="skel h-4 w-1/2"></div></div>
       </div>
@@ -39,7 +39,7 @@ const WishlistView = {
     </div>
     <div v-else class="grid grid-cols-2 md:grid-cols-3 gap-3">
       <div v-for="p in items" :key="p.id" @click="openProduct(p.id)"
-           class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
+           class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition flex flex-col">
         <div class="relative aspect-square">
           <blur-img :src="imgOf(p)" cls="w-full h-full" :alt="p.name"></blur-img>
           <button @click.stop="remove(p.id)" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500 text-white shadow text-sm flex items-center justify-center" title="Hapus dari wishlist">✕</button>

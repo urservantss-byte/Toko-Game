@@ -7,7 +7,7 @@ const BlurImg = {
       <img v-if="src && !err" :src="src" :alt="alt" :loading="eager ? 'eager' : 'lazy'"
            @load="loaded = true" @error="err = true; loaded = true"
            :class="[{ loaded }, fit === 'contain' ? 'object-contain' : 'object-cover']" class="w-full h-full">
-      <div v-else class="w-full h-full flex items-center justify-center text-3xl bg-gray-100 dark:bg-gray-800">🎮</div>
+      <div v-else class="w-full h-full flex items-center justify-center text-3xl bg-gray-100 dark:bg-nova-surface2">🎮</div>
     </div>`
 };
 
@@ -26,7 +26,7 @@ const StatusBadge = {
   props: { status: String },
   computed: {
     lbl() { return STLBL[this.status] || this.status; },
-    cls() { return STCOLOR[this.status] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'; }
+    cls() { return STCOLOR[this.status] || 'bg-gray-100 dark:bg-nova-surface2 text-gray-600 dark:text-gray-400'; }
   },
   template: `<span :class="['text-xs font-semibold px-2.5 py-1 rounded-full', cls]">{{ lbl }}</span>`
 };

@@ -79,14 +79,14 @@ const AdminProducts = {
       <button @click="bulkStock('add')" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-700">+ Tambah</button>
       <button @click="sel = []; bulkVal = ''" class="text-xs text-gray-500 dark:text-gray-400 font-semibold hover:underline ml-auto">Batal</button>
     </div>
-    <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-x-auto shadow-sm">
+    <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl overflow-x-auto shadow-sm">
       <table class="w-full text-sm">
-        <thead><tr class="text-left text-gray-400 border-b dark:border-gray-800 text-xs uppercase">
+        <thead><tr class="text-left text-gray-400 border-b dark:border-nova-line text-xs uppercase">
           <th class="p-3 w-10"><input type="checkbox" :checked="allChecked" @change="toggleAll($event.target.checked)" class="w-4 h-4 accent-indigo-600 cursor-pointer"></th>
           <th class="p-3">Produk</th><th class="p-3">Foto</th><th class="p-3">Kategori</th><th class="p-3">Harga</th><th class="p-3">Stok</th><th class="p-3">Aksi</th>
         </tr></thead>
         <tbody>
-          <tr v-for="p in products" :key="p.id" :class="['border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800', p.stock < 5 ? 'bg-red-50/50 dark:bg-red-500/10' : '']">
+          <tr v-for="p in products" :key="p.id" :class="['border-b last:border-0 hover:bg-gray-50 dark:hover:bg-nova-surface2', p.stock < 5 ? 'bg-red-50/50 dark:bg-red-500/10' : '']">
             <td class="p-3"><input type="checkbox" :value="p.id" v-model="sel" class="w-4 h-4 accent-indigo-600 cursor-pointer"></td>
             <td class="p-3 font-medium">{{ p.name }}<div v-if="p.stock < 5" class="text-[10px] text-red-500 font-bold mt-0.5">⚠️ Stok rendah!</div></td>
             <td class="p-3"><span class="text-xs bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300 px-2 py-1 rounded-full font-bold">{{ (p.images || []).length }} foto</span></td>
@@ -108,7 +108,7 @@ const AdminProducts = {
     <product-form-modal @saved="load"></product-form-modal>
     <!-- Modal stok kode voucher -->
     <div v-if="codesModal" class="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4" @click.self="codesModal = null">
-      <div class="bg-white dark:bg-gray-900 rounded-3xl p-5 max-w-md w-full max-h-[85vh] overflow-y-auto">
+      <div class="bg-white dark:bg-nova-surface rounded-3xl p-5 max-w-md w-full max-h-[85vh] overflow-y-auto">
         <h3 class="font-bold mb-1">🎫 Stok Kode: {{ codesModal.name }}</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Kode otomatis terkirim saat admin delivery. Satu kode per qty.</p>
         <textarea v-model="codesInput" rows="4" placeholder="Tempel kode, satu per baris"
@@ -116,13 +116,13 @@ const AdminProducts = {
         <button @click="addCodes" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Tambah Kode</button>
         <span class="text-xs ml-2" :class="codesMsg.includes('✓') ? 'text-green-600' : 'text-red-500'">{{ codesMsg }}</span>
         <div class="mt-3 space-y-1.5 max-h-56 overflow-y-auto">
-          <div v-for="c in codes" :key="c.id" class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2 text-xs font-mono">
+          <div v-for="c in codes" :key="c.id" class="flex items-center justify-between bg-gray-50 dark:bg-nova-surface2 rounded-xl px-3 py-2 text-xs font-mono">
             <span :class="c.used ? 'line-through text-gray-400' : ''">{{ c.used ? '•••••• (terpakai #' + c.order_id + ')' : c.code }}</span>
             <button v-if="!c.used" @click="delCode(c.id)" class="text-red-500 font-bold">✕</button>
           </div>
           <p v-if="!codes.length" class="text-xs text-gray-400 text-center py-3">Belum ada stok kode</p>
         </div>
-        <button @click="codesModal = null" class="mt-4 w-full bg-gray-100 dark:bg-gray-800 font-bold text-sm rounded-xl py-2.5">Tutup</button>
+        <button @click="codesModal = null" class="mt-4 w-full bg-gray-100 dark:bg-nova-surface2 font-bold text-sm rounded-xl py-2.5">Tutup</button>
       </div>
     </div>
   </div>`
@@ -261,7 +261,7 @@ const ProductFormModal = {
   template: `
   <div v-if="show" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="close">
     <div class="absolute inset-0 bg-black/50" @click="close"></div>
-    <div class="relative bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto p-5">
+    <div class="relative bg-white dark:bg-nova-surface w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto p-5">
       <h3 class="font-bold text-lg mb-4">{{ pid ? '✏️ Edit' : '➕ Tambah' }} Produk</h3>
       <div class="space-y-3 text-sm">
         <input v-model="form.name" placeholder="Nama produk" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
@@ -291,15 +291,15 @@ const ProductFormModal = {
             <div class="text-sm text-gray-500 dark:text-gray-400">Klik atau seret foto ke sini<br><span class="text-xs text-gray-400">Maks 10 foto • 1MB per foto • jpg/png/webp/gif</span></div>
           </div>
           <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-3">
-            <div v-for="im in existing" :key="'e' + im.id" class="relative group rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-square">
+            <div v-for="im in existing" :key="'e' + im.id" class="relative group rounded-xl overflow-hidden bg-gray-100 dark:bg-nova-surface2 aspect-square">
               <img :src="im.url" class="w-full h-full object-cover">
               <span v-if="im.sort_order === 0" class="absolute top-1 left-1 text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full font-bold">Utama</span>
               <div class="absolute inset-x-0 bottom-0 flex justify-center gap-1 p-1 bg-black/40 opacity-0 group-hover:opacity-100 transition">
-                <button v-if="im.sort_order !== 0" @click="setMain(im.id)" class="text-[10px] bg-white dark:bg-gray-900 rounded px-1.5 py-0.5">Utama</button>
+                <button v-if="im.sort_order !== 0" @click="setMain(im.id)" class="text-[10px] bg-white dark:bg-nova-surface rounded px-1.5 py-0.5">Utama</button>
                 <button @click="delPhoto(im.id)" class="text-[10px] bg-red-500 text-white rounded px-1.5 py-0.5">Hapus</button>
               </div>
             </div>
-            <div v-for="(f, i) in pending" :key="'p' + i" class="relative rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-square">
+            <div v-for="(f, i) in pending" :key="'p' + i" class="relative rounded-xl overflow-hidden bg-gray-100 dark:bg-nova-surface2 aspect-square">
               <img :src="preview(f)" class="w-full h-full object-cover">
               <span class="absolute top-1 left-1 text-[9px] bg-amber-400 text-white px-1.5 py-0.5 rounded-full font-bold">Baru</span>
               <button @click="rmPending(i)" class="absolute bottom-1 right-1 text-[10px] bg-red-500 text-white rounded px-1.5 py-0.5">Hapus</button>
@@ -326,7 +326,7 @@ const ProductFormModal = {
         </div>
       </div>
       <div class="flex gap-2 mt-5">
-        <button @click="close" class="flex-1 border-2 border-gray-200 dark:border-gray-700 rounded-xl py-2.5 text-sm font-semibold">Batal</button>
+        <button @click="close" class="flex-1 border-2 border-gray-200 dark:border-nova-line rounded-xl py-2.5 text-sm font-semibold">Batal</button>
         <button @click="save" :disabled="saving" class="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
       </div>
     </div>

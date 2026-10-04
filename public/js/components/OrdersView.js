@@ -109,7 +109,7 @@ const OrdersView = {
   <div class="max-w-3xl mx-auto px-4 py-4">
     <h2 class="text-xl font-bold mb-4">📦 Pesanan Saya</h2>
     <div v-if="store.ordersLoading" class="space-y-3">
-      <div v-for="i in 3" :key="'osk'+i" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 space-y-2.5">
+      <div v-for="i in 3" :key="'osk'+i" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 space-y-2.5">
         <div class="flex justify-between"><div class="skel h-4 w-24"></div><div class="skel h-5 w-20" style="border-radius:999px"></div></div>
         <div class="skel h-4 w-2/3"></div>
         <div class="skel h-4 w-1/3"></div>
@@ -122,7 +122,7 @@ const OrdersView = {
       <button @click="go('home')" class="bg-primary text-white text-sm font-bold rounded-xl px-6 py-2.5">Mulai Belanja</button>
     </div>
     <div class="space-y-4">
-      <div v-for="o in orders" :key="o.id" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
+      <div v-for="o in orders" :key="o.id" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 shadow-sm">
         <div class="flex items-center justify-between text-sm">
           <b class="text-primary">#{{ o.id }}</b>
           <span class="text-gray-400 text-xs">{{ fmtDate(o.created_at) }}</span>
@@ -152,13 +152,13 @@ const OrdersView = {
                 <div class="font-semibold">{{ dl.name }}</div>
                 <div class="text-gray-500 dark:text-gray-400 mt-0.5">TRX ID: <b class="text-gray-700 dark:text-gray-300 font-mono">{{ dl.trx_id || '-' }}</b></div>
                 <a v-if="dl.proof_path" :href="dl.proof_path" target="_blank">
-                  <img :src="dl.proof_path" class="w-24 h-24 object-cover rounded-xl border border-gray-200 dark:border-gray-700 mt-1.5 hover:scale-105 transition">
+                  <img :src="dl.proof_path" class="w-24 h-24 object-cover rounded-xl border border-gray-200 dark:border-nova-line mt-1.5 hover:scale-105 transition">
                 </a>
                 <div v-if="dl.proof_path" class="text-[10px] text-gray-400 mt-0.5">Bukti sukses topup</div>
               </template>
               <template v-else>
                 <div class="font-semibold mb-1">{{ dl.name }}</div>
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 font-mono text-[11px] whitespace-pre-wrap break-all">{{ dl.data }}</div>
+                <div class="bg-white dark:bg-nova-surface border border-gray-200 dark:border-nova-line rounded-xl p-2.5 font-mono text-[11px] whitespace-pre-wrap break-all">{{ dl.data }}</div>
                 <button @click="copyDelivery(dl.data)" class="mt-1.5 text-primary dark:text-indigo-300 font-bold hover:underline">📋 Salin</button>
               </template>
             </div>
@@ -180,13 +180,13 @@ const OrdersView = {
                   @click="uploadProof(o.id)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-primary text-white hover:bg-indigo-700">📤 Upload Bukti</button>
           <a v-if="o.proof_path" :href="o.proof_path" target="_blank"
-             class="text-xs font-bold px-3 py-2.5 rounded-xl text-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">📎 Bukti Bayar</a>
+             class="text-xs font-bold px-3 py-2.5 rounded-xl text-center bg-gray-100 dark:bg-nova-surface2 text-gray-700 dark:text-nova-text hover:bg-gray-200 dark:hover:bg-gray-700">📎 Bukti Bayar</a>
           <button v-if="o.status === 'pending'" @click="cancelOrder(o.id)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20">❌ Batalkan</button>
           <button v-if="o.status === 'selesai'" @click="buyAgain(o)"
                   class="text-xs font-bold px-3 py-2.5 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20">🔁 Beli Lagi</button>
           <button @click="complain(o.id)"
-                  class="text-xs font-bold px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">💬 Komplain</button>
+                  class="text-xs font-bold px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-nova-surface2 text-gray-700 dark:text-nova-text hover:bg-gray-200 dark:hover:bg-gray-700">💬 Komplain</button>
           <button v-for="e in eligFor(o.id)" :key="e.product_id" @click="openReview(e)"
                   class="col-span-2 text-xs font-bold px-3 py-2.5 rounded-xl bg-primary text-white hover:brightness-110">⭐ Tulis Ulasan: {{ e.product_name.slice(0, 24) }}</button>
         </div>
@@ -194,11 +194,11 @@ const OrdersView = {
     </div>
     <!-- Modal QRIS -->
     <div v-if="qris" class="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4" @click.self="qris = null">
-      <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-sm w-full text-center relative">
-        <button @click="qris = null" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-lg leading-none" title="Tutup">✕</button>
+      <div class="bg-white dark:bg-nova-surface rounded-3xl p-6 max-w-sm w-full text-center relative">
+        <button @click="qris = null" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-gray-100 dark:bg-nova-surface2 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-lg leading-none" title="Tutup">✕</button>
         <div class="text-lg font-extrabold mb-1">⚡ Scan untuk Bayar</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">Pesanan #{{ qris.orderId }} • {{ qris.merchant }}</div>
-        <img :src="qris.qr" class="w-64 h-64 mx-auto rounded-2xl border border-gray-200 dark:border-gray-700" alt="QRIS">
+        <img :src="qris.qr" class="w-64 h-64 mx-auto rounded-2xl border border-gray-200 dark:border-nova-line" alt="QRIS">
         <div class="mt-3 text-sm text-gray-500 dark:text-gray-400">Nominal</div>
         <div class="text-2xl font-extrabold text-accent">{{ rp(qris.amount) }}</div>
         <button @click="qris = null" class="mt-4 w-full bg-primary text-white font-bold rounded-2xl py-3 hover:bg-indigo-700">Tutup</button>

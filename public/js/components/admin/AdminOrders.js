@@ -72,13 +72,13 @@ const AdminOrders = {
       </select>
       <input v-model="aof.q" @input="filter" placeholder="🔍 Cari ID / nama / email..." class="border rounded-xl px-3 py-2 text-sm flex-1 min-w-[180px]">
     </div>
-    <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-x-auto shadow-sm">
+    <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl overflow-x-auto shadow-sm">
       <table class="w-full text-sm">
-        <thead><tr class="text-left text-gray-400 border-b dark:border-gray-800 text-xs uppercase">
+        <thead><tr class="text-left text-gray-400 border-b dark:border-nova-line text-xs uppercase">
           <th class="p-3">ID</th><th class="p-3">User</th><th class="p-3">Item</th><th class="p-3">Total</th><th class="p-3">Bayar</th><th class="p-3">Bukti</th><th class="p-3">Status</th>
         </tr></thead>
         <tbody>
-          <tr v-for="o in orders" :key="o.id" class="border-b dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800">
+          <tr v-for="o in orders" :key="o.id" class="border-b dark:border-nova-line last:border-0 hover:bg-gray-50 dark:hover:bg-nova-surface2">
             <td class="p-3 font-bold text-primary">#{{ o.id }}<br><span class="text-[10px] text-gray-400 font-normal">{{ fmtDay(o.created_at) }}</span></td>
             <td class="p-3">{{ o.user_name }}<br><span class="text-xs text-gray-400">{{ o.user_email }}</span></td>
             <td class="p-3 text-xs max-w-[180px]"><div v-for="it in (o.items || [])" :key="it.product_id">{{ it.name }} ×{{ it.qty }}</div></td>
@@ -155,11 +155,11 @@ const DeliverModal = {
   template: `
   <div v-if="order" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="close">
     <div class="absolute inset-0 bg-black/50" @click="close"></div>
-    <div class="relative bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto p-5">
+    <div class="relative bg-white dark:bg-nova-surface w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto p-5">
       <h3 class="font-bold text-lg mb-1">📤 Input Data Delivery</h3>
       <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Pesanan <b class="text-primary">#{{ order.id }}</b> — isi data di bawah, lalu konfirmasi. Status otomatis berubah ke <b>delivery</b>.</p>
       <div class="space-y-3">
-        <div v-for="it in order.items" :key="it.product_id" class="border rounded-2xl p-4 bg-gray-50 dark:bg-gray-800">
+        <div v-for="it in order.items" :key="it.product_id" class="border rounded-2xl p-4 bg-gray-50 dark:bg-nova-surface2">
           <template v-if="it.category === 'topup'">
             <div class="font-bold text-sm mb-1">💎 {{ it.name }} <span class="text-[10px] font-normal text-gray-400">×{{ it.qty }}</span></div>
             <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">Upload bukti sukses topup (gambar) + isi TRX ID.</p>
@@ -179,7 +179,7 @@ const DeliverModal = {
         </div>
       </div>
       <div class="flex gap-2 mt-5">
-        <button @click="close" class="flex-1 border-2 border-gray-200 dark:border-gray-700 rounded-xl py-2.5 text-sm font-semibold">Nanti Saja</button>
+        <button @click="close" class="flex-1 border-2 border-gray-200 dark:border-nova-line rounded-xl py-2.5 text-sm font-semibold">Nanti Saja</button>
         <button @click="submit" :disabled="sending" class="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">{{ sending ? 'Mengirim...' : 'Kirim & Delivery →' }}</button>
       </div>
     </div>

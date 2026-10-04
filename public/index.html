@@ -6,7 +6,22 @@
 <title>TokoGame — Akun, Voucher & Topup Digital</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: '#4f46e5', accent: '#f59e0b' } } } };
+tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
+  primary: '#4f46e5',
+  accent: '#f59e0b',
+  // NOVA design system (2026-10-04) — clean & unik
+  nova: {
+    bg: '#0a0e1a',       // background utama
+    surface: '#131a30',  // kartu
+    surface2: '#1a2340', // elevated
+    line: '#232c4d',     // border
+    accent: '#6c7cff',   // aksen signature periwinkle
+    accentdim: '#4a56c8',
+    gold: '#ffc24b',     // harga
+    text: '#e8ecf8',     // teks utama
+    muted: '#8b94b8',    // teks sekunder
+  },
+} } } };
 // Terapkan tema sebelum render (hindari kedip)
 try {
   const t = localStorage.getItem('tg_theme');
@@ -20,7 +35,7 @@ function toggleTheme() {
 </script>
 <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 pb-24 md:pb-0">
+<body class="bg-gray-50 dark:bg-nova-bg text-gray-800 dark:text-nova-text pb-24 md:pb-0 antialiased">
 <div id="toasts" class="fixed top-4 right-4 z-[100] space-y-2"></div>
 <div id="app"></div>
 

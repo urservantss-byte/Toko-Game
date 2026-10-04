@@ -166,32 +166,32 @@ const AdminDash = {
   <div>
     <p v-if="err" class="text-red-400 text-sm">{{ err }}</p>
     <div v-if="!stats && !err" class="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-5">
-      <div v-for="i in 5" :key="'dsk'+i" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 space-y-2">
+      <div v-for="i in 5" :key="'dsk'+i" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-3 space-y-2">
         <div class="skel h-3 w-2/3"></div><div class="skel h-6 w-1/2"></div>
       </div>
     </div>
     <template v-if="stats">
       <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-5">
-        <div v-for="c in cards" :key="c.lb" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 shadow-sm min-w-0">
+        <div v-for="c in cards" :key="c.lb" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-3 shadow-sm min-w-0">
           <div class="text-xl mb-1">{{ c.ic }}</div>
           <div class="text-[11px] text-gray-400 font-medium truncate">{{ c.lb }}</div>
           <div :class="['text-sm md:text-lg font-extrabold mt-1 break-words', c.cls]">{{ c.v }}<span v-if="c.warn" class="text-red-500">{{ c.warn }}</span></div>
         </div>
       </div>
       <div class="grid lg:grid-cols-2 gap-3 md:gap-4">
-        <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 md:p-4 shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-3 md:p-4 shadow-sm overflow-hidden">
           <h3 class="font-bold text-sm mb-3">📈 Penjualan 7 Hari <span class="text-[10px] font-normal text-gray-400">(realtime)</span></h3>
           <div class="flex items-end gap-1 md:gap-2 h-28 md:h-32">
             <div v-for="x in stats.sales_7d" :key="x.d" class="flex-1 flex flex-col items-center gap-1">
               <div class="text-[10px] font-bold text-gray-600 dark:text-gray-400">{{ x.t > 0 ? shortRp(x.t) : '' }}</div>
-              <div class="w-full bg-indigo-100 dark:bg-gray-800 rounded-t-lg relative" :style="{ height: barH(x.t, maxSale) + 'px' }">
+              <div class="w-full bg-indigo-100 dark:bg-nova-surface2 rounded-t-lg relative" :style="{ height: barH(x.t, maxSale) + 'px' }">
                 <div class="absolute bottom-0 inset-x-0 bg-primary rounded-t-lg" style="height:100%"></div>
               </div>
               <div class="text-[10px] text-gray-400">{{ dayName(x.d) }}</div>
             </div>
           </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 md:p-4 shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-3 md:p-4 shadow-sm overflow-hidden">
           <h3 class="font-bold text-sm mb-3">🕐 Pesanan Terbaru</h3>
           <div class="space-y-2 text-sm">
             <div v-for="o in stats.recent_orders" :key="o.id" class="flex items-center justify-between py-2 border-b last:border-0 gap-2">
@@ -203,7 +203,7 @@ const AdminDash = {
         </div>
       </div>
       <!-- Pengaturan QRIS -->
-      <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-sm mt-4">
+      <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 shadow-sm mt-4">
         <h3 class="font-bold text-sm mb-1">⚡ Pengaturan QRIS</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Tempel string QRIS statis tokomu (scan QRIS cetak pakai aplikasi QR scanner, copy teksnya). Status:
           <b :class="qrisOk ? 'text-green-600' : 'text-red-500'">{{ qrisOk ? 'Aktif (' + qrisMerchant + ')' : 'Belum dikonfigurasi' }}</b>
@@ -233,7 +233,7 @@ const AdminDash = {
           <h4 class="font-bold text-xs mb-1">💳 Metode Pembayaran</h4>
           <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Kelola bank/e-wallet/QRIS. Yang nonaktif tidak tampil di checkout.</p>
           <div class="space-y-2 mb-3">
-            <div v-for="m in payMethods" :key="m.id" class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">
+            <div v-for="m in payMethods" :key="m.id" class="flex items-center gap-2 bg-gray-50 dark:bg-nova-surface2 rounded-xl px-3 py-2">
               <button @click="togglePay(m)" :class="['w-10 h-6 rounded-full relative transition-colors shrink-0', m.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700']">
                 <span :class="['absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all', m.active ? 'left-[18px]' : 'left-0.5']"></span>
               </button>
@@ -245,12 +245,12 @@ const AdminDash = {
               <button @click="delPay(m)" class="text-xs text-red-500 font-bold px-2 py-1">🗑️</button>
             </div>
           </div>
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+          <div class="bg-gray-50 dark:bg-nova-surface2 rounded-xl p-3">
             <div class="text-xs font-bold mb-2">{{ pmEdit ? '✏️ Ubah metode' : '➕ Tambah metode baru' }}</div>
             <div class="grid grid-cols-2 gap-2">
               <input v-model="pmForm.label" :disabled="!!pmEdit" placeholder="Label, mis: 🏦 Transfer BRI" class="border rounded-xl px-3 py-2 text-xs outline-none focus:border-primary col-span-2">
               <input v-model="pmForm.details" placeholder="Detail rekening, mis: BRI 1234 0100 5678 901 a.n. TokoGame" class="border rounded-xl px-3 py-2 text-xs outline-none focus:border-primary col-span-2">
-              <select v-model="pmForm.kind" class="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs outline-none focus:border-primary bg-white dark:bg-gray-900">
+              <select v-model="pmForm.kind" class="border border-gray-200 dark:border-nova-line rounded-xl px-3 py-2 text-xs outline-none focus:border-primary bg-white dark:bg-nova-surface">
                 <option value="transfer">Transfer (upload bukti)</option>
                 <option value="qris">QRIS (scan QR)</option>
               </select>
@@ -280,14 +280,14 @@ const AdminDash = {
           </div>
           <div class="flex items-center gap-2 mt-2">
             <button @click="saveEmail" class="bg-primary text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Simpan Email</button>
-            <button @click="testEmail" class="bg-gray-100 dark:bg-gray-800 text-sm font-bold px-4 py-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700">Kirim Tes</button>
+            <button @click="testEmail" class="bg-gray-100 dark:bg-nova-surface2 text-sm font-bold px-4 py-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700">Kirim Tes</button>
             <span class="text-xs" :class="emMsg.includes('✓') || emMsg.includes('Terkirim') ? 'text-green-600' : 'text-red-500'">{{ emMsg }}</span>
           </div>
         </div>
         <div class="border-t mt-4 pt-3">
           <h4 class="font-bold text-xs mb-1">🔑 Login Google (OAuth)</h4>
           <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Status: <b :class="gOk ? 'text-green-600' : 'text-red-500'">{{ gOk ? 'Aktif' : 'Belum dikonfigurasi' }}</b><span v-if="gSavedId"> — Client ID: <span class="font-mono">{{ gSavedId.slice(0, 24) }}…</span></span></p>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Buat di <b>console.cloud.google.com</b> → APIs & Services → Credentials → OAuth client ID (Web). Tambahkan <b>Authorized redirect URI</b>: <span class="font-mono bg-gray-100 dark:bg-gray-800 px-1 rounded">[URL-publik-toko]/api/auth/google/callback</span> (URL berubah tiap reconnect — tambahkan yang baru).</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Buat di <b>console.cloud.google.com</b> → APIs & Services → Credentials → OAuth client ID (Web). Tambahkan <b>Authorized redirect URI</b>: <span class="font-mono bg-gray-100 dark:bg-nova-surface2 px-1 rounded">[URL-publik-toko]/api/auth/google/callback</span> (URL berubah tiap reconnect — tambahkan yang baru).</p>
           <div class="grid md:grid-cols-2 gap-2">
             <input v-model="gId" placeholder="Google Client ID" class="border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
             <input v-model="gSecret" type="password" placeholder="Google Client Secret (kosongkan = tidak diubah)" class="border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">

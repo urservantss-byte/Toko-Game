@@ -52,7 +52,7 @@ const TicketsView = {
       finally { this.loading = false; }
     },
     stCls(s) {
-      return s === 'open' ? 'bg-amber-100 text-amber-700' : s === 'answered' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500 dark:bg-gray-800';
+      return s === 'open' ? 'bg-amber-100 text-amber-700' : s === 'answered' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500 dark:bg-nova-surface2';
     },
     stLbl(s) { return s === 'open' ? 'Menunggu balasan' : s === 'answered' ? 'Dibalas admin' : 'Ditutup'; },
   },
@@ -65,32 +65,32 @@ const TicketsView = {
       </button>
     </div>
 
-    <div v-if="showForm" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 mb-4 space-y-3">
+    <div v-if="showForm" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 mb-4 space-y-3">
       <div>
         <label class="text-[13px] font-medium text-gray-700 dark:text-gray-300">Subjek</label>
-        <input v-model="form.subject" placeholder="Contoh: Kode voucher tidak valid" class="mt-1.5 w-full border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary">
+        <input v-model="form.subject" placeholder="Contoh: Kode voucher tidak valid" class="mt-1.5 w-full border border-gray-200 dark:border-nova-line bg-gray-50/60 dark:bg-nova-surface2 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary">
       </div>
       <div>
         <label class="text-[13px] font-medium text-gray-700 dark:text-gray-300">Pesanan terkait (opsional)</label>
-        <select v-model="form.order_id" class="mt-1.5 w-full border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary">
+        <select v-model="form.order_id" class="mt-1.5 w-full border border-gray-200 dark:border-nova-line bg-gray-50/60 dark:bg-nova-surface2 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary">
           <option value="">— Umum / tanpa pesanan —</option>
           <option v-for="o in myOrders" :key="o.id" :value="o.id">#{{ o.id }} — {{ o.status }}</option>
         </select>
       </div>
       <div>
         <label class="text-[13px] font-medium text-gray-700 dark:text-gray-300">Pesan</label>
-        <textarea v-model="form.message" rows="4" placeholder="Jelaskan masalahmu sedetail mungkin..." class="mt-1.5 w-full border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary"></textarea>
+        <textarea v-model="form.message" rows="4" placeholder="Jelaskan masalahmu sedetail mungkin..." class="mt-1.5 w-full border border-gray-200 dark:border-nova-line bg-gray-50/60 dark:bg-nova-surface2 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary"></textarea>
       </div>
       <button @click="create" :disabled="loading" class="bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50">{{ loading ? 'Mengirim...' : 'Kirim Tiket' }}</button>
     </div>
 
     <div class="grid md:grid-cols-[1fr_1.5fr] gap-3">
-      <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
-        <div class="divide-y divide-gray-100 dark:divide-gray-800 max-h-[60vh] overflow-y-auto">
+      <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl overflow-hidden">
+        <div class="divide-y divide-gray-100 dark:divide-nova-line max-h-[60vh] overflow-y-auto">
           <div v-if="listLoading" class="p-3 space-y-3">
             <div v-for="i in 4" :key="'tskl'+i" class="space-y-1.5"><div class="skel h-4 w-3/4"></div><div class="skel h-3 w-1/2"></div></div>
           </div>
-          <div v-for="t in list" :key="t.id" @click="open(t); showForm = false" class="p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+          <div v-for="t in list" :key="t.id" @click="open(t); showForm = false" class="p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-nova-surface2"
                :class="{ 'bg-indigo-50/50 dark:bg-indigo-900/20': cur && cur.id === t.id }">
             <div class="flex items-center justify-between gap-2 mb-1">
               <b class="text-sm truncate">#{{ t.id }} {{ t.subject }}</b>
@@ -101,7 +101,7 @@ const TicketsView = {
           <div v-if="!listLoading && !list.length" class="p-8 text-center text-gray-400 text-sm">Belum ada tiket. Klik "Buat Tiket" jika butuh bantuan.</div>
         </div>
       </div>
-      <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 flex flex-col min-h-[50vh]">
+      <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 flex flex-col min-h-[50vh]">
         <template v-if="cur">
           <div class="mb-3">
             <b class="text-sm">#{{ cur.id }} {{ cur.subject }}</b>
@@ -112,7 +112,7 @@ const TicketsView = {
           <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[45vh] mb-3 pr-1">
             <div v-for="m in cur.messages" :key="m.id" class="flex" :class="m.is_admin ? 'justify-start' : 'justify-end'">
               <div class="max-w-[85%] rounded-2xl px-3.5 py-2 text-sm"
-                   :class="m.is_admin ? 'bg-gray-100 dark:bg-gray-800 rounded-bl-md' : 'bg-primary text-white rounded-br-md'">
+                   :class="m.is_admin ? 'bg-gray-100 dark:bg-nova-surface2 rounded-bl-md' : 'bg-primary text-white rounded-br-md'">
                 <div class="text-[10px] opacity-70 mb-0.5 font-semibold">{{ m.is_admin ? 'Admin TokoGame' : 'Kamu' }}</div>
                 <div class="whitespace-pre-wrap">{{ m.message }}</div>
                 <div class="text-[10px] opacity-60 mt-1 text-right">{{ fmtDate(m.created_at) }}</div>
@@ -121,7 +121,7 @@ const TicketsView = {
           </div>
           <div v-if="cur.status !== 'closed'" class="flex gap-2">
             <input v-model="reply" @keyup.enter="sendReply" placeholder="Tulis balasan..." :disabled="loading"
-                   class="flex-1 min-w-0 border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary">
+                   class="flex-1 min-w-0 border border-gray-200 dark:border-nova-line bg-gray-50/60 dark:bg-nova-surface2 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary">
             <button @click="sendReply" :disabled="loading" class="bg-primary text-white text-sm font-bold px-5 rounded-xl hover:bg-indigo-700 disabled:opacity-50">Kirim</button>
           </div>
           <p v-else class="text-xs text-gray-400 text-center">Tiket ini sudah ditutup admin.</p>

@@ -16,26 +16,35 @@ const AdminView = {
       } catch (e) { /* bukan admin -> biarkan */ }
     },
     tabCls(t) {
-      const base = 'px-3 py-2 rounded-xl text-sm font-semibold whitespace-nowrap ';
-      return base + (this.tab === t ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700');
+      const base = 'px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition ';
+      return base + (this.tab === t ? 'text-white' : 'nv-chip')
+        + (this.tab === t ? '' : '');
+    },
+    tabStyle(t) {
+      return this.tab === t
+        ? 'background:linear-gradient(135deg,#7a88ff,#5a68e8);box-shadow:0 4px 14px rgba(108,124,255,.35)'
+        : '';
     },
   },
   template: `
   <div class="max-w-6xl mx-auto px-4 py-4">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-bold">🛠️ Admin Panel</h2>
-      <span v-if="pendingCount" class="text-xs font-bold bg-red-500 text-white px-2.5 py-1 rounded-full">{{ pendingCount }} perlu diproses</span>
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h2 class="text-xl font-extrabold dark:text-nova-text tracking-tight">🛠️ Admin Panel</h2>
+        <p class="text-xs text-gray-500 dark:text-nova-muted mt-0.5">Kelola toko dalam satu tempat</p>
+      </div>
+      <span v-if="pendingCount" class="nv-badge nv-badge-red">{{ pendingCount }} perlu diproses</span>
     </div>
-    <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
-      <button @click="nav('dash')" :class="tabCls('dash')">📊 Dashboard</button>
-      <button @click="nav('orders')" :class="tabCls('orders')">🧾 Pesanan</button>
-      <button @click="nav('products')" :class="tabCls('products')">📦 Produk</button>
-      <button @click="nav('vouchers')" :class="tabCls('vouchers')">🎟️ Voucher</button>
-      <button @click="nav('reports')" :class="tabCls('reports')">📈 Laporan</button>
-      <button @click="nav('banners')" :class="tabCls('banners')">🎨 Banner</button>
-      <button @click="nav('tickets')" :class="tabCls('tickets')">🎫 Tiket</button>
-      <button @click="nav('users')" :class="tabCls('users')">👥 User</button>
-      <button @click="nav('settings')" :class="tabCls('settings')">⚙️ Pengaturan</button>
+    <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
+      <button @click="nav('dash')" :class="tabCls('dash')" :style="tabStyle('dash')">📊 Dashboard</button>
+      <button @click="nav('orders')" :class="tabCls('orders')" :style="tabStyle('orders')">🧾 Pesanan</button>
+      <button @click="nav('products')" :class="tabCls('products')" :style="tabStyle('products')">📦 Produk</button>
+      <button @click="nav('vouchers')" :class="tabCls('vouchers')" :style="tabStyle('vouchers')">🎟️ Voucher</button>
+      <button @click="nav('reports')" :class="tabCls('reports')" :style="tabStyle('reports')">📈 Laporan</button>
+      <button @click="nav('banners')" :class="tabCls('banners')" :style="tabStyle('banners')">🎨 Banner</button>
+      <button @click="nav('tickets')" :class="tabCls('tickets')" :style="tabStyle('tickets')">🎫 Tiket</button>
+      <button @click="nav('users')" :class="tabCls('users')" :style="tabStyle('users')">👥 User</button>
+      <button @click="nav('settings')" :class="tabCls('settings')" :style="tabStyle('settings')">⚙️ Pengaturan</button>
     </div>
     <admin-dash v-if="tab === 'dash'" :key="'d' + tab"></admin-dash>
     <admin-orders v-if="tab === 'orders'" :key="'o' + tab"></admin-orders>

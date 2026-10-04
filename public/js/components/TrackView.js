@@ -27,13 +27,13 @@ const TrackView = {
   <div class="max-w-lg mx-auto px-4 py-8">
     <h2 class="text-xl font-extrabold mb-1">🔍 Lacak Pesanan</h2>
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Masukkan ID pesanan dan email yang dipakai saat checkout.</p>
-    <div class="bg-white dark:bg-gray-900 border rounded-2xl p-4 space-y-3">
+    <div class="bg-white dark:bg-nova-surface border rounded-2xl p-4 space-y-3">
       <input v-model="orderId" type="number" placeholder="ID Pesanan (mis. 25)" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary">
       <input v-model="email" type="email" placeholder="Email" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary">
       <button @click="track" :disabled="loading" class="w-full bg-primary text-white font-bold rounded-xl py-2.5 text-sm hover:bg-indigo-700 disabled:opacity-50">{{ loading ? 'Mencari...' : 'Lacak' }}</button>
       <p v-if="err" class="text-xs text-red-500">{{ err }}</p>
     </div>
-    <div v-if="result" class="bg-white dark:bg-gray-900 border rounded-2xl p-4 mt-4">
+    <div v-if="result" class="bg-white dark:bg-nova-surface border rounded-2xl p-4 mt-4">
       <div class="flex items-center justify-between mb-2">
         <b class="text-primary">#{{ result.id }}</b>
         <status-badge :status="result.status"></status-badge>
@@ -43,7 +43,7 @@ const TrackView = {
         <div>Bayar via: {{ payLabel(result.payment_method) }} • {{ fmtDate(result.created_at) }}</div>
       </div>
       <div class="mt-3 space-y-1.5">
-        <div v-for="it in result.items" :key="it.name" class="flex justify-between text-xs bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">
+        <div v-for="it in result.items" :key="it.name" class="flex justify-between text-xs bg-gray-50 dark:bg-nova-surface2 rounded-xl px-3 py-2">
           <span>{{ it.qty }}× {{ it.name }}</span><b>{{ rp(it.price * it.qty) }}</b>
         </div>
       </div>
