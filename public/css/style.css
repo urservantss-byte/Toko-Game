@@ -54,20 +54,25 @@ html,body{overflow-x:clip}
 
 /* ============================================================
    NOVA DESIGN SYSTEM (2026-10-04)
-   Clean, unik, dark gaming — tanpa ubah fitur
+   Clean, unik — light & dark — tanpa ubah fitur
    ============================================================ */
 
 /* --- Kartu signature --- */
-.dark .nv-card{
-  background:linear-gradient(180deg,#151c34 0%,#121830 100%);
-  border:1px solid #232c4d;
+.nv-card{
+  background:#fff;
+  border:1px solid #e8ecf5;
   border-radius:1.25rem;
-  box-shadow:0 2px 12px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04);
+  box-shadow:0 2px 12px rgba(30,40,90,.06);
   transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-.dark .nv-card.clickable{cursor:pointer}
+.dark .nv-card{
+  background:linear-gradient(180deg,#151c34 0%,#121830 100%);
+  border-color:#232c4d;
+  box-shadow:0 2px 12px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.nv-card.clickable{cursor:pointer}
+.nv-card.clickable:hover{transform:translateY(-2px);border-color:#c3cbff;box-shadow:0 8px 24px rgba(80,100,220,.12)}
 .dark .nv-card.clickable:hover{
-  transform:translateY(-2px);
   border-color:#31407a;
   box-shadow:0 8px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(108,124,255,.15);
 }
@@ -86,87 +91,119 @@ html,body{overflow-x:clip}
 .nv-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
 .nv-btn-ghost{
   display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
-  background:rgba(108,124,255,.1);color:#aab4ff;font-weight:600;border-radius:999px;
-  border:1px solid rgba(108,124,255,.25);cursor:pointer;transition:background .15s;
+  background:rgba(108,124,255,.08);color:#4a56c8;font-weight:600;border-radius:999px;
+  border:1px solid rgba(108,124,255,.3);cursor:pointer;transition:background .15s;
 }
-.nv-btn-ghost:hover{background:rgba(108,124,255,.18)}
+.nv-btn-ghost:hover{background:rgba(108,124,255,.15)}
+.dark .nv-btn-ghost{background:rgba(108,124,255,.1);color:#aab4ff;border-color:rgba(108,124,255,.25)}
+.dark .nv-btn-ghost:hover{background:rgba(108,124,255,.18)}
 
 /* --- Badge & pill --- */
-.dark .nv-badge{
+.nv-badge{
   display:inline-flex;align-items:center;gap:.25rem;
   font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
   padding:.3rem .7rem;border-radius:999px;
 }
-.dark .nv-badge-accent{background:rgba(108,124,255,.15);color:#aab4ff;border:1px solid rgba(108,124,255,.3)}
-.dark .nv-badge-gold{background:rgba(255,194,75,.12);color:#ffc24b;border:1px solid rgba(255,194,75,.3)}
-.dark .nv-badge-red{background:rgba(255,90,90,.12);color:#ff8a8a;border:1px solid rgba(255,90,90,.3)}
-.dark .nv-badge-green{background:rgba(52,211,153,.12);color:#5eeab8;border:1px solid rgba(52,211,153,.3)}
+.nv-badge-accent{background:rgba(108,124,255,.1);color:#4a56c8;border:1px solid rgba(108,124,255,.3)}
+.nv-badge-gold{background:rgba(255,170,0,.1);color:#b87a00;border:1px solid rgba(255,170,0,.3)}
+.nv-badge-red{background:rgba(255,60,60,.08);color:#d33;border:1px solid rgba(255,60,60,.3)}
+.nv-badge-green{background:rgba(16,185,129,.1);color:#0a8a5f;border:1px solid rgba(16,185,129,.3)}
+.dark .nv-badge-accent{background:rgba(108,124,255,.15);color:#aab4ff;border-color:rgba(108,124,255,.3)}
+.dark .nv-badge-gold{background:rgba(255,194,75,.12);color:#ffc24b;border-color:rgba(255,194,75,.3)}
+.dark .nv-badge-red{background:rgba(255,90,90,.12);color:#ff8a8a;border-color:rgba(255,90,90,.3)}
+.dark .nv-badge-green{background:rgba(52,211,153,.12);color:#5eeab8;border-color:rgba(52,211,153,.3)}
 
 /* --- Section header signature --- */
 .nv-sec{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem}
 .nv-sec .dot{width:8px;height:8px;border-radius:50%;background:#6c7cff;box-shadow:0 0 10px rgba(108,124,255,.8);flex-shrink:0}
-.nv-sec h2{font-weight:800;font-size:1rem;letter-spacing:.01em}
+.nv-sec h2{font-weight:800;font-size:1rem;letter-spacing:.01em;color:#1a2040}
 .dark .nv-sec h2{color:#e8ecf8}
 .nv-sec .more{margin-left:auto;font-size:.8rem;font-weight:600;color:#6c7cff;cursor:pointer}
 .nv-sec .more:hover{text-decoration:underline}
 
 /* --- Input signature --- */
-.dark .nv-input{
-  background:#0e1428;border:1px solid #232c4d;color:#e8ecf8;
+.nv-input{
+  background:#f6f8fd;border:1px solid #e2e8f5;color:#1a2040;
   border-radius:.9rem;padding:.7rem 1rem;font-size:.875rem;outline:none;width:100%;
   transition:border-color .15s, box-shadow .15s;
 }
-.dark .nv-input:focus{border-color:#6c7cff;box-shadow:0 0 0 3px rgba(108,124,255,.15)}
+.nv-input:focus{border-color:#6c7cff;box-shadow:0 0 0 3px rgba(108,124,255,.15);background:#fff}
+.nv-input::placeholder{color:#9aa3c0}
+.dark .nv-input{background:#0e1428;border-color:#232c4d;color:#e8ecf8}
+.dark .nv-input:focus{background:#0e1428}
 .dark .nv-input::placeholder{color:#5a6488}
 
 /* --- Harga --- */
-.dark .nv-price{color:#ffc24b;font-weight:800;letter-spacing:.01em}
+.nv-price{color:#d97a00;font-weight:800;letter-spacing:.01em}
+.dark .nv-price{color:#ffc24b}
 
 /* --- Header signature --- */
+.nv-header{
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(108,124,255,.12);
+}
 .dark .nv-header{
   background:rgba(10,14,26,.82);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border-bottom:1px solid rgba(108,124,255,.1);
+  border-bottom-color:rgba(108,124,255,.1);
 }
 .nv-logo{
   font-weight:900;letter-spacing:.14em;font-size:.95rem;
-  background:linear-gradient(135deg,#aab4ff 0%,#6c7cff 60%,#4a56c8 100%);
+  background:linear-gradient(135deg,#7a88ff 0%,#4a56c8 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
 
 /* --- Bottom nav signature --- */
+.nv-nav{
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(108,124,255,.18);
+  border-radius:1.5rem;
+  box-shadow:0 8px 32px rgba(30,40,90,.12);
+}
 .dark .nv-nav{
   background:rgba(16,22,40,.92);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border:1px solid rgba(108,124,255,.14);
-  border-radius:1.5rem;
+  border-color:rgba(108,124,255,.14);
   box-shadow:0 8px 32px rgba(0,0,0,.5);
 }
-.nv-navitem{display:flex;flex-direction:column;align-items:center;gap:2px;padding:.6rem 0;cursor:pointer;transition:color .15s}
+.nv-navitem{display:flex;flex-direction:column;align-items:center;gap:2px;padding:.6rem 0;cursor:pointer;transition:color .15s;color:#8b94b8}
+.nv-navitem.on{color:#4a56c8}
 .dark .nv-navitem{color:#8b94b8}
 .dark .nv-navitem.on{color:#aab4ff}
-.dark .nv-navitem.on .nv-navdot{opacity:1;transform:scale(1)}
+.nv-navitem.on .nv-navdot{opacity:1;transform:scale(1)}
 .nv-navdot{width:4px;height:4px;border-radius:50%;background:#6c7cff;opacity:0;transform:scale(0);transition:all .2s}
 
 /* --- Modal signature --- */
+.nv-modal{
+  background:#fff;border:1px solid #e8ecf5;border-radius:1.5rem;
+  box-shadow:0 24px 64px rgba(30,40,90,.18);
+}
 .dark .nv-modal{
   background:linear-gradient(180deg,#161d36 0%,#121830 100%);
-  border:1px solid #2a3458;border-radius:1.5rem;
+  border-color:#2a3458;
   box-shadow:0 24px 64px rgba(0,0,0,.6);
 }
 
 /* --- Divider --- */
+.nv-div{border-color:#e8ecf5}
 .dark .nv-div{border-color:#1e2745}
 
 /* --- Chip filter signature --- */
-.dark .nv-chip{
-  background:#131a30;border:1px solid #232c4d;color:#8b94b8;
+.nv-chip{
+  background:#f1f4fb;border:1px solid #e2e8f5;color:#5a6488;
   font-size:.75rem;font-weight:600;padding:.5rem 1rem;border-radius:999px;white-space:nowrap;
   transition:all .15s;cursor:pointer;
 }
+.nv-chip:hover{border-color:#c3cbff;color:#4a56c8}
+.nv-chip.on{
+  background:linear-gradient(135deg,rgba(122,136,255,.16) 0%,rgba(90,104,232,.16) 100%);
+  border-color:#6c7cff;color:#4a56c8;
+  box-shadow:0 0 12px rgba(108,124,255,.18);
+}
+.dark .nv-chip{background:#131a30;border-color:#232c4d;color:#8b94b8}
 .dark .nv-chip:hover{border-color:#31407a;color:#c6cdea}
 .dark .nv-chip.on{
   background:linear-gradient(135deg,rgba(122,136,255,.22) 0%,rgba(90,104,232,.22) 100%);
-  border-color:#6c7cff;color:#c6ccff;
+  color:#c6ccff;
   box-shadow:0 0 12px rgba(108,124,255,.25);
 }
