@@ -2,6 +2,7 @@
 const AdminUsers = {
   data: () => ({ users: [], pg: 1 }),
   computed: {
+    me: () => store.user,
     totalPages() { return Math.max(1, Math.ceil(this.users.length / 10)); },
     pagedUsers() {
       const p = Math.min(this.pg, this.totalPages);
@@ -61,5 +62,4 @@ const AdminUsers = {
       <button @click="goPage(pg + 1)" :disabled="pg >= totalPages" class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">›</button>
     </div>
   </div>`,
-  computed: { me: () => store.user },
 };
