@@ -72,23 +72,37 @@ const OrdersView = {
     async buyAgain(o) {
       const items = Array.isArray(o.items) ? o.items : [];
       if (!items.length) return toast('Tidak ada item di pesanan ini', false);
-      let added = 0;
+      let added = 0, skipped = [];
       for (const it of items) {
         try {
           const d = await api('/api/products/' + it.product_id);
           const p = d.product;
-          if (!p) continue;
+          if (!p) { skipped.push(it.name); continue; }
+          // cek stok (varian atau produk)
+          let st = 0;
+          if (it.variant_id && p.variants) {
+            const v = p.variants.find(v => v.id === it.variant_id);
+            st = v ? (v.stock || 0) : 0;
+          } else {
+            st = p.stock || 0;
+          }
+          if (st < 1) { skipped.push(it.name || p.name); continue; }
           const key = it.variant_id ? p.id + '_v' + it.variant_id : String(p.id);
           const c = store.cart.find(x => x.key === key);
           const img = (p.images && p.images[0] && p.images[0].url) || p.image_url;
-          if (c) c.qty += it.qty;
-          else store.cart.push({ key, id: p.id, variant_id: it.variant_id || null, name: it.name || p.name, price: it.price || p.price, image_url: img, qty: it.qty });
+          const qty = Math.min(it.qty, st);
+          if (c) {
+            if (c.qty + qty > st) { skipped.push(`${it.name || p.name} (stok sisa ${st})`); continue; }
+            c.qty += qty;
+          }
+          else store.cart.push({ key, id: p.id, variant_id: it.variant_id || null, name: it.name || p.name, price: it.price || p.price, image_url: img, qty, stock: st });
           added++;
         } catch {}
       }
       saveCart();
+      if (skipped.length) toast(`Stok habis: ${skipped.join(', ')}`, false);
       if (added) { toast(added + ' produk dimasukkan keranjang'); go('cart'); }
-      else toast('Produk sudah tidak tersedia', false);
+      else if (!skipped.length) toast('Produk sudah tidak tersedia', false);
     },
     uploadProof(id) {
       const inp = document.createElement('input');

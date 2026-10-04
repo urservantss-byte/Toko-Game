@@ -13,15 +13,68 @@ const CartView = {
     },
     chQty(i, d) {
       const c = store.cart[i];
+      if (d > 0) {
+        const max = this.maxQty(c);
+        if (c.qty + d > max) return toast(`Stok tidak cukup (sisa ${max})`, false);
+      }
       c.qty += d;
       if (c.qty < 1) store.cart.splice(i, 1);
       saveCart();
     },
+    maxQty(c) {
+      // stok tersedia untuk item keranjang (varian pakai snapshot saat ditambah, produk pakai data terbaru)
+      if (c.variant_id) return c.stock != null ? c.stock : 0;
+      const p = store.products.find(x => x.id === c.id);
+      return p ? (p.stock || 0) : (c.stock != null ? c.stock : 0);
+    },
     rm(i) { store.cart.splice(i, 1); saveCart(); },
-    checkout() {
+    async checkout() {
       if (!store.cart.length) return;
       if (!store.user) { go('login'); return toast('Masuk dulu untuk checkout', false); }
+      if (!await this.pruneCart()) return;
       go('checkout');
+    },
+    async pruneCart() {
+      // Refresh stok dari server lalu bersihkan item yang habis / sesuaikan qty melebihi stok
+      try {
+        const ids = [...new Set(store.cart.map(c => c.id))];
+        const fresh = {};
+        await Promise.all(ids.map(async id => {
+          try {
+            const d = await api('/api/products/' + id);
+            if (d.product) fresh[id] = d.product;
+          } catch {}
+        }));
+        // update data produk lokal agar maxQty pakai angka terbaru
+        for (const id of ids) {
+          if (fresh[id]) {
+            const i = store.products.findIndex(x => x.id === id);
+            if (i >= 0) store.products[i] = { ...store.products[i], ...fresh[id] };
+          }
+        }
+        // update snapshot stok varian di cart
+        for (const c of store.cart) {
+          const fp = fresh[c.id];
+          if (fp && c.variant_id && fp.variants) {
+            const v = fp.variants.find(v => v.id === c.variant_id);
+            if (v) c.stock = v.stock || 0;
+          } else if (fp && !c.variant_id) {
+            c.stock = fp.stock || 0;
+          }
+        }
+      } catch {}
+      let removed = [], adjusted = [];
+      store.cart = store.cart.filter(c => {
+        const max = this.maxQty(c);
+        if (max < 1) { removed.push(c.name); return false; }
+        if (c.qty > max) { adjusted.push(`${c.name} (jadi ${max})`); c.qty = max; }
+        return true;
+      });
+      saveCart();
+      if (removed.length) toast(`Stok habis, dihapus dari keranjang: ${removed.join(', ')}`, false);
+      else if (adjusted.length) toast(`Qty disesuaikan dengan stok: ${adjusted.join(', ')}`, false);
+      if (!store.cart.length) { toast('Keranjang kosong', false); return false; }
+      return true;
     },
   },
   template: `
@@ -41,7 +94,7 @@ const CartView = {
           <div class="flex items-center gap-2 mt-1.5">
             <button @click="chQty(i, -1)" class="w-7 h-7 rounded-lg border border-gray-200 dark:border-nova-line text-sm font-bold">−</button>
             <span class="text-sm font-semibold w-6 text-center">{{ c.qty }}</span>
-            <button @click="chQty(i, 1)" class="w-7 h-7 rounded-lg border border-gray-200 dark:border-nova-line text-sm font-bold">+</button>
+            <button @click="chQty(i, 1)" :disabled="c.qty >= maxQty(c)" class="w-7 h-7 rounded-lg border border-gray-200 dark:border-nova-line text-sm font-bold disabled:opacity-30">+</button>
           </div>
         </div>
         <button @click="rm(i)" class="text-gray-400 hover:text-red-500 p-2">🗑️</button>
@@ -117,6 +170,7 @@ const CheckoutView = {
     },
     async submit() {
       if (!store.cart.length) return;
+      if (!await this.pruneCart()) return;
       if (this.needProof && !store.proofFile) return toast('Upload bukti pembayaran dulu', false);
       this.loading = true;
       try {

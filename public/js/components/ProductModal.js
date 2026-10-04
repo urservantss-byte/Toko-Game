@@ -19,7 +19,7 @@ const ProductModal = {
       const base = this.selVariant ? this.selVariant.price : (this.p ? this.p.price : 0);
       return finalPrice({ price: base, discount: this.p ? this.p.discount : 0 });
     },
-    curStock() { return this.selVariant ? this.selVariant.stock : (this.p ? this.p.stock : 0); },
+    curStock() { return this.selVariant ? (this.selVariant.stock || 0) : (this.p ? (this.p.stock || 0) : 0); },
     wished() { return store.wishlist.includes(this.p && this.p.id); },
   },
   methods: {
@@ -35,14 +35,18 @@ const ProductModal = {
       const p = this.p;
       if (!p) return;
       if (this.hasVariants && !this.selVariant) return toast('Pilih varian dulu', false);
-      if (this.curStock < 1) return;
+      const st = this.curStock || 0;
+      if (st < 1) return toast('Stok habis', false);
       const key = this.selVariant ? p.id + '_v' + this.selVariant.id : String(p.id);
       const c = store.cart.find(x => x.key === key);
       const img = (p.images && p.images[0] && p.images[0].url) || p.image_url;
       const label = this.selVariant ? `${p.name} (${this.selVariant.label})` : p.name;
       const rawPrice = this.selVariant ? this.selVariant.price : p.price;
-      if (c) c.qty++;
-      else store.cart.push({ key, id: p.id, variant_id: this.selVariant ? this.selVariant.id : null, name: label, price: rawPrice, image_url: img, qty: 1 });
+      if (c) {
+        if (c.qty + 1 > st) return toast(`Stok tidak cukup (sisa ${st})`, false);
+        c.qty++;
+      }
+      else store.cart.push({ key, id: p.id, variant_id: this.selVariant ? this.selVariant.id : null, name: label, price: rawPrice, image_url: img, qty: 1, stock: st });
       saveCart();
       this.close();
       go(goCheckout ? 'checkout' : 'cart');

@@ -76,10 +76,14 @@ const HomeView = {
     openProduct(id) { openProduct(id); },
     addCart(id) {
       const p = store.products.find(x => x.id === id);
-      if (!p || p.stock < 1) return toast('Stok habis', false);
+      const st = p ? (p.stock || 0) : 0;
+      if (!p || st < 1) return toast('Stok habis', false);
       const c = store.cart.find(x => x.key === String(id));
-      if (c) c.qty++;
-      else store.cart.push({ key: String(id), id: p.id, variant_id: null, name: p.name, price: p.price, image_url: this.imgOf(p), qty: 1 });
+      if (c) {
+        if (c.qty + 1 > st) return toast(`Stok tidak cukup (sisa ${st})`, false);
+        c.qty++;
+      }
+      else store.cart.push({ key: String(id), id: p.id, variant_id: null, name: p.name, price: p.price, image_url: this.imgOf(p), qty: 1, stock: st });
       saveCart();
       toast('Ditambahkan ke keranjang 🛒');
     },
@@ -262,8 +266,8 @@ const HomeView = {
             <div class="text-[10px] text-gray-400 dark:text-nova-muted">{{ p.sold_count ? p.sold_count + ' Terjual' : '✨ Baru' }}</div>
             <div class="text-[10px] text-gray-500 dark:text-nova-muted">⭐ <b class="text-gray-700 dark:text-nova-text">{{ Number(p.avg_rating || 0).toFixed(1) }}</b></div>
           </div>
-          <button @click.stop="buyNow(p.id)" :disabled="p.stock < 1"
-                  class="nv-btn mt-2.5 w-full text-xs py-2 disabled:opacity-40">🛒 Beli Sekarang</button>
+          <button @click.stop="buyNow(p.id)" :disabled="(p.stock || 0) < 1"
+                  class="nv-btn mt-2.5 w-full text-xs py-2 disabled:opacity-40">{{ (p.stock || 0) < 1 ? 'Stok Habis' : '🛒 Beli Sekarang' }}</button>
         </div>
       </div>
       <div v-if="!list.length" class="col-span-full text-center py-14">
