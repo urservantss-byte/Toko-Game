@@ -55,6 +55,11 @@ const HomeView = {
   },
   methods: {
     rp, finalPrice, CATLABEL, CATCOLOR,
+    goPage(n) {
+      this.pg = Math.min(Math.max(1, n), this.totalPages);
+      const el = document.getElementById('all-products');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
     imgOf(p) { return (p.images && p.images[0] && p.images[0].url) || p.image_url; },
     openProduct(id) { openProduct(id); },
     addCart(id) {
@@ -250,12 +255,12 @@ const HomeView = {
     </div>
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex items-center justify-center gap-1.5 mt-5">
-      <button @click="pg = Math.max(1, pg - 1)" :disabled="pg <= 1"
+      <button @click="goPage(pg - 1)" :disabled="pg <= 1"
               class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">‹</button>
-      <button v-for="n in totalPages" :key="n" @click="pg = n"
+      <button v-for="n in totalPages" :key="n" @click="goPage(n)"
               :class="['w-9 h-9 rounded-full text-sm font-bold transition', pg === n ? 'text-white' : 'nv-btn-ghost !p-0']"
               :style="pg === n ? 'background:linear-gradient(135deg,#7a88ff,#5a68e8);box-shadow:0 4px 12px rgba(108,124,255,.4)' : ''">{{ n }}</button>
-      <button @click="pg = Math.min(totalPages, pg + 1)" :disabled="pg >= totalPages"
+      <button @click="goPage(pg + 1)" :disabled="pg >= totalPages"
               class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">›</button>
     </div>
     </section>
