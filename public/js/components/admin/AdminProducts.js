@@ -99,7 +99,7 @@ const AdminProducts = {
             <td><input type="checkbox" :value="p.id" v-model="sel" class="w-4 h-4 accent-indigo-600 cursor-pointer"></td>
             <td><b class="font-medium">{{ p.name }}</b><div v-if="p.stock < 5" class="text-[10px] text-red-500 font-bold mt-0.5">⚠️ Stok rendah!</div></td>
             <td><span class="nv-badge nv-badge-accent">{{ (p.images || []).length }} foto</span></td>
-            <td><span class="text-[10px] font-bold px-2 py-1 rounded-full text-white uppercase" :style="{ background: catBg(p.category) }">{{ catLbl(p.category) }}</span></td>
+            <td><span class="text-[10px] font-bold px-2 py-1 rounded-full text-white uppercase whitespace-nowrap" :style="{ background: catBg(p.category) }">{{ catLbl(p.category) }}</span></td>
             <td><b class="nv-price">{{ rp(p.price) }}</b></td>
             <td>
               <span class="adm-act">
