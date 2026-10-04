@@ -74,41 +74,44 @@ const AdminOrders = {
   },
   template: `
   <div>
-    <div class="flex gap-2 mb-3 text-sm flex-wrap">
-      <select v-model="aof.status" @change="filter" class="border rounded-xl px-3 py-2 text-sm">
+    <div class="flex gap-2 mb-3 flex-wrap">
+      <select v-model="aof.status" @change="filter" class="nv-input !w-auto text-sm">
         <option value="">Semua status</option>
         <option v-for="s in STATUS_LIST" :key="s" :value="s">{{ stl(s) }} ({{ counts[s] || 0 }})</option>
       </select>
-      <input v-model="aof.q" @input="filter" placeholder="🔍 Cari ID / nama / email..." class="border rounded-xl px-3 py-2 text-sm flex-1 min-w-[180px]">
+      <input v-model="aof.q" @input="filter" placeholder="🔍 Cari ID / nama / email..." class="nv-input !w-auto flex-1 min-w-[180px] text-sm">
     </div>
     <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl overflow-x-auto shadow-sm">
-      <table class="w-full text-sm">
-        <thead><tr class="text-left text-gray-400 border-b dark:border-nova-line text-xs uppercase">
-          <th class="p-3">ID</th><th class="p-3">User</th><th class="p-3">Item</th><th class="p-3">Total</th><th class="p-3">Bayar</th><th class="p-3">Bukti</th><th class="p-3">Status</th>
+      <table class="adm-table">
+        <thead><tr>
+          <th>ID</th><th>User</th><th>Item</th><th>Total</th><th>Bayar</th><th>Bukti</th><th>Status</th>
         </tr></thead>
         <tbody>
-          <tr v-for="o in pagedOrders" :key="o.id" class="border-b dark:border-nova-line last:border-0 hover:bg-gray-50 dark:hover:bg-nova-surface2">
-            <td class="p-3 font-bold text-primary">#{{ o.id }}<br><span class="text-[10px] text-gray-400 font-normal">{{ fmtDay(o.created_at) }}</span></td>
-            <td class="p-3">{{ o.user_name }}<br><span class="text-xs text-gray-400">{{ o.user_email }}</span></td>
-            <td class="p-3 text-xs max-w-[180px]"><div v-for="it in (o.items || [])" :key="it.product_id">{{ it.name }} ×{{ it.qty }}</div></td>
-            <td class="p-3 font-bold">{{ rp(o.total) }}</td>
-            <td class="p-3 text-xs">{{ o.payment_method }}</td>
-            <td class="p-3">
+          <tr v-for="o in pagedOrders" :key="o.id">
+            <td><b class="text-primary">#{{ o.id }}</b><br><span class="text-[10px] text-gray-400">{{ fmtDay(o.created_at) }}</span></td>
+            <td><b class="font-medium">{{ o.user_name }}</b><br><span class="text-xs text-gray-400">{{ o.user_email }}</span></td>
+            <td class="text-xs max-w-[180px]"><div v-for="it in (o.items || [])" :key="it.product_id" class="py-0.5">{{ it.name }} <b>×{{ it.qty }}</b></div></td>
+            <td><b class="nv-price">{{ rp(o.total) }}</b></td>
+            <td class="text-xs">{{ o.payment_method }}</td>
+            <td>
               <a v-if="o.proof_path" :href="o.proof_path" target="_blank"><img :src="o.proof_path" class="w-12 h-12 object-cover rounded-lg border hover:scale-110 transition"></a>
               <span v-else class="text-xs text-gray-300">-</span>
             </td>
-            <td class="p-3">
-              <div class="mb-1.5"><status-badge :status="o.status"></status-badge></div>
-              <div class="flex flex-col gap-1.5 items-start">
+            <td>
+              <div class="mb-2"><status-badge :status="o.status"></status-badge></div>
+              <div class="adm-act">
                 <template v-if="o.status === 'pending'">
-                  <button @click="process(o.id)" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-blue-700 whitespace-nowrap">⚙️ Proses</button>
-                  <button @click="cancel(o.id)" class="text-xs bg-red-500/10 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-xl font-semibold hover:bg-red-500/20 whitespace-nowrap">Batalkan</button>
+                  <button @click="process(o.id)" class="adm-btn adm-btn-primary">⚙️ Proses</button>
+                  <button @click="cancel(o.id)" class="adm-btn adm-btn-danger">Batalkan</button>
                 </template>
                 <template v-if="o.status === 'proses'">
-                  <button @click="openDeliver(o.id)" class="text-xs bg-primary text-white px-3 py-1.5 rounded-xl font-bold hover:bg-indigo-700 whitespace-nowrap">📤 Input Data & Delivery</button>
-                  <button @click="cancel(o.id, true)" class="text-[10px] text-red-400 hover:text-red-600 hover:underline whitespace-nowrap" title="Batal paksa (salah input data)">⚠️ batal paksa</button>
+                  <button @click="openDeliver(o.id)" class="adm-btn adm-btn-primary">📤 Input Data & Delivery</button>
+                  <button @click="cancel(o.id, true)" class="adm-btn adm-btn-danger" title="Batal paksa — hanya jika salah input data">⚠️ Batal paksa</button>
                 </template>
-                <span v-if="o.status === 'delivery'" class="text-[10px] text-gray-400">⏳ Menunggu ulasan user<br><a @click="cancel(o.id, true)" class="cursor-pointer text-red-400 hover:text-red-600 hover:underline" title="Batal paksa (salah input data)">⚠️ batal paksa</a></span>
+                <template v-if="o.status === 'delivery'">
+                  <span class="text-[11px] text-gray-400">⏳ Menunggu ulasan user</span>
+                  <button @click="cancel(o.id, true)" class="adm-btn adm-btn-danger" title="Batal paksa — hanya jika salah input data">⚠️ Batal paksa</button>
+                </template>
               </div>
             </td>
           </tr>
@@ -195,8 +198,8 @@ const DeliverModal = {
         </div>
       </div>
       <div class="flex gap-2 mt-5">
-        <button @click="close" class="flex-1 border-2 border-gray-200 dark:border-nova-line rounded-xl py-2.5 text-sm font-semibold">Nanti Saja</button>
-        <button @click="submit" :disabled="sending" class="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">{{ sending ? 'Mengirim...' : 'Kirim & Delivery →' }}</button>
+        <button @click="close" class="flex-1 nv-btn-ghost py-2.5 text-sm">Nanti Saja</button>
+        <button @click="submit" :disabled="sending" class="flex-1 nv-btn py-2.5 text-sm disabled:opacity-50">{{ sending ? 'Mengirim...' : 'Kirim & Delivery →' }}</button>
       </div>
     </div>
   </div>`

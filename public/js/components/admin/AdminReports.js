@@ -50,16 +50,16 @@ const AdminReports = {
   template: `
   <div>
     <div class="grid grid-cols-3 gap-2 mb-3">
-      <button @click="preset(7)" class="text-xs font-bold px-3 py-2 rounded-xl bg-gray-100 dark:bg-nova-surface2 hover:bg-gray-200 dark:hover:bg-gray-700">7 hari</button>
-      <button @click="preset(30)" class="text-xs font-bold px-3 py-2 rounded-xl bg-gray-100 dark:bg-nova-surface2 hover:bg-gray-200 dark:hover:bg-gray-700">30 hari</button>
-      <button @click="preset(90)" class="text-xs font-bold px-3 py-2 rounded-xl bg-gray-100 dark:bg-nova-surface2 hover:bg-gray-200 dark:hover:bg-gray-700">90 hari</button>
+      <button @click="preset(7)" class="adm-btn adm-btn-ghost">7 hari</button>
+      <button @click="preset(30)" class="adm-btn adm-btn-ghost">30 hari</button>
+      <button @click="preset(90)" class="adm-btn adm-btn-ghost">90 hari</button>
     </div>
     <div class="flex flex-wrap items-center gap-2 mb-4">
       <input v-model="from" type="date" class="flex-1 min-w-[130px] text-xs border border-gray-200 dark:border-nova-line rounded-xl px-3 py-2 bg-white dark:bg-nova-surface">
       <span class="text-xs text-gray-400">s/d</span>
       <input v-model="to" type="date" class="flex-1 min-w-[130px] text-xs border border-gray-200 dark:border-nova-line rounded-xl px-3 py-2 bg-white dark:bg-nova-surface">
-      <button @click="load" class="text-xs font-bold px-4 py-2 rounded-xl bg-primary text-white hover:bg-indigo-700">Tampilkan</button>
-      <button @click="downloadCsv" class="text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">📥 Export CSV</button>
+      <button @click="load" class="adm-btn adm-btn-primary">Tampilkan</button>
+      <button @click="downloadCsv" class="adm-btn adm-btn-green">📥 Export CSV</button>
     </div>
     <div v-if="loading" class="text-center text-gray-400 py-10 text-sm">Memuat laporan...</div>
     <div v-else-if="r">

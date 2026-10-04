@@ -211,15 +211,15 @@ const AdminDash = {
         <textarea v-model="qrisInput" rows="3" placeholder="Tempel string QRIS di sini (diawali 000201...)"
                   class="w-full border rounded-xl p-2.5 text-xs font-mono outline-none focus:border-primary"></textarea>
         <div class="flex items-center gap-2 mt-2">
-          <button @click="saveQris" class="bg-primary text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Simpan QRIS</button>
+          <button @click="saveQris" class="nv-btn text-sm px-5 py-2">Simpan QRIS</button>
           <span class="text-xs" :class="qrisMsg.includes('✓') ? 'text-green-600' : 'text-red-500'">{{ qrisMsg }}</span>
         </div>
         <div class="border-t mt-4 pt-3">
           <h4 class="font-bold text-xs mb-1">💬 WhatsApp CS</h4>
           <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Nomor aktif: <b>{{ waSaved || '-' }}</b> (format: 62812xxxxxxx)</p>
           <div class="flex gap-2">
-            <input v-model="waInput" placeholder="62812xxxxxxx" class="flex-1 min-w-0 border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
-            <button @click="saveWa" class="bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-green-700">Simpan</button>
+            <input v-model="waInput" placeholder="62812xxxxxxx" class="nv-input text-sm flex-1 min-w-0">
+            <button @click="saveWa" class="adm-btn adm-btn-green !text-sm !px-5">Simpan</button>
           </div>
           <label class="flex items-center gap-2 mt-2 text-xs cursor-pointer select-none">
             <button @click="toggleWa" :class="['w-10 h-6 rounded-full relative transition-colors', waOn ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700']">
@@ -241,8 +241,8 @@ const AdminDash = {
                 <div class="text-xs font-bold truncate">{{ m.label }} <span class="font-normal text-gray-400">({{ m.kind === 'qris' ? 'QRIS' : 'Transfer' }})</span></div>
                 <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate">{{ m.details || '-' }}</div>
               </div>
-              <button @click="startEditPay(m)" class="text-xs text-primary font-bold px-2 py-1">✏️</button>
-              <button @click="delPay(m)" class="text-xs text-red-500 font-bold px-2 py-1">🗑️</button>
+              <button @click="startEditPay(m)" class="adm-btn adm-btn-ghost" title="Ubah">✏️</button>
+              <button @click="delPay(m)" class="adm-btn adm-btn-danger" title="Hapus">🗑️</button>
             </div>
           </div>
           <div class="bg-gray-50 dark:bg-nova-surface2 rounded-xl p-3">
@@ -255,10 +255,10 @@ const AdminDash = {
                 <option value="qris">QRIS (scan QR)</option>
               </select>
               <div class="flex gap-2">
-                <button v-if="!pmEdit" @click="addPay" class="flex-1 bg-primary text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-indigo-700">Tambah</button>
+                <button v-if="!pmEdit" @click="addPay" class="flex-1 nv-btn text-xs py-2">Tambah</button>
                 <template v-else>
-                  <button @click="saveEditPay" class="flex-1 bg-primary text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-indigo-700">Simpan</button>
-                  <button @click="cancelEditPay" class="bg-gray-200 dark:bg-gray-700 text-xs font-bold px-3 py-2 rounded-xl">Batal</button>
+                  <button @click="saveEditPay" class="flex-1 nv-btn text-xs py-2">Simpan</button>
+                  <button @click="cancelEditPay" class="nv-btn-ghost text-xs px-4 py-2">Batal</button>
                 </template>
               </div>
             </div>
@@ -279,7 +279,7 @@ const AdminDash = {
             <input v-model="em.admin_email" placeholder="Email admin penerima notif" class="border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
           </div>
           <div class="flex items-center gap-2 mt-2">
-            <button @click="saveEmail" class="bg-primary text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Simpan Email</button>
+            <button @click="saveEmail" class="nv-btn text-sm px-5 py-2">Simpan Email</button>
             <button @click="testEmail" class="bg-gray-100 dark:bg-nova-surface2 text-sm font-bold px-4 py-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700">Kirim Tes</button>
             <span class="text-xs" :class="emMsg.includes('✓') || emMsg.includes('Terkirim') ? 'text-green-600' : 'text-red-500'">{{ emMsg }}</span>
           </div>

@@ -79,36 +79,40 @@ const AdminProducts = {
   },
   template: `
   <div>
-    <button @click="openForm(null)" class="mb-3 bg-primary text-white text-sm font-bold rounded-xl px-5 py-2.5">➕ Tambah Produk</button>
+    <button @click="openForm(null)" class="nv-btn text-sm px-5 py-2.5 mb-3">➕ Tambah Produk</button>
     <div v-if="sel.length" class="mb-3 flex flex-wrap items-center gap-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/25 rounded-2xl px-4 py-2.5 text-sm">
       <b class="text-primary dark:text-indigo-300">{{ sel.length }} dipilih</b>
       <input v-model="bulkVal" type="number" min="0" placeholder="Jumlah stok"
-             class="w-32 border rounded-xl px-3 py-1.5 text-sm outline-none focus:border-primary">
-      <button @click="bulkStock('set')" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Set stok</button>
-      <button @click="bulkStock('add')" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-700">+ Tambah</button>
-      <button @click="sel = []; bulkVal = ''" class="text-xs text-gray-500 dark:text-gray-400 font-semibold hover:underline ml-auto">Batal</button>
+             class="nv-input !w-32 !py-1.5 text-sm">
+      <button @click="bulkStock('set')" class="adm-btn adm-btn-primary">Set stok</button>
+      <button @click="bulkStock('add')" class="adm-btn adm-btn-green">+ Tambah</button>
+      <button @click="sel = []; bulkVal = ''" class="adm-btn adm-btn-ghost ml-auto">Batal</button>
     </div>
     <div class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl overflow-x-auto shadow-sm">
-      <table class="w-full text-sm">
-        <thead><tr class="text-left text-gray-400 border-b dark:border-nova-line text-xs uppercase">
-          <th class="p-3 w-10"><input type="checkbox" :checked="allChecked" @change="toggleAll($event.target.checked)" class="w-4 h-4 accent-indigo-600 cursor-pointer"></th>
-          <th class="p-3">Produk</th><th class="p-3">Foto</th><th class="p-3">Kategori</th><th class="p-3">Harga</th><th class="p-3">Stok</th><th class="p-3">Aksi</th>
+      <table class="adm-table">
+        <thead><tr>
+          <th class="w-10"><input type="checkbox" :checked="allChecked" @change="toggleAll($event.target.checked)" class="w-4 h-4 accent-indigo-600 cursor-pointer"></th>
+          <th>Produk</th><th>Foto</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Aksi</th>
         </tr></thead>
         <tbody>
-          <tr v-for="p in pagedProducts" :key="p.id" :class="['border-b last:border-0 hover:bg-gray-50 dark:hover:bg-nova-surface2', p.stock < 5 ? 'bg-red-50/50 dark:bg-red-500/10' : '']">
-            <td class="p-3"><input type="checkbox" :value="p.id" v-model="sel" class="w-4 h-4 accent-indigo-600 cursor-pointer"></td>
-            <td class="p-3 font-medium">{{ p.name }}<div v-if="p.stock < 5" class="text-[10px] text-red-500 font-bold mt-0.5">⚠️ Stok rendah!</div></td>
-            <td class="p-3"><span class="text-xs bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300 px-2 py-1 rounded-full font-bold">{{ (p.images || []).length }} foto</span></td>
-            <td class="p-3"><span class="text-[10px] font-bold px-2 py-1 rounded-full text-white uppercase" :style="{ background: catBg(p.category) }">{{ catLbl(p.category) }}</span></td>
-            <td class="p-3 font-bold text-accent">{{ rp(p.price) }}</td>
-            <td class="p-3">
-              <span v-if="p.stock < 5" class="font-bold text-red-600">{{ p.stock }}</span><span v-else>{{ p.stock }}</span>
-              <button v-if="p.stock < 5" @click="restock(p.id)" class="text-[10px] bg-emerald-600 text-white px-2 py-1 rounded-full font-bold hover:bg-emerald-700 ml-1">+10</button>
+          <tr v-for="p in pagedProducts" :key="p.id" :style="p.stock < 5 ? 'background:rgba(255,60,60,.04)' : ''">
+            <td><input type="checkbox" :value="p.id" v-model="sel" class="w-4 h-4 accent-indigo-600 cursor-pointer"></td>
+            <td><b class="font-medium">{{ p.name }}</b><div v-if="p.stock < 5" class="text-[10px] text-red-500 font-bold mt-0.5">⚠️ Stok rendah!</div></td>
+            <td><span class="nv-badge nv-badge-accent">{{ (p.images || []).length }} foto</span></td>
+            <td><span class="text-[10px] font-bold px-2 py-1 rounded-full text-white uppercase" :style="{ background: catBg(p.category) }">{{ catLbl(p.category) }}</span></td>
+            <td><b class="nv-price">{{ rp(p.price) }}</b></td>
+            <td>
+              <span class="adm-act">
+                <b :class="p.stock < 5 ? 'text-red-600' : ''">{{ p.stock }}</b>
+                <button v-if="p.stock < 5" @click="restock(p.id)" class="adm-btn adm-btn-green" title="Tambah stok +10">+10</button>
+              </span>
             </td>
-            <td class="p-3 whitespace-nowrap">
-              <button @click="openForm(p.id)" class="text-primary font-semibold hover:underline mr-3">Edit</button>
-              <button v-if="p.category === 'voucher'" @click="openCodes(p)" class="text-amber-600 font-semibold hover:underline mr-3">🎫 Kode</button>
-              <button @click="del(p.id)" class="text-red-500 font-semibold hover:underline">Hapus</button>
+            <td>
+              <div class="adm-act">
+                <button @click="openForm(p.id)" class="adm-btn adm-btn-ghost">✏️ Edit</button>
+                <button v-if="p.category === 'voucher'" @click="openCodes(p)" class="adm-btn adm-btn-amber">🎫 Kode</button>
+                <button @click="del(p.id)" class="adm-btn adm-btn-danger">🗑️ Hapus</button>
+              </div>
             </td>
           </tr>
         </tbody>

@@ -106,7 +106,7 @@ const AdminSettings = {
         </div>
       </div>
       <div class="mt-3 flex items-center gap-3">
-        <button @click="saveStore" class="bg-primary text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">💾 Simpan</button>
+        <button @click="saveStore" class="nv-btn text-sm px-5 py-2">💾 Simpan</button>
         <span class="text-xs" :class="storeMsg.includes('✓') ? 'text-green-600' : 'text-red-500'">{{ storeMsg }}</span>
       </div>
     </div>
@@ -122,8 +122,8 @@ const AdminSettings = {
           <div class="flex-1 min-w-0">
             <div class="text-xs font-bold truncate">{{ c.icon }} {{ c.label }} <span class="font-normal text-gray-400">({{ c.id }})</span></div>
           </div>
-          <button @click="startEditCat(c)" class="text-xs text-primary font-bold px-2 py-1">✏️</button>
-          <button @click="delCat(c)" class="text-xs text-red-500 font-bold px-2 py-1">🗑️</button>
+          <button @click="startEditCat(c)" class="adm-btn adm-btn-ghost" title="Ubah">✏️</button>
+          <button @click="delCat(c)" class="adm-btn adm-btn-danger" title="Hapus">🗑️</button>
         </div>
       </div>
       <div class="bg-gray-50 dark:bg-nova-surface2 rounded-xl p-3">
@@ -131,10 +131,10 @@ const AdminSettings = {
         <div class="flex gap-2">
           <input v-model="catForm.icon" placeholder="📦" class="w-14 border rounded-xl px-3 py-2 text-sm text-center outline-none focus:border-primary">
           <input v-model="catForm.label" placeholder="Label, mis: Pulsa" class="flex-1 border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary">
-          <button v-if="!catEdit" @click="addCat" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Tambah</button>
+          <button v-if="!catEdit" @click="addCat" class="nv-btn text-xs px-4 py-2">Tambah</button>
           <template v-else>
-            <button @click="saveEditCat" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Simpan</button>
-            <button @click="cancelEditCat" class="bg-gray-200 dark:bg-gray-700 text-xs font-bold px-3 py-2 rounded-xl">Batal</button>
+            <button @click="saveEditCat" class="nv-btn text-xs px-4 py-2">Simpan</button>
+            <button @click="cancelEditCat" class="nv-btn-ghost text-xs px-4 py-2">Batal</button>
           </template>
         </div>
         <span class="text-xs" :class="catMsg.includes('✓') ? 'text-green-600' : 'text-red-500'">{{ catMsg }}</span>
