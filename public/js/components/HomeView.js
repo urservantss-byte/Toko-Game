@@ -34,6 +34,7 @@ const HomeView = {
       const q = store.f.q.toLowerCase();
       let arr = store.products.filter(p =>
         (store.f.cat === 'all' || p.category === store.f.cat) &&
+        (!store.f.sub || p.subcategory_id === store.f.sub) &&
         (!store.f.tag || String(p.tags || '').toLowerCase().includes(store.f.tag.toLowerCase())) &&
         (!q || (p.name + ' ' + (p.description || '') + ' ' + (p.tags || '')).toLowerCase().includes(q)));
       const sorters = {
@@ -48,6 +49,17 @@ const HomeView = {
     pagedList() {
       const p = Math.min(this.pg, this.totalPages);
       return this.list.slice((p - 1) * 10, p * 10);
+    },
+    activeCat() {
+      const fc = store.f.cat;
+      if (!fc || fc === 'all') return null;
+      return (store.cats || []).find(c => c.id === fc) || null;
+    },
+    rootCats() { return (store.cats || []).filter(c => !c.parent_id); },
+    activeSubcats() {
+      const fc = store.f.cat;
+      if (!fc || fc === 'all') return [];
+      return (store.cats || []).filter(c => c.parent_id === fc);
     },
   },
   watch: {
@@ -86,7 +98,8 @@ const HomeView = {
       } catch (e) { toast(e.message, false); }
     },
     buyNow(id) { this.addCart(id); go('checkout'); },
-    setCat(c) { store.f.cat = c; store.f.tag = ''; },
+    setCat(c) { store.f.cat = c; store.f.sub = ''; store.f.tag = ''; },
+    setSub(sc) { store.f.sub = store.f.sub === sc ? '' : sc; },
     setTag(t) { store.f.tag = store.f.tag === t ? '' : t; },
     catProducts(catId) {
       return store.products.filter(p => p.category === catId).slice(0, 12);
@@ -98,11 +111,6 @@ const HomeView = {
       if (fc && fc !== 'all') return false;
       if (store.f.q || store.f.tag) return false;
       return this.catProducts(c.id).length > 0;
-    },
-    activeCat() {
-      const fc = store.f.cat;
-      if (!fc || fc === 'all') return null;
-      return (store.cats || []).find(c => c.id === fc) || null;
     },
   },
   template: `
@@ -166,10 +174,15 @@ const HomeView = {
     <!-- Filter chips -->
     <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
       <button @click="setCat('all')" :class="['nv-chip', !f.cat || f.cat==='all' ? 'on' : '']">Semua</button>
-      <button v-for="c in store.cats" :key="c.id" @click="setCat(c.id)"
+      <button v-for="c in rootCats" :key="c.id" @click="setCat(c.id)"
               :class="['nv-chip', f.cat===c.id ? 'on' : '']">{{ c.icon }} {{ c.label }}</button>
       <button v-for="t in tags" :key="t" @click="setTag(t)"
               :class="['nv-chip', f.tag===t ? 'on' : '']">#{{ t }}</button>
+    </div>
+    <div v-if="activeSubcats.length" class="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 -mt-3">
+      <button @click="setSub('')" :class="['nv-chip !text-xs', !f.sub ? 'on' : '']">Semua {{ activeCat ? activeCat.label : '' }}</button>
+      <button v-for="sc in activeSubcats" :key="sc.id" @click="setSub(sc.id)"
+              :class="['nv-chip !text-xs', f.sub===sc.id ? 'on' : '']">{{ sc.icon }} {{ sc.label }}</button>
     </div>
 
     <!-- Sort -->
@@ -183,7 +196,7 @@ const HomeView = {
     </div>
 
     <!-- Produk per kategori (slider) -->
-    <template v-for="c in store.cats" :key="'cs'+c.id">
+    <template v-for="c in rootCats" :key="'cs'+c.id">
       <section v-if="showCatSection(c)">
         <div class="nv-sec">
           <span class="dot"></span>
@@ -210,9 +223,9 @@ const HomeView = {
     <section id="all-products">
       <div class="nv-sec">
         <span class="dot"></span>
-        <h2>{{ activeCat() ? activeCat().icon + ' ' + activeCat().label : '🛍️ Semua Produk' }}</h2>
+        <h2>{{ activeCat ? activeCat.icon + ' ' + activeCat.label : '🛍️ Semua Produk' }}</h2>
         <span class="text-xs text-gray-500 dark:text-nova-muted font-medium">{{ list.length }} produk</span>
-        <a v-if="activeCat()" class="more" @click="setCat('all')">← Kembali</a>
+        <a v-if="activeCat" class="more" @click="setCat('all')">← Kembali</a>
       </div>
     <!-- Grid produk -->
     <div v-if="store.productsLoading" class="grid grid-cols-2 md:grid-cols-3 gap-3">

@@ -1,6 +1,6 @@
 /* Admin: kelola produk + form produk + photo manager */
 const AdminProducts = {
-  data: () => ({ products: [], codesModal: null, codes: [], codesInput: '', codesMsg: '', sel: [], bulkVal: '', pg: 1 }),
+  data: () => ({ products: [], codesModal: null, codes: [], codesInput: '', codesMsg: '', accModal: null, accs: [], accInput: '', accMsg: '', sel: [], bulkVal: '', pg: 1 }),
   computed: {
     allChecked() { return this.products.length > 0 && this.sel.length === this.products.length; },
     totalPages() { return Math.max(1, Math.ceil(this.products.length / 10)); },
@@ -76,6 +76,25 @@ const AdminProducts = {
       await api(`/api/admin/products/${this.codesModal.id}/codes/${cid}`, { method: 'DELETE' });
       this.openCodes(this.codesModal);
     },
+    async openAccs(p) {
+      this.accModal = p; this.accs = []; this.accInput = ''; this.accMsg = '';
+      try { this.accs = (await api(`/api/admin/products/${p.id}/accounts`)).accounts || []; }
+      catch (e) { this.accMsg = e.message; }
+    },
+    async addAccs() {
+      this.accMsg = '';
+      try {
+        const d = await api(`/api/admin/products/${this.accModal.id}/accounts`, { method: 'POST',
+          body: JSON.stringify({ accounts: this.accInput }) });
+        this.accMsg = `Stok akun tersedia: ${d.available} ✓`;
+        this.accInput = '';
+        this.openAccs(this.accModal);
+      } catch (e) { this.accMsg = e.message; }
+    },
+    async delAcc(aid) {
+      await api(`/api/admin/products/${this.accModal.id}/accounts/${aid}`, { method: 'DELETE' });
+      this.openAccs(this.accModal);
+    },
   },
   template: `
   <div>
@@ -110,7 +129,8 @@ const AdminProducts = {
             <td>
               <div class="adm-act">
                 <button @click="openForm(p.id)" class="adm-btn adm-btn-ghost">✏️ Edit</button>
-                <button v-if="p.category === 'voucher'" @click="openCodes(p)" class="adm-btn adm-btn-amber">🎫 Kode</button>
+                <button v-if="p.category !== 'topup'" @click="openCodes(p)" class="adm-btn adm-btn-amber">🎫 Kode</button>
+                <button v-if="p.category !== 'topup'" @click="openAccs(p)" class="adm-btn adm-btn-primary">👤 Akun</button>
                 <button @click="del(p.id)" class="adm-btn adm-btn-danger">🗑️ Hapus</button>
               </div>
             </td>
@@ -145,13 +165,32 @@ const AdminProducts = {
         <button @click="codesModal = null" class="mt-4 w-full bg-gray-100 dark:bg-nova-surface2 font-bold text-sm rounded-xl py-2.5">Tutup</button>
       </div>
     </div>
+    <!-- Modal stok akun otomatis -->
+    <div v-if="accModal" class="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4" @click.self="accModal = null">
+      <div class="bg-white dark:bg-nova-surface rounded-3xl p-5 max-w-md w-full max-h-[85vh] overflow-y-auto">
+        <h3 class="font-bold mb-1">👤 Stok Akun: {{ accModal.name }}</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Akun otomatis terkirim saat admin delivery. Format per baris:<br><span class="font-mono">email | password | catatan (opsional)</span></p>
+        <textarea v-model="accInput" rows="4" placeholder="user1@mail.com | pass123 | -&#10;user2@mail.com | pass456 | -"
+                  class="w-full border rounded-xl p-2.5 text-xs font-mono outline-none focus:border-primary mb-2"></textarea>
+        <button @click="addAccs" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-indigo-700">Tambah Akun</button>
+        <span class="text-xs ml-2" :class="accMsg.includes('✓') ? 'text-green-600' : 'text-red-500'">{{ accMsg }}</span>
+        <div class="mt-3 space-y-1.5 max-h-56 overflow-y-auto">
+          <div v-for="a in accs" :key="a.id" class="flex items-center justify-between bg-gray-50 dark:bg-nova-surface2 rounded-xl px-3 py-2 text-xs">
+            <span :class="a.used ? 'line-through text-gray-400' : ''" class="font-mono truncate">{{ a.used ? '•••••• (terpakai #' + a.order_id + ')' : a.email }}</span>
+            <button v-if="!a.used" @click="delAcc(a.id)" class="text-red-500 font-bold ml-2">✕</button>
+          </div>
+          <p v-if="!accs.length" class="text-xs text-gray-400 text-center py-3">Belum ada stok akun</p>
+        </div>
+        <button @click="accModal = null" class="mt-4 w-full bg-gray-100 dark:bg-nova-surface2 font-bold text-sm rounded-xl py-2.5">Tutup</button>
+      </div>
+    </div>
   </div>`
 };
 
 /* Modal form produk + photo manager */
 const ProductFormModal = {
   data: () => ({
-    form: { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '', process_time: '', discount: '' },
+    form: { name: '', description: '', price: '', stock: '', category: 'voucher', subcategory_id: null, delivery_mode: 'auto', tags: '', process_time: '', discount: '' },
     existing: [],   // foto yg sudah tersimpan [{id, url, sort_order}]
     pending: [],    // File baru
     err: '',
@@ -162,22 +201,30 @@ const ProductFormModal = {
   }),
   computed: {
     show: () => !!store.productForm,
+    rootCats() { return (store.cats || []).filter(c => !c.parent_id); },
+    subcats() { return (store.cats || []).filter(c => c.parent_id === this.form.category); },
     pid() { return store.productForm && store.productForm.id; },
     total() { return this.existing.length + this.pending.length; },
   },
   watch: {
-    show(v) { if (v) this.init(); }
+    show(v) { if (v) this.init(); },
+    'form.category'(nc) {
+      // Reset subkategori hanya kalau tidak cocok dengan kategori baru
+      // (bukan buta-buta, agar tidak menghapus saat init edit)
+      const sc = (store.cats || []).find(c => c.id === this.form.subcategory_id);
+      if (!sc || sc.parent_id !== nc) this.form.subcategory_id = null;
+    },
   },
   methods: {
     close() { store.productForm = null; },
     async init() {
       const pf = store.productForm;
       this.existing = []; this.pending = []; this.err = ''; this.variants = []; this.nv = { label: '', price: '', stock: '' };
-      this.form = { name: '', description: '', price: '', stock: '', category: 'voucher', tags: '', process_time: '', discount: '' };
+      this.form = { name: '', description: '', price: '', stock: '', category: 'voucher', subcategory_id: null, delivery_mode: 'auto', tags: '', process_time: '', discount: '' };
       if (pf && pf.id) {
         try {
           const { product: p } = await api('/api/products/' + pf.id);
-          this.form = { name: p.name || '', description: p.description || '', price: p.price || '', stock: p.stock ?? '', category: p.category || 'voucher', tags: p.tags || '', process_time: p.process_time || '', discount: p.discount || '' };
+          this.form = { name: p.name || '', description: p.description || '', price: p.price || '', stock: p.stock ?? '', category: p.category || 'voucher', subcategory_id: p.subcategory_id || null, delivery_mode: p.delivery_mode || 'auto', tags: p.tags || '', process_time: p.process_time || '', discount: p.discount || '' };
           this.existing = (p.images || []).slice();
           this.variants = (p.variants || []).slice();
         } catch (e) { toast(e.message, false); this.close(); }
@@ -252,11 +299,14 @@ const ProductFormModal = {
       const b = {
         name: this.form.name.trim(), description: this.form.description.trim(),
         price: Number(this.form.price) || 0,
-        category: this.form.category, tags: this.form.tags.trim(), process_time: this.form.process_time.trim(),
+        category: this.form.category, subcategory_id: this.form.subcategory_id || null,
+        delivery_mode: this.form.category === 'topup' ? 'manual' : this.form.delivery_mode,
+        tags: this.form.tags.trim(), process_time: this.form.process_time.trim(),
         discount: Math.max(0, Math.min(100, Number(this.form.discount) || 0))
       };
-      // Stok manual hanya untuk produk tanpa varian dan bukan voucher (voucher ngikutin jumlah kode)
-      if (!this.variants.length && this.form.category !== 'voucher') b.stock = Number(this.form.stock) || 0;
+      // Stok manual hanya jika: tanpa varian, mode manual (pool otomatis ngikutin jumlah stok pool)
+      const autoPool = b.delivery_mode === 'auto' && b.category !== 'topup';
+      if (!this.variants.length && !autoPool) b.stock = Number(this.form.stock) || 0;
       if (!b.name || b.price < 0) return toast('Nama & harga wajib diisi', false);
       this.saving = true;
       try {
@@ -288,17 +338,29 @@ const ProductFormModal = {
         <textarea v-model="form.description" placeholder="Deskripsi" rows="3" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none"></textarea>
         <div class="grid grid-cols-2 gap-3">
           <input v-model="form.price" type="number" placeholder="Harga (Rp)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
-          <input v-model="form.stock" type="number" placeholder="Stok" :disabled="variants.length > 0 || form.category === 'voucher'" :title="variants.length ? 'Stok mengikuti total varian' : (form.category === 'voucher' ? 'Stok mengikuti jumlah kode' : '')" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400">
+          <input v-model="form.stock" type="number" placeholder="Stok" :disabled="variants.length > 0 || (form.delivery_mode === 'auto' && form.category !== 'topup')" :title="variants.length ? 'Stok mengikuti total varian' : ((form.delivery_mode === 'auto' && form.category !== 'topup') ? 'Stok otomatis mengikuti jumlah stok pool (kode/akun)' : '')" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400">
         </div>
         <p v-if="variants.length" class="text-[11px] text-gray-400">Stok produk = total stok varian ({{ variants.reduce((a, v) => a + (Number(v.stock) || 0), 0) }}). Ubah stok lewat tiap varian di bawah.</p>
-        <p v-else-if="form.category === 'voucher'" class="text-[11px] text-gray-400">Stok otomatis mengikuti jumlah kode voucher yang tersedia. Kelola lewat tombol 🎫 Kode.</p>
+        <p v-else-if="form.delivery_mode === 'auto' && form.category !== 'topup'" class="text-[11px] text-gray-400">⚡ Stok otomatis mengikuti jumlah stok pool (kode voucher / akun). Kelola lewat tombol 🎫 Kode / 👤 Akun di daftar produk.</p>
         <div class="grid grid-cols-2 gap-3">
           <input v-model="form.discount" type="number" min="0" max="100" placeholder="Diskon % (flash sale)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
           <input v-model="form.process_time" placeholder="Estimasi proses (mis: 5 menit)" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
         </div>
-        <select v-model="form.category" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
-          <option v-for="c in store.cats" :key="c.id" :value="c.id">{{ c.icon }} {{ c.label }}</option>
-        </select>
+        <div class="grid grid-cols-2 gap-3">
+          <select v-model="form.category" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
+            <option v-for="c in rootCats" :key="c.id" :value="c.id">{{ c.icon }} {{ c.label }}</option>
+          </select>
+          <select v-model="form.subcategory_id" class="border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none" :disabled="!subcats.length">
+            <option :value="null">{{ subcats.length ? '— Pilih subkategori —' : 'Tidak ada subkategori' }}</option>
+            <option v-for="sc in subcats" :key="sc.id" :value="sc.id">{{ sc.icon }} {{ sc.label }}</option>
+          </select>
+        </div>
+        <div v-if="form.category !== 'topup'" class="flex items-center gap-2 bg-gray-50 dark:bg-nova-surface2 rounded-xl px-3 py-2.5">
+          <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Mode delivery:</span>
+          <button type="button" @click="form.delivery_mode = 'auto'" :class="['text-xs font-bold px-3 py-1.5 rounded-full transition', form.delivery_mode === 'auto' ? 'bg-emerald-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500']">⚡ Otomatis</button>
+          <button type="button" @click="form.delivery_mode = 'manual'" :class="['text-xs font-bold px-3 py-1.5 rounded-full transition', form.delivery_mode === 'manual' ? 'bg-amber-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500']">✋ Manual</button>
+        </div>
+        <p v-else class="text-[11px] text-gray-400">💎 Produk topup selalu manual (upload bukti + TRX ID). Otomatisasi penuh butuh API supplier.</p>
         <input v-model="form.tags" placeholder="Tags (koma, mis: mlbb,diamond)" class="w-full border rounded-xl px-3 py-2.5 focus:border-primary focus:outline-none">
         <div>
           <label class="block font-semibold mb-2">Foto Produk <span class="text-xs font-normal text-gray-400">({{ total }}/10)</span></label>

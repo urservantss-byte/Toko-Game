@@ -10,7 +10,7 @@ const store = reactive({
   products: [],
   productsLoading: true,
   ordersLoading: false,
-  f: { q: '', cat: 'all', tag: '', sort: 'pop' },
+  f: { q: '', cat: 'all', sub: '', tag: '', sort: 'pop' },
   // product modal
   product: null,           // produk yg dibuka di modal detail
   productLoading: false,

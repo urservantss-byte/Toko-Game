@@ -188,10 +188,10 @@ const DeliverModal = {
           <template v-else>
             <div class="font-bold text-sm mb-1">{{ it.category === 'akun' ? '👤' : '🎟️' }} {{ it.name }} <span class="text-[10px] font-normal text-gray-400">×{{ it.qty }}</span></div>
             <div v-if="autoFor(it)" class="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 rounded-xl p-3 text-xs text-emerald-700 dark:text-emerald-300">
-              ⚡ {{ it.auto_codes }} kode otomatis tersedia — akan dikirim otomatis, tidak perlu isi manual.
+              ⚡ {{ it.auto_codes }} stok otomatis tersedia — akan dikirim otomatis, tidak perlu isi manual.
             </div>
             <template v-else>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">{{ it.category === 'akun' ? 'Isi detail akun (email & password / data login).' : 'Isi kode voucher.' }}<span v-if="it.auto_codes > 0" class="text-amber-600"> (stok kode otomatis kurang: {{ it.auto_codes }}/{{ it.qty }})</span></p>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">{{ it.category === 'akun' ? 'Isi detail akun (email & password / data login).' : 'Isi kode voucher.' }}<span v-if="it.auto_codes > 0" class="text-amber-600"> (stok otomatis kurang: {{ it.auto_codes }}/{{ it.qty }})</span></p>
               <textarea v-model="it.data" rows="3" :placeholder="it.category === 'akun' ? 'Email: ...\\nPassword: ...' : 'Kode voucher: ...'" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:border-primary focus:outline-none font-mono"></textarea>
             </template>
           </template>

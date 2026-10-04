@@ -182,10 +182,22 @@ CREATE TABLE IF NOT EXISTS categories (
   console.log('[seed] categories: 3 kategori default');
 })();
 function allCategories() {
-  return db.prepare('SELECT id,label,icon,active,sort_order FROM categories ORDER BY sort_order,id').all();
+  return db.prepare('SELECT id,label,icon,active,sort_order,parent_id FROM categories ORDER BY sort_order,id').all();
 }
 function activeCategories() {
-  return db.prepare("SELECT id,label,icon FROM categories WHERE active = 1 ORDER BY sort_order,id").all();
+  return db.prepare("SELECT id,label,icon,parent_id FROM categories WHERE active = 1 ORDER BY sort_order,id").all();
+}
+// Tree kategori: [{...cat, children: [...]}] — dipakai admin & frontend
+function categoryTree() {
+  const all = allCategories();
+  const map = {};
+  for (const c of all) map[c.id] = { ...c, children: [] };
+  const roots = [];
+  for (const c of all) {
+    if (c.parent_id && map[c.parent_id]) map[c.parent_id].children.push(map[c.id]);
+    else roots.push(map[c.id]);
+  }
+  return roots;
 }
 function categoryIds() { return allCategories().map(c => c.id); }
 // Migrasi: hapus CHECK(category IN (...)) agar kategori bisa dinamis (rebuild tabel, idempoten)
@@ -344,6 +356,36 @@ seed();
     if (!cols.includes(name)) { db.exec(`ALTER TABLE orders ADD COLUMN ${name} ${def}`); added++; }
   }
   if (added) console.log(`[migrasi] ${added} kolom delivery ditambahkan ke orders`);
+})();
+
+// ---- Migrasi: subkategori (parent_id) + stok akun otomatis ----
+(function migrateCategoriesSub() {
+  const cols = db.prepare(`PRAGMA table_info(categories)`).all().map(c => c.name);
+  if (!cols.includes('parent_id')) {
+    db.exec(`ALTER TABLE categories ADD COLUMN parent_id TEXT REFERENCES categories(id)`);
+    console.log('[migrasi] kolom parent_id ditambahkan ke categories (subkategori)');
+  }
+})();
+db.exec(`CREATE TABLE IF NOT EXISTS account_stocks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  email TEXT NOT NULL DEFAULT '',
+  password TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT '',
+  used INTEGER NOT NULL DEFAULT 0,
+  order_id INTEGER,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
+(function migrateProductsSub() {
+  const cols = db.prepare(`PRAGMA table_info(products)`).all().map(c => c.name);
+  let added = 0;
+  for (const [name, def] of [
+    ['subcategory_id', `TEXT REFERENCES categories(id)`], // subkategori produk (opsional)
+    ['delivery_mode', `TEXT NOT NULL DEFAULT 'auto'`],    // auto = pakai stok pool (kode/akun), manual = input admin
+  ]) {
+    if (!cols.includes(name)) { db.exec(`ALTER TABLE products ADD COLUMN ${name} ${def}`); added++; }
+  }
+  if (added) console.log(`[migrasi] ${added} kolom (subcategory_id, delivery_mode) ditambahkan ke products`);
 })();
 
 // ---- Helpers email (verifikasi & reset password) ----
@@ -836,28 +878,50 @@ app.get('/api/tags', (req, res) => {
 
 // ---- Products (admin) ----
 app.post('/api/products', auth, requireAdmin, (req, res) => {
-  const { name, description = '', price = 0, image_url = '', category = 'voucher', tags = '', stock = 0, process_time = '', discount = 0 } = req.body || {};
+  const { name, description = '', price = 0, image_url = '', category = 'voucher', subcategory_id = null, delivery_mode = 'auto', tags = '', stock = 0, process_time = '', discount = 0 } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Nama produk wajib diisi' });
-  if (!categoryIds().includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
+  const _cat = catById(category);
+  if (!_cat || _cat.parent_id) return res.status(400).json({ error: 'Kategori produk harus kategori utama (bukan subkategori)' });
+  if (subcategory_id) {
+    const sc = catById(subcategory_id);
+    if (!sc || sc.parent_id !== category) return res.status(400).json({ error: 'Subkategori tidak valid untuk kategori ini' });
+  }
   const disc = Math.max(0, Math.min(100, Number(discount) || 0));
-  const info = db.prepare('INSERT INTO products (name,description,price,image_url,category,tags,stock,process_time,discount) VALUES (?,?,?,?,?,?,?,?,?)')
-    .run(name, description, Number(price) || 0, image_url, category, tags, Number(stock) || 0, String(process_time || ''), disc);
+  const info = db.prepare('INSERT INTO products (name,description,price,image_url,category,subcategory_id,delivery_mode,tags,stock,process_time,discount) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+    .run(name, description, Number(price) || 0, image_url, category, subcategory_id || null,
+      ['auto', 'manual'].includes(delivery_mode) ? delivery_mode : 'auto',
+      tags, Number(stock) || 0, String(process_time || ''), disc);
   res.status(201).json({ product: db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid) });
 });
 
 app.put('/api/products/:id', auth, requireAdmin, (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Produk tidak ditemukan' });
-  const { name, description, price, image_url, category, tags, stock, process_time, discount } = req.body || {};
-  if (category && !categoryIds().includes(category)) return res.status(400).json({ error: 'Kategori tidak valid' });
+  const { name, description, price, image_url, category, subcategory_id, delivery_mode, tags, stock, process_time, discount } = req.body || {};
+  if (category) {
+    const _uc = catById(category);
+    if (!_uc || _uc.parent_id) return res.status(400).json({ error: 'Kategori produk harus kategori utama (bukan subkategori)' });
+  }
+  const effCat = category || p.category;
+  if (subcategory_id !== undefined && subcategory_id) {
+    const sc = catById(subcategory_id);
+    if (!sc || sc.parent_id !== effCat) return res.status(400).json({ error: 'Subkategori tidak valid untuk kategori ini' });
+  }
+  // ganti kategori tanpa subkategori baru -> subkategori lama dibersihkan
+  const effSub = subcategory_id === undefined
+    ? (category && category !== p.category ? null : p.subcategory_id)
+    : (subcategory_id || null);
   const disc = discount === undefined ? null : Math.max(0, Math.min(100, Number(discount) || 0));
   db.prepare(`UPDATE products SET
     name=COALESCE(?,name), description=COALESCE(?,description), price=COALESCE(?,price),
-    image_url=COALESCE(?,image_url), category=COALESCE(?,category), tags=COALESCE(?,tags),
+    image_url=COALESCE(?,image_url), category=COALESCE(?,category), subcategory_id=?,
+    delivery_mode=COALESCE(?,delivery_mode), tags=COALESCE(?,tags),
     stock=COALESCE(?,stock), process_time=COALESCE(?,process_time), discount=COALESCE(?,discount) WHERE id=?`)
     .run(name ?? null, description ?? null, price ?? null, image_url ?? null,
-      category ?? null, tags ?? null, stock ?? null, process_time ?? null, disc, req.params.id);
-  syncCodeStock(req.params.id); // produk berkode: stok selalu ngikutin jumlah kode
+      category ?? null, effSub,
+      delivery_mode && ['auto', 'manual'].includes(delivery_mode) ? delivery_mode : null,
+      tags ?? null, stock ?? null, process_time ?? null, disc, req.params.id);
+  syncAutoStock(req.params.id); // produk ber-pool: stok selalu ngikutin jumlah pool
   res.json({ product: db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id) });
 });
 
@@ -1209,6 +1273,34 @@ app.delete('/api/admin/products/:id/codes/:cid', auth, requireAdmin, (req, res) 
   res.json({ ok: true });
 });
 
+// ---- Stok akun otomatis (admin) — mirip kode voucher, untuk produk kategori akun ----
+// Format input: satu akun per baris "email | password | catatan(opsional)"
+app.get('/api/admin/products/:id/accounts', auth, requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT id, email, password, notes, used, order_id FROM account_stocks WHERE product_id = ? ORDER BY id').all(req.params.id);
+  res.json({ accounts: rows, available: rows.filter(r => !r.used).length });
+});
+app.post('/api/admin/products/:id/accounts', auth, requireAdmin, (req, res) => {
+  const lines = String((req.body || {}).accounts || '').split(/[\n]+/).map(s => s.trim()).filter(Boolean);
+  if (!lines.length) return res.status(400).json({ error: 'Tidak ada akun' });
+  const ins = db.prepare('INSERT INTO account_stocks (product_id, email, password, notes) VALUES (?,?,?,?)');
+  const tx = db.transaction(() => {
+    for (const ln of lines.slice(0, 500)) {
+      const [email = '', password = '', ...rest] = ln.split('|').map(s => s.trim());
+      if (!email || !password) continue;
+      ins.run(req.params.id, email.slice(0, 200), password.slice(0, 200), rest.join('|').slice(0, 500));
+    }
+  });
+  tx();
+  syncAutoStock(req.params.id);
+  const n = db.prepare('SELECT COUNT(*) c FROM account_stocks WHERE product_id = ? AND used = 0').get(req.params.id).c;
+  res.json({ ok: true, available: n });
+});
+app.delete('/api/admin/products/:id/accounts/:aid', auth, requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM account_stocks WHERE id = ? AND product_id = ? AND used = 0').run(req.params.aid, req.params.id);
+  syncAutoStock(req.params.id);
+  res.json({ ok: true });
+});
+
 // ---- Varian produk ----
 app.get('/api/products/:id/variants', (req, res) => {
   try {
@@ -1237,37 +1329,69 @@ app.delete('/api/products/:id/variants/:vid', auth, requireAdmin, (req, res) => 
   res.json({ ok: true });
 });
 
-// Coba kirim otomatis: jika SEMUA item punya kode otomatis cukup (non-topup),
-// claim kode + return array delivery. Return null jika butuh input manual.
+// Coba kirim otomatis: jika SEMUA item non-topup, mode auto, dan pool (kode/akun) cukup,
+// claim dari pool + return array delivery. Return null jika butuh input manual.
+// HOOK topup otomatis: integrasi API supplier (VipReseller/Digiflazz/dll) dipasang di sini —
 function tryAutoDeliver(orderId) {
   const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
   if (!order) return null;
   let items = [];
   try { items = JSON.parse(order.items_json); } catch {}
   if (!items.length) return null;
-  const catStmt = db.prepare('SELECT category FROM products WHERE id = ?');
-  const cats = items.map(it => (catStmt.get(it.product_id) || {}).category || 'voucher');
-  if (cats.some(c => c === 'topup')) return null;
+  const prodStmt = db.prepare('SELECT category, delivery_mode FROM products WHERE id = ?');
+  const metas = items.map(it => prodStmt.get(it.product_id) || { category: 'voucher', delivery_mode: 'auto' });
+  if (metas.some(m => m.category === 'topup')) return null;      // topup = manual (bukti + TRX ID)
+  if (metas.some(m => m.delivery_mode === 'manual')) return null; // admin paksa manual
   for (const it of items) {
-    const avail = db.prepare('SELECT COUNT(*) c FROM voucher_codes WHERE product_id = ? AND used = 0').get(it.product_id).c;
-    if (avail < it.qty) return null;
+    if (poolAvailable(it.product_id) < it.qty) return null;
   }
   const delivery = [];
   const tx = db.transaction(() => {
-    const upd = db.prepare('UPDATE voucher_codes SET used = 1, order_id = ? WHERE id = ?');
+    const updCode = db.prepare('UPDATE voucher_codes SET used = 1, order_id = ? WHERE id = ?');
+    const updAcc = db.prepare('UPDATE account_stocks SET used = 1, order_id = ? WHERE id = ?');
     items.forEach((it, i) => {
-      const rows = db.prepare('SELECT id, code FROM voucher_codes WHERE product_id = ? AND used = 0 ORDER BY id LIMIT ?')
-        .all(it.product_id, it.qty);
-      for (const r of rows) upd.run(orderId, r.id);
-      delivery.push({ product_id: it.product_id, name: it.name, category: cats[i], qty: it.qty,
-        data: rows.map(r => r.code).join('\n'), auto: true });
+      let dataStr;
+      if (hasAccountStock(it.product_id)) {
+        const rows = db.prepare('SELECT id, email, password, notes FROM account_stocks WHERE product_id = ? AND used = 0 ORDER BY id LIMIT ?')
+          .all(it.product_id, it.qty);
+        for (const r of rows) updAcc.run(orderId, r.id);
+        dataStr = rows.map(r => `Email: ${r.email}\nPassword: ${r.password}` + (r.notes ? `\nCatatan: ${r.notes}` : '')).join('\n\n');
+      } else {
+        const rows = db.prepare('SELECT id, code FROM voucher_codes WHERE product_id = ? AND used = 0 ORDER BY id LIMIT ?')
+          .all(it.product_id, it.qty);
+        for (const r of rows) updCode.run(orderId, r.id);
+        dataStr = rows.map(r => r.code).join('\n');
+      }
+      delivery.push({ product_id: it.product_id, name: it.name, category: metas[i].category, qty: it.qty,
+        data: dataStr, auto: true });
     });
   });
   tx();
-  for (const it of items) syncCodeStock(it.product_id);
+  for (const it of items) syncAutoStock(it.product_id);
   return delivery;
 }
 
+// Ambil N akun otomatis untuk order (dipakai saat delivery) — return array string "Email:..\nPassword:.." atau null
+function claimAccounts(productId, orderId, qty) {
+  const rows = db.prepare('SELECT id, email, password, notes FROM account_stocks WHERE product_id = ? AND used = 0 ORDER BY id LIMIT ?').all(productId, qty);
+  if (rows.length < qty) return null;
+  const upd = db.prepare('UPDATE account_stocks SET used = 1, order_id = ? WHERE id = ?');
+  const tx = db.transaction(() => { for (const r of rows) upd.run(orderId, r.id); });
+  tx();
+  syncAutoStock(productId);
+  return rows.map(r => `Email: ${r.email}\nPassword: ${r.password}` + (r.notes ? `\nCatatan: ${r.notes}` : ''));
+}
+// Klaim otomatis terpadu: akun dulu (produk akun), lalu kode voucher. Return {data, auto:true} atau null.
+function claimAutoStock(productId, orderId, qty) {
+  if (hasAccountStock(productId)) {
+    const accs = claimAccounts(productId, orderId, qty);
+    if (accs) return { data: accs.join('\n\n'), auto: true };
+    return null;
+  }
+  const codes = claimVoucherCodes(productId, orderId, qty);
+  if (codes) return { data: codes.join('\n'), auto: true };
+  return null;
+}
 // Ambil N kode otomatis untuk order (dipakai saat delivery)
 function claimVoucherCodes(productId, orderId, qty) {
   const rows = db.prepare('SELECT id FROM voucher_codes WHERE product_id = ? AND used = 0 ORDER BY id LIMIT ?').all(productId, qty);
@@ -1280,14 +1404,23 @@ function claimVoucherCodes(productId, orderId, qty) {
   return codes;
 }
 
-// Sinkron stok produk = kode belum terpakai - qty yg dipesan (pending/proses).
-// Hanya untuk produk yg punya stok kode; produk lain pakai stok manual.
+// Sinkron stok produk = stok pool otomatis (kode voucher / akun) - qty yg dipesan (pending/proses).
+// Hanya untuk produk yg punya pool; produk lain pakai stok manual.
 function hasVoucherCodes(productId) {
   return db.prepare('SELECT COUNT(*) c FROM voucher_codes WHERE product_id = ?').get(productId).c > 0;
 }
-function syncCodeStock(productId) {
-  if (!hasVoucherCodes(productId)) return;
-  const unused = db.prepare('SELECT COUNT(*) c FROM voucher_codes WHERE product_id = ? AND used = 0').get(productId).c;
+function hasAccountStock(productId) {
+  return db.prepare('SELECT COUNT(*) c FROM account_stocks WHERE product_id = ?').get(productId).c > 0;
+}
+function hasAutoPool(productId) { return hasVoucherCodes(productId) || hasAccountStock(productId); }
+function poolAvailable(productId) {
+  const codes = db.prepare('SELECT COUNT(*) c FROM voucher_codes WHERE product_id = ? AND used = 0').get(productId).c;
+  const accs = db.prepare('SELECT COUNT(*) c FROM account_stocks WHERE product_id = ? AND used = 0').get(productId).c;
+  return codes + accs;
+}
+function syncAutoStock(productId) {
+  if (!hasAutoPool(productId)) return;
+  const unused = poolAvailable(productId);
   const reserved = db.prepare(`
     SELECT COALESCE(SUM(CAST(json_extract(j.value, '$.qty') AS INTEGER)), 0) r
     FROM orders o, json_each(o.items_json) j
@@ -1296,6 +1429,8 @@ function syncCodeStock(productId) {
   `).get(productId).r;
   db.prepare('UPDATE products SET stock = ? WHERE id = ?').run(Math.max(0, unused - reserved), productId);
 }
+// alias lama (kompatibilitas)
+function syncCodeStock(productId) { syncAutoStock(productId); }
 
 // ---- Orders ----
 // Metode pembayaran dinamis (tabel payment_methods, dikelola dari admin)
@@ -1399,38 +1534,62 @@ app.delete('/api/admin/pay-methods/:id', auth, requireAdmin, (req, res) => {
 // ---- CRUD kategori produk (admin) ----
 function catById(id) { return db.prepare('SELECT * FROM categories WHERE id = ?').get(id); }
 app.post('/api/admin/categories', auth, requireAdmin, (req, res) => {
-  const { id, label, icon = '📦' } = req.body || {};
+  const { id, label, icon = '📦', parent_id = null } = req.body || {};
   const rawId = id || label || '';
   const nid = String(rawId).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').replace(/_+/g, '_').slice(0, 40);
   if (!nid || nid.length < 3) return res.status(400).json({ error: 'ID minimal 3 karakter (huruf/angka/_)' });
   if (!label || !String(label).trim()) return res.status(400).json({ error: 'Label wajib diisi' });
   if (catById(nid)) return res.status(400).json({ error: 'ID sudah dipakai' });
-  const maxSort = db.prepare('SELECT COALESCE(MAX(sort_order), -1) m FROM categories').get().m;
-  db.prepare('INSERT INTO categories (id,label,icon,active,sort_order) VALUES (?,?,?,1,?)')
-    .run(nid, String(label).trim().slice(0, 40), String(icon).trim().slice(0, 8) || '📦', maxSort + 1);
+  let pid = null;
+  if (parent_id) {
+    const p = catById(parent_id);
+    if (!p) return res.status(400).json({ error: 'Kategori induk tidak ditemukan' });
+    if (p.parent_id) return res.status(400).json({ error: 'Subkategori tidak bisa punya subkategori lagi (maks 2 level)' });
+    pid = p.id;
+  }
+  const maxSort = db.prepare("SELECT COALESCE(MAX(sort_order), -1) m FROM categories WHERE COALESCE(parent_id, '') = COALESCE(?, '')").get(pid).m;
+  db.prepare('INSERT INTO categories (id,label,icon,active,sort_order,parent_id) VALUES (?,?,?,1,?,?)')
+    .run(nid, String(label).trim().slice(0, 40), String(icon).trim().slice(0, 8) || '📦', maxSort + 1, pid);
   res.status(201).json({ category: catById(nid) });
 });
 app.put('/api/admin/categories/:id', auth, requireAdmin, (req, res) => {
   const c = catById(req.params.id);
   if (!c) return res.status(404).json({ error: 'Kategori tidak ditemukan' });
-  const { label, icon, active, sort_order } = req.body || {};
+  const { label, icon, active, sort_order, parent_id } = req.body || {};
   if (label !== undefined && !String(label).trim()) return res.status(400).json({ error: 'Label wajib diisi' });
   if (active !== undefined && !active) {
     const others = db.prepare('SELECT COUNT(*) c FROM categories WHERE active = 1 AND id != ?').get(c.id).c;
     if (!others) return res.status(400).json({ error: 'Minimal satu kategori harus aktif' });
   }
+  let pid = c.parent_id;
+  if (parent_id !== undefined) {
+    if (parent_id) {
+      if (parent_id === c.id) return res.status(400).json({ error: 'Kategori tidak bisa jadi induk dirinya sendiri' });
+      const p = catById(parent_id);
+      if (!p) return res.status(400).json({ error: 'Kategori induk tidak ditemukan' });
+      if (p.parent_id) return res.status(400).json({ error: 'Subkategori tidak bisa punya subkategori lagi (maks 2 level)' });
+      pid = p.id;
+    } else pid = null;
+    // kategori yang punya anak tidak boleh dijadikan subkategori
+    if (pid) {
+      const kids = db.prepare('SELECT COUNT(*) c FROM categories WHERE parent_id = ?').get(c.id).c;
+      if (kids) return res.status(400).json({ error: `Kategori punya ${kids} subkategori — hapus/pindahkan dulu` });
+    }
+  }
   db.prepare(`UPDATE categories SET label = COALESCE(?, label), icon = COALESCE(?, icon),
-    active = COALESCE(?, active), sort_order = COALESCE(?, sort_order) WHERE id = ?`)
+    active = COALESCE(?, active), sort_order = COALESCE(?, sort_order), parent_id = ? WHERE id = ?`)
     .run(label !== undefined ? String(label).trim().slice(0, 40) : null,
       icon !== undefined ? String(icon).trim().slice(0, 8) || '📦' : null,
       active !== undefined ? (active ? 1 : 0) : null,
-      sort_order !== undefined ? Number(sort_order) || 0 : null, c.id);
+      sort_order !== undefined ? Number(sort_order) || 0 : null, pid, c.id);
   res.json({ category: catById(c.id) });
 });
 app.delete('/api/admin/categories/:id', auth, requireAdmin, (req, res) => {
   const c = catById(req.params.id);
   if (!c) return res.status(404).json({ error: 'Kategori tidak ditemukan' });
-  const used = db.prepare('SELECT COUNT(*) c FROM products WHERE category = ?').get(c.id).c;
+  const kids = db.prepare('SELECT COUNT(*) c FROM categories WHERE parent_id = ?').get(c.id).c;
+  if (kids) return res.status(400).json({ error: `Kategori punya ${kids} subkategori — hapus/pindahkan dulu` });
+  const used = db.prepare('SELECT COUNT(*) c FROM products WHERE category = ? OR subcategory_id = ?').get(c.id, c.id).c;
   if (used) return res.status(400).json({ error: `Kategori dipakai ${used} produk — pindahkan dulu produknya` });
   if (c.active) {
     const others = db.prepare('SELECT COUNT(*) c FROM categories WHERE active = 1 AND id != ?').get(c.id).c;
@@ -1684,22 +1843,23 @@ app.patch('/api/orders/:id/status', auth, requireAdmin, (req, res) => {
     const fromStatus = order.status;
     let items = [];
     try { items = JSON.parse(order.items_json); } catch {}
-    // 1. Kembalikan kode otomatis yg sudah di-claim
-    const affected = db.prepare('SELECT DISTINCT product_id FROM voucher_codes WHERE order_id = ?').all(order.id).map(r => r.product_id);
-    if (affected.length) {
-      db.prepare('UPDATE voucher_codes SET used = 0, order_id = NULL WHERE order_id = ?').run(order.id);
-    }
-    // 2. Kembalikan stok produk non-kode (kecuali sudah delivery = barang sudah dikirim)
+    // 1. Kembalikan stok otomatis yg sudah di-claim (kode voucher + akun)
+    const affectedCodes = db.prepare('SELECT DISTINCT product_id FROM voucher_codes WHERE order_id = ?').all(order.id).map(r => r.product_id);
+    const affectedAccs = db.prepare('SELECT DISTINCT product_id FROM account_stocks WHERE order_id = ?').all(order.id).map(r => r.product_id);
+    if (affectedCodes.length) db.prepare('UPDATE voucher_codes SET used = 0, order_id = NULL WHERE order_id = ?').run(order.id);
+    if (affectedAccs.length) db.prepare('UPDATE account_stocks SET used = 0, order_id = NULL WHERE order_id = ?').run(order.id);
+    const affected = [...new Set([...affectedCodes, ...affectedAccs])];
+    // 2. Kembalikan stok produk non-pool (kecuali sudah delivery = barang sudah dikirim)
     if (['pending', 'proses'].includes(fromStatus)) {
       for (const it of items) {
         if (it.variant_id) db.prepare('UPDATE product_variants SET stock = stock + ? WHERE id = ?').run(it.qty, it.variant_id);
-        else if (!hasVoucherCodes(it.product_id))
+        else if (!hasAutoPool(it.product_id))
           db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(it.qty, it.product_id);
       }
     }
-    // 3. Sync stok produk berkode
-    const pids = [...new Set([...affected, ...items.filter(i => hasVoucherCodes(i.product_id)).map(i => i.product_id)])];
-    for (const pid of pids) syncCodeStock(pid);
+    // 3. Sync stok produk ber-pool otomatis
+    const pids = [...new Set([...affected, ...items.filter(i => hasAutoPool(i.product_id)).map(i => i.product_id)])];
+    for (const pid of pids) syncAutoStock(pid);
   }
   const finalOrder = attachItems(db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id));
   const msgs = {
@@ -1748,9 +1908,8 @@ app.get('/api/orders/:id', auth, (req, res) => {
     return res.status(403).json({ error: 'Bukan pesananmu' });
   const o = attachItems(order);
   const catStmt = db.prepare('SELECT category FROM products WHERE id = ?');
-  const codeStmt = db.prepare('SELECT COUNT(*) c FROM voucher_codes WHERE product_id = ? AND used = 0');
   o.items = o.items.map(it => ({ ...it, category: (catStmt.get(it.product_id) || {}).category || 'voucher',
-    auto_codes: codeStmt.get(it.product_id).c }));
+    auto_codes: poolAvailable(it.product_id) }));
   res.json({ order: o });
 });
 
@@ -1781,11 +1940,11 @@ app.post('/api/orders/:id/deliver', auth, requireAdmin, async (req, res) => {
       delivery.push({ product_id: it.product_id, name: it.name, category: cat, qty: it.qty,
         proof_path: '/uploads/' + fname, trx_id: trx.slice(0, 100) });
     } else {
-      // Coba kode otomatis dulu (stok kode voucher)
-      const autoCodes = claimVoucherCodes(it.product_id, order.id, it.qty);
-      if (autoCodes) {
+      // Coba stok otomatis dulu (akun / kode voucher)
+      const claimed = claimAutoStock(it.product_id, order.id, it.qty);
+      if (claimed) {
         delivery.push({ product_id: it.product_id, name: it.name, category: cat, qty: it.qty,
-          data: autoCodes.join('\n'), auto: true });
+          data: claimed.data, auto: true });
       } else {
         const data = String(parsed.fields[`data_${it.product_id}`] || '').trim();
         if (!data) return res.status(400).json({ error: `Data pengiriman wajib diisi untuk "${it.name}"` });
