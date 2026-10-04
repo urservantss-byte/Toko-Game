@@ -2,11 +2,19 @@
 const AdminReports = {
   data() {
     const t = new Date(), f = new Date(Date.now() - 29 * 864e5);
-    return { from: f.toISOString().slice(0, 10), to: t.toISOString().slice(0, 10), r: null, loading: false };
+    return { from: f.toISOString().slice(0, 10), to: t.toISOString().slice(0, 10), r: null, loading: false, payLabels: {} };
   },
-  mounted() { this.load(); },
+  mounted() {
+    this.load();
+    fetch('/api/settings/public').then(r => r.json()).then(d => {
+      const l = {};
+      for (const x of (d.pay_methods || [])) l[x.id] = x.label;
+      this.payLabels = l;
+    }).catch(() => {});
+  },
   methods: {
     rp,
+    payLabel(id) { return this.payLabels[id] || String(id).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); },
     async load() {
       this.loading = true;
       try {
@@ -82,7 +90,7 @@ const AdminReports = {
           <h4 class="font-bold text-sm mb-3">💳 Per Metode Bayar</h4>
           <div v-if="!r.byPayment.length" class="text-xs text-gray-400">Belum ada data.</div>
           <div v-for="m in r.byPayment" :key="m.m" class="flex justify-between items-center text-sm py-2 border-b border-gray-50 dark:border-nova-line last:border-0">
-            <span class="truncate mr-2">{{ m.m }}</span>
+            <span class="truncate mr-2">{{ payLabel(m.m) }}</span>
             <span class="shrink-0 text-xs text-gray-500">{{ m.orders }} pesanan · <b class="text-emerald-600">{{ rp(m.revenue) }}</b></span>
           </div>
           <h4 class="font-bold text-sm mt-4 mb-3">📅 7 Hari Terakhir</h4>

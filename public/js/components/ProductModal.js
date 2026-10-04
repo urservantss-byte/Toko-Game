@@ -80,73 +80,80 @@ const ProductModal = {
         <div class="skel h-10 w-full" style="border-radius:.75rem"></div>
       </div>
       <div v-else class="p-5">
-        <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-nova-surface2">
+        <div class="relative overflow-hidden bg-gray-100 dark:bg-nova-surface2" style="border-radius:1.25rem">
           <div @click="zoom = true" class="cursor-zoom-in">
             <blur-img :src="imgs[idx] && imgs[idx].url" cls="w-full aspect-[4/3]" fit="contain" :alt="p.name" :eager="true" :key="idx"></blur-img>
           </div>
-          <span class="absolute bottom-3 right-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium">{{ idx + 1 }}/{{ imgs.length }}</span>
-          <span class="absolute bottom-3 left-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium pointer-events-none">🔍 ketuk untuk perbesar</span>
+          <span class="absolute bottom-3 right-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium backdrop-blur">{{ idx + 1 }}/{{ imgs.length }}</span>
+          <span class="absolute bottom-3 left-3 text-[11px] bg-black/60 text-white px-2.5 py-1 rounded-full font-medium pointer-events-none backdrop-blur">🔍 ketuk untuk perbesar</span>
           <template v-if="imgs.length > 1">
-            <button @click="gal(idx - 1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-nova-surface/90 rounded-full shadow font-bold">‹</button>
-            <button @click="gal(idx + 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 dark:bg-nova-surface/90 rounded-full shadow font-bold">›</button>
+            <button @click="gal(idx - 1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 hover:bg-black/60 backdrop-blur text-white rounded-full shadow font-bold transition">‹</button>
+            <button @click="gal(idx + 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 hover:bg-black/60 backdrop-blur text-white rounded-full shadow font-bold transition">›</button>
           </template>
-          <button @click="close" class="absolute top-2 right-2 w-8 h-8 bg-white/90 dark:bg-gray-700/90 hover:dark:bg-gray-600 rounded-full shadow text-gray-600 dark:text-white">✕</button>
-          <button @click="toggleWish" :class="['absolute top-2 left-2 w-8 h-8 rounded-full shadow text-lg', wished ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-700/90 text-gray-400']" :title="wished ? 'Hapus dari wishlist' : 'Tambah ke wishlist'">{{ wished ? '❤️' : '🤍' }}</button>
+          <button @click="close" class="absolute top-2.5 right-2.5 w-9 h-9 bg-black/40 hover:bg-black/60 backdrop-blur text-white rounded-full shadow transition">✕</button>
+          <button @click="toggleWish" :class="['absolute top-2.5 left-2.5 w-9 h-9 rounded-full shadow text-lg transition', wished ? 'text-white' : 'bg-black/40 backdrop-blur text-gray-300']"
+                  :style="wished ? 'background:linear-gradient(135deg,#ff6b8a,#e83e6b);box-shadow:0 4px 12px rgba(255,107,138,.4)' : ''"
+                  :title="wished ? 'Hapus dari wishlist' : 'Tambah ke wishlist'">{{ wished ? '❤️' : '🤍' }}</button>
         </div>
         <div v-if="imgs.length > 1" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
           <img v-for="(im, j) in imgs" :key="j" :src="im.url" loading="lazy" @click="idx = j"
-               :class="['w-16 h-16 object-cover rounded-xl cursor-pointer bg-gray-100 dark:bg-nova-surface2 shrink-0', j === idx ? 'ring-2 ring-primary' : '']">
+               :class="['w-16 h-16 object-cover cursor-pointer bg-gray-100 dark:bg-nova-surface2 shrink-0 transition', j === idx ? 'ring-2 ring-nova-accent' : 'opacity-60 hover:opacity-100']"
+               style="border-radius:.9rem">
         </div>
         <div class="mt-4">
-          <span class="text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase tracking-wide" :style="{ background: catColor(p.category) }">{{ catLabel(p.category) }}</span>
-          <h3 class="text-lg font-bold mt-2 leading-snug">{{ p.name }}</h3>
-          <div class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+          <span class="nv-badge nv-badge-accent">{{ catLabel(p.category) }}</span>
+          <h3 class="text-xl font-extrabold mt-2.5 leading-snug tracking-tight dark:text-nova-text">{{ p.name }}</h3>
+          <div class="text-[12px] text-gray-500 dark:text-nova-muted mt-1.5 flex items-center gap-1.5">
             <stars :value="Number(p.avg_rating) || 0"></stars>
-            <b class="text-gray-700 dark:text-gray-300">{{ Number(p.avg_rating || 0).toFixed(1) }}</b> | {{ p.review_count || 0 }} ulasan | Terjual {{ p.sold_count || 0 }}
+            <b class="text-gray-700 dark:text-nova-text">{{ Number(p.avg_rating || 0).toFixed(1) }}</b>
+            <span>·</span><span>{{ p.review_count || 0 }} ulasan</span>
+            <span>·</span><span>{{ p.sold_count || 0 }} terjual</span>
           </div>
-          <div class="mt-2"><span class="text-accent font-extrabold text-2xl">{{ rp(curPrice) }}</span>
-            <span v-if="p.discount > 0" class="text-sm text-gray-400 line-through ml-2">{{ rp(selVariant ? selVariant.price : p.price) }}</span>
-            <span v-if="p.discount > 0" class="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full ml-2">-{{ Math.round(p.discount) }}%</span>
+          <div class="mt-3 flex items-center gap-2 flex-wrap">
+            <span class="nv-price text-[26px]">{{ rp(curPrice) }}</span>
+            <span v-if="p.discount > 0" class="text-sm text-gray-400 dark:text-nova-muted line-through">{{ rp(selVariant ? selVariant.price : p.price) }}</span>
+            <span v-if="p.discount > 0" class="nv-badge nv-badge-red">-{{ Math.round(p.discount) }}%</span>
           </div>
-          <div v-if="p.process_time" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">⚡ Rata-rata diproses dalam {{ p.process_time }}</div>
+          <div v-if="p.process_time" class="inline-flex items-center gap-1.5 text-xs font-semibold mt-2 px-3 py-1.5 rounded-full"
+               style="background:rgba(52,211,153,.1);color:#5eeab8;border:1px solid rgba(52,211,153,.25)">⚡ Diproses ± {{ p.process_time }}</div>
           <!-- Varian produk -->
-          <div v-if="hasVariants" class="mt-3">
-            <div class="text-xs font-bold mb-2 text-gray-600 dark:text-gray-300">Pilih varian:</div>
+          <div v-if="hasVariants" class="mt-4">
+            <div class="text-xs font-bold mb-2 text-gray-600 dark:text-nova-text">Pilih varian:</div>
             <div class="flex flex-wrap gap-2">
               <button v-for="v in variants" :key="v.id" @click="pickVariant(v)" :disabled="v.stock < 1"
-                :class="['px-3.5 py-2 rounded-xl text-xs font-bold border-2 transition disabled:opacity-40',
-                  selVariant && selVariant.id === v.id ? 'border-primary bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300' : 'border-gray-200 dark:border-nova-line text-gray-600 dark:text-gray-300']">
-                {{ v.label }}<span class="block font-normal text-[10px] mt-0.5">{{ rp(finalPrice({ price: v.price, discount: p.discount })) }}</span>
+                :class="['nv-chip !text-xs !py-2.5 !px-4 disabled:opacity-40', selVariant && selVariant.id === v.id ? 'on' : '']">
+                {{ v.label }}<span class="block font-normal text-[10px] mt-0.5 opacity-80">{{ rp(finalPrice({ price: v.price, discount: p.discount })) }}</span>
               </button>
             </div>
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed whitespace-pre-line">{{ p.description }}</p>
+          <p class="text-sm text-gray-600 dark:text-nova-muted mt-4 leading-relaxed whitespace-pre-line">{{ p.description }}</p>
           <div class="flex flex-wrap gap-1.5 mt-3">
-            <span v-for="t in tags()" :key="t" class="text-xs bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300 rounded-full px-3 py-1 font-medium">#{{ t }}</span>
+            <span v-for="t in tags()" :key="t" class="nv-chip !text-[11px] !py-1 !px-3">#{{ t }}</span>
           </div>
-          <div :class="['text-xs mt-3 font-medium', curStock > 0 ? 'text-emerald-600' : 'text-red-500']">
-            {{ curStock > 0 ? 'Stok tersedia: ' + curStock : 'Stok habis' }}
+          <div :class="['inline-flex items-center gap-1.5 text-xs mt-4 font-bold px-3 py-1.5 rounded-full', curStock > 0 ? '' : 'nv-badge-red']"
+               :style="curStock > 0 ? 'background:rgba(52,211,153,.1);color:#5eeab8;border:1px solid rgba(52,211,153,.25)' : ''">
+            {{ curStock > 0 ? '● Stok tersedia: ' + curStock : '● Stok habis' }}
           </div>
           <div class="mt-5 pt-4 border-t border-gray-100 dark:border-nova-line">
             <div class="flex items-center justify-between mb-3">
-              <h4 class="font-bold text-sm">💬 Ulasan Pembeli</h4>
-              <button @click="openReview" class="text-xs font-semibold text-primary">+ Tulis ulasan</button>
+              <h4 class="font-bold text-sm dark:text-nova-text">💬 Ulasan Pembeli</h4>
+              <button @click="openReview" class="nv-btn-ghost text-xs px-3.5 py-1.5">+ Tulis ulasan</button>
             </div>
-            <div class="space-y-3 text-sm">
-              <div v-for="r in reviews" :key="r.id" class="bg-gray-50 dark:bg-nova-surface2 rounded-xl p-3">
+            <div class="space-y-2.5 text-sm">
+              <div v-for="r in reviews" :key="r.id" class="rounded-2xl p-3.5 bg-gray-50 dark:bg-nova-surface2 dark:border dark:border-nova-line">
                 <div class="flex items-center justify-between">
-                  <span class="font-semibold text-xs">{{ r.user_name }}</span>
-                  <span class="text-[10px] text-gray-400">{{ (r.created_at || '').slice(0, 10) }}</span>
+                  <span class="font-bold text-xs dark:text-nova-text">{{ r.user_name }}</span>
+                  <span class="text-[10px] text-gray-400 dark:text-nova-muted">{{ (r.created_at || '').slice(0, 10) }}</span>
                 </div>
                 <div class="mt-1"><stars :value="r.rating"></stars></div>
-                <p v-if="r.comment" class="text-xs text-gray-600 dark:text-gray-400 mt-1.5 leading-relaxed">{{ r.comment }}</p>
+                <p v-if="r.comment" class="text-xs text-gray-600 dark:text-nova-muted mt-1.5 leading-relaxed">{{ r.comment }}</p>
               </div>
-              <div v-if="!reviews.length" class="text-gray-400 text-xs bg-gray-50 dark:bg-nova-surface2 rounded-xl p-4 text-center">Belum ada ulasan untuk produk ini.</div>
+              <div v-if="!reviews.length" class="text-gray-400 dark:text-nova-muted text-xs rounded-2xl p-4 text-center bg-gray-50 dark:bg-nova-surface2 dark:border dark:border-nova-line">Belum ada ulasan untuk produk ini.</div>
             </div>
           </div>
-          <div class="flex gap-2 mt-4">
-            <button @click="addCart(false)" :disabled="curStock < 1" class="flex-1 border-2 border-primary text-primary font-bold rounded-xl py-2.5 text-sm disabled:opacity-40">+ Keranjang</button>
-            <button @click="addCart(true)" :disabled="curStock < 1" class="flex-1 bg-primary text-white font-bold rounded-xl py-2.5 text-sm hover:bg-indigo-700 disabled:opacity-40">Beli Sekarang</button>
+          <div class="flex gap-2.5 mt-5">
+            <button @click="addCart(false)" :disabled="curStock < 1" class="nv-btn-ghost flex-1 py-3 text-sm disabled:opacity-40">+ Keranjang</button>
+            <button @click="addCart(true)" :disabled="curStock < 1" class="nv-btn flex-1 py-3 text-sm disabled:opacity-40">⚡ Beli Sekarang</button>
           </div>
         </div>
       </div>
