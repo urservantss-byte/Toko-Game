@@ -4,12 +4,12 @@ const AuthView = {
     email: '', password: '', name: '', showPw: false,
     newPw: '', confirmPw: '',
     loading: false,
-    notice: '', devLink: '',
+    notice: '', noticeHtml: false, devLink: '',
     googleAvailable: false,
   }),
   computed: { page: () => store.page },
   watch: {
-    page() { this.notice = ''; this.devLink = ''; }
+    page() { this.notice = ''; this.noticeHtml = false; this.devLink = ''; }
   },
   mounted() {
     fetch('/api/settings/google-available').then(r => r.json()).then(d => { this.googleAvailable = !!d.available; }).catch(() => {});
@@ -25,8 +25,9 @@ const AuthView = {
         go('home');
       } catch (e) {
         if (e.data && e.data.need_verification) {
+          this.noticeHtml = true;
           this.notice = '⚠️ <b>Email belum diverifikasi.</b><br><span class="text-xs text-gray-600 dark:text-gray-400">Cek inbox email kamu, atau kirim ulang link verifikasi di bawah.</span>';
-        } else toast(e.message, false);
+        } else { this.noticeHtml = false; toast(e.message, false); }
       } finally { this.loading = false; }
     },
     async doRegister() {
@@ -35,6 +36,7 @@ const AuthView = {
       this.loading = true;
       try {
         const d = await api('/api/auth/register', { method: 'POST', body: JSON.stringify({ name: this.name.trim(), email: this.email.trim(), password: this.password }) });
+        this.noticeHtml = false;
         this.notice = d.message || 'Pendaftaran berhasil! Cek email kamu untuk verifikasi sebelum masuk.';
         this.devLink = d.dev_link || '';
         toast('Akun dibuat ✅');
@@ -46,6 +48,7 @@ const AuthView = {
       this.loading = true;
       try {
         const d = await api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email: this.email.trim() }) });
+        this.noticeHtml = false;
         this.notice = d.message || 'Link reset dikirim.';
         this.devLink = d.dev_link || '';
       } catch (e) { toast(e.message, false); }
@@ -56,6 +59,7 @@ const AuthView = {
       this.loading = true;
       try {
         const d = await api('/api/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email: this.email.trim() }) });
+        this.noticeHtml = false;
         this.notice = d.message || 'Link verifikasi dikirim ulang.';
         this.devLink = d.dev_link || '';
         toast('Link verifikasi dikirim ulang ✅');
@@ -96,7 +100,7 @@ const AuthView = {
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6">{{ page==='register' ? 'Daftar gratis, cuma butuh semenit.' : page==='forgot' ? 'Kami kirim link reset ke emailmu.' : page==='reset' ? 'Pilih password yang kuat.' : 'Senang melihatmu kembali.' }}</p>
 
         <div v-if="notice" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-500/25 text-amber-800 dark:text-amber-200 text-sm rounded-xl px-4 py-3 mb-5">
-          <span v-html="notice"></span>
+          <span v-if="noticeHtml" v-html="notice"></span><span v-else>{{ notice }}</span>
           <div v-if="devLink" class="mt-2 break-all">
             <span class="text-xs text-gray-500 dark:text-gray-400">Mode demo — link:</span><br>
             <a :href="devLink" class="text-indigo-600 underline text-xs">{{ devLink }}</a>

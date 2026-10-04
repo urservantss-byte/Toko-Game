@@ -899,7 +899,7 @@ app.post('/api/products/:id/images', auth, requireAdmin, async (req, res) => {
     let outBuf;
     try {
       outBuf = await sharp(f.data).resize(800, 800, { fit: 'cover', position: 'centre' }).jpeg({ quality: 82 }).toBuffer();
-    } catch { outBuf = f.data; } // kalau gagal resize, pakai file asli
+    } catch { return res.status(400).json({ error: `File "${f.filename}" bukan gambar yang valid` }); }
     const fname = `${Date.now()}_${crypto.randomBytes(6).toString('hex')}.jpg`;
     fs.writeFileSync(path.join(dir, fname), outBuf);
     ins.run(p.id, `/uploads/products/${p.id}/${fname}`, startOrder + i);
@@ -1000,6 +1000,8 @@ app.post('/api/admin/banners', auth, requireAdmin, async (req, res) => {
   const fname = `banner_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.${ext}`;
   fs.writeFileSync(path.join(UPLOAD_DIR, fname), parsed.file.data);
   const link = String((parsed.fields && parsed.fields.link_url) || '').trim().slice(0, 500);
+  if (link && !/^(https?:\/\/|#\/|\/)/i.test(link))
+    return res.status(400).json({ error: 'Link harus diawali http(s)://, #/ atau /' });
   const maxSort = db.prepare('SELECT COALESCE(MAX(sort_order), -1) m FROM banners').get().m;
   const info = db.prepare('INSERT INTO banners (image_url, link_url, sort_order) VALUES (?,?,?)')
     .run('/uploads/' + fname, link, maxSort + 1);
