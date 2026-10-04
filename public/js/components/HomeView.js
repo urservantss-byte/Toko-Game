@@ -94,9 +94,15 @@ const HomeView = {
     showCatSection(c) {
       if (store.productsLoading) return false;
       const fc = store.f.cat;
-      if (fc && fc !== 'all' && fc !== c.id) return false;
+      // Slider kategori hanya di menu utama. Kalau lagi lihat kategori spesifik / search / tag → sembunyikan semua slider, tampil grid saja.
+      if (fc && fc !== 'all') return false;
       if (store.f.q || store.f.tag) return false;
       return this.catProducts(c.id).length > 0;
+    },
+    activeCat() {
+      const fc = store.f.cat;
+      if (!fc || fc === 'all') return null;
+      return (store.cats || []).find(c => c.id === fc) || null;
     },
   },
   template: `
@@ -204,8 +210,9 @@ const HomeView = {
     <section id="all-products">
       <div class="nv-sec">
         <span class="dot"></span>
-        <h2>🛍️ Semua Produk</h2>
+        <h2>{{ activeCat() ? activeCat().icon + ' ' + activeCat().label : '🛍️ Semua Produk' }}</h2>
         <span class="text-xs text-gray-500 dark:text-nova-muted font-medium">{{ list.length }} produk</span>
+        <a v-if="activeCat()" class="more" @click="setCat('all')">← Kembali</a>
       </div>
     <!-- Grid produk -->
     <div v-if="store.productsLoading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
