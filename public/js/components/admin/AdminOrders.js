@@ -3,7 +3,7 @@ const STATUS_LIST = ['pending', 'proses', 'delivery', 'selesai', 'dibatalkan'];
 
 const AdminOrders = {
   components: { StatusBadge },
-  data: () => ({ orders: [], all: [] }),
+  data: () => ({ orders: [], all: [], pg: 1 }),
   computed: {
     aof: () => store.aof,
     STATUS_LIST: () => STATUS_LIST,
@@ -11,6 +11,11 @@ const AdminOrders = {
       const c = {};
       STATUS_LIST.forEach(s => { c[s] = this.all.filter(o => o.status === s).length; });
       return c;
+    },
+    totalPages() { return Math.max(1, Math.ceil(this.orders.length / 10)); },
+    pagedOrders() {
+      const p = Math.min(this.pg, this.totalPages);
+      return this.orders.slice((p - 1) * 10, p * 10);
     },
   },
   mounted() { this.load(); },
@@ -78,7 +83,7 @@ const AdminOrders = {
           <th class="p-3">ID</th><th class="p-3">User</th><th class="p-3">Item</th><th class="p-3">Total</th><th class="p-3">Bayar</th><th class="p-3">Bukti</th><th class="p-3">Status</th>
         </tr></thead>
         <tbody>
-          <tr v-for="o in orders" :key="o.id" class="border-b dark:border-nova-line last:border-0 hover:bg-gray-50 dark:hover:bg-nova-surface2">
+          <tr v-for="o in pagedOrders" :key="o.id" class="border-b dark:border-nova-line last:border-0 hover:bg-gray-50 dark:hover:bg-nova-surface2">
             <td class="p-3 font-bold text-primary">#{{ o.id }}<br><span class="text-[10px] text-gray-400 font-normal">{{ fmtDay(o.created_at) }}</span></td>
             <td class="p-3">{{ o.user_name }}<br><span class="text-xs text-gray-400">{{ o.user_email }}</span></td>
             <td class="p-3 text-xs max-w-[180px]"><div v-for="it in (o.items || [])" :key="it.product_id">{{ it.name }} ×{{ it.qty }}</div></td>
@@ -106,6 +111,13 @@ const AdminOrders = {
           <tr v-if="!orders.length"><td colspan="7" class="p-6 text-center text-gray-400 text-sm">Tidak ada pesanan.</td></tr>
         </tbody>
       </table>
+    </div>
+    <div v-if="totalPages > 1" class="flex items-center justify-center gap-1.5 mt-4">
+      <button @click="pg = Math.max(1, pg - 1)" :disabled="pg <= 1" class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">‹</button>
+      <button v-for="n in totalPages" :key="n" @click="pg = n"
+              :class="['w-9 h-9 rounded-full text-sm font-bold transition', pg === n ? 'text-white' : 'nv-btn-ghost !p-0']"
+              :style="pg === n ? 'background:linear-gradient(135deg,#7a88ff,#5a68e8);box-shadow:0 4px 12px rgba(108,124,255,.4)' : ''">{{ n }}</button>
+      <button @click="pg = Math.min(totalPages, pg + 1)" :disabled="pg >= totalPages" class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">›</button>
     </div>
     <deliver-modal @done="load"></deliver-modal>
   </div>`

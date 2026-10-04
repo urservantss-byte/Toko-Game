@@ -1,7 +1,7 @@
 /* Menu utama: katalog produk + flash sale + filter */
 const HomeView = {
   components: { BlurImg, Stars },
-  data: () => ({ banners: [], bannersLoading: true, bannerIdx: 0, bannerTimer: null, flashEnds: '', now: Date.now(), cdTimer: null, testimonials: [], testimonialsLoading: true }),
+  data: () => ({ banners: [], bannersLoading: true, bannerIdx: 0, bannerTimer: null, flashEnds: '', now: Date.now(), cdTimer: null, testimonials: [], testimonialsLoading: true, pg: 1 }),
   mounted() {
     fetch('/api/banners').then(r => r.json()).then(d => {
       this.banners = d.banners || [];
@@ -44,6 +44,14 @@ const HomeView = {
       };
       return arr.sort(sorters[store.f.sort] || sorters.pop);
     },
+    totalPages() { return Math.max(1, Math.ceil(this.list.length / 10)); },
+    pagedList() {
+      const p = Math.min(this.pg, this.totalPages);
+      return this.list.slice((p - 1) * 10, p * 10);
+    },
+  },
+  watch: {
+    list() { this.pg = 1; },
   },
   methods: {
     rp, finalPrice, CATLABEL, CATCOLOR,
@@ -207,7 +215,7 @@ const HomeView = {
       </div>
     </div>
     <div v-else class="grid grid-cols-2 md:grid-cols-3 gap-3">
-      <div v-for="p in list" :key="p.id" @click="openProduct(p.id)"
+      <div v-for="p in pagedList" :key="p.id" @click="openProduct(p.id)"
            class="nv-card clickable overflow-hidden flex flex-col">
         <div class="relative aspect-square">
           <blur-img :src="imgOf(p)" cls="w-full h-full" :alt="p.name"></blur-img>
@@ -239,6 +247,16 @@ const HomeView = {
         <p class="text-xs text-gray-400 dark:text-nova-muted mb-4">Coba kata kunci lain atau lihat semua produk</p>
         <button @click="f.q=''; f.cat='all'; f.tag=''" class="nv-btn text-sm px-6 py-2.5">Lihat Semua Produk</button>
       </div>
+    </div>
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex items-center justify-center gap-1.5 mt-5">
+      <button @click="pg = Math.max(1, pg - 1)" :disabled="pg <= 1"
+              class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">‹</button>
+      <button v-for="n in totalPages" :key="n" @click="pg = n"
+              :class="['w-9 h-9 rounded-full text-sm font-bold transition', pg === n ? 'text-white' : 'nv-btn-ghost !p-0']"
+              :style="pg === n ? 'background:linear-gradient(135deg,#7a88ff,#5a68e8);box-shadow:0 4px 12px rgba(108,124,255,.4)' : ''">{{ n }}</button>
+      <button @click="pg = Math.min(totalPages, pg + 1)" :disabled="pg >= totalPages"
+              class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">›</button>
     </div>
     </section>
     <!-- Testimoni pembeli -->

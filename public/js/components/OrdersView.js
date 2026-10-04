@@ -1,10 +1,15 @@
 /* Halaman pesanan user: timeline, data delivery, ulasan, selesaikan */
 const OrdersView = {
   components: { StatusBadge },
-  data: () => ({ eligible: [], qris: null, payKinds: {}, payLabels: {} }),
+  data: () => ({ eligible: [], qris: null, payKinds: {}, payLabels: {}, pg: 1 }),
   computed: {
     orders: () => store.myOrders,
     store: () => store,
+    totalPages() { return Math.max(1, Math.ceil(this.orders.length / 5)); },
+    pagedOrders() {
+      const p = Math.min(this.pg, this.totalPages);
+      return this.orders.slice((p - 1) * 5, p * 5);
+    },
   },
   mounted() {
     this.load();
@@ -122,7 +127,7 @@ const OrdersView = {
       <button @click="go('home')" class="bg-primary text-white text-sm font-bold rounded-xl px-6 py-2.5">Mulai Belanja</button>
     </div>
     <div class="space-y-4">
-      <div v-for="o in orders" :key="o.id" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 shadow-sm">
+      <div v-for="o in pagedOrders" :key="o.id" class="bg-white dark:bg-nova-surface border border-gray-100 dark:border-nova-line rounded-2xl p-4 shadow-sm">
         <div class="flex items-center justify-between text-sm">
           <b class="text-primary">#{{ o.id }}</b>
           <span class="text-gray-400 text-xs">{{ fmtDate(o.created_at) }}</span>
@@ -203,6 +208,16 @@ const OrdersView = {
         <div class="text-2xl font-extrabold text-accent">{{ rp(qris.amount) }}</div>
         <button @click="qris = null" class="mt-4 w-full bg-primary text-white font-bold rounded-2xl py-3 hover:bg-indigo-700">Tutup</button>
       </div>
+    </div>
+    <!-- Pagination -->
+    <div v-if="totalPages > 1 && orders.length" class="flex items-center justify-center gap-1.5 mt-5">
+      <button @click="pg = Math.max(1, pg - 1)" :disabled="pg <= 1"
+              class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">‹</button>
+      <button v-for="n in totalPages" :key="n" @click="pg = n"
+              :class="['w-9 h-9 rounded-full text-sm font-bold transition', pg === n ? 'text-white' : 'nv-btn-ghost !p-0']"
+              :style="pg === n ? 'background:linear-gradient(135deg,#7a88ff,#5a68e8);box-shadow:0 4px 12px rgba(108,124,255,.4)' : ''">{{ n }}</button>
+      <button @click="pg = Math.min(totalPages, pg + 1)" :disabled="pg >= totalPages"
+              class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">›</button>
     </div>
   </div>`
 };

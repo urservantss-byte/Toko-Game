@@ -1,8 +1,13 @@
 /* Admin: kelola produk + form produk + photo manager */
 const AdminProducts = {
-  data: () => ({ products: [], codesModal: null, codes: [], codesInput: '', codesMsg: '', sel: [], bulkVal: '' }),
+  data: () => ({ products: [], codesModal: null, codes: [], codesInput: '', codesMsg: '', sel: [], bulkVal: '', pg: 1 }),
   computed: {
     allChecked() { return this.products.length > 0 && this.sel.length === this.products.length; },
+    totalPages() { return Math.max(1, Math.ceil(this.products.length / 10)); },
+    pagedProducts() {
+      const p = Math.min(this.pg, this.totalPages);
+      return this.products.slice((p - 1) * 10, p * 10);
+    },
   },
   mounted() { this.load(); },
   methods: {
@@ -86,7 +91,7 @@ const AdminProducts = {
           <th class="p-3">Produk</th><th class="p-3">Foto</th><th class="p-3">Kategori</th><th class="p-3">Harga</th><th class="p-3">Stok</th><th class="p-3">Aksi</th>
         </tr></thead>
         <tbody>
-          <tr v-for="p in products" :key="p.id" :class="['border-b last:border-0 hover:bg-gray-50 dark:hover:bg-nova-surface2', p.stock < 5 ? 'bg-red-50/50 dark:bg-red-500/10' : '']">
+          <tr v-for="p in pagedProducts" :key="p.id" :class="['border-b last:border-0 hover:bg-gray-50 dark:hover:bg-nova-surface2', p.stock < 5 ? 'bg-red-50/50 dark:bg-red-500/10' : '']">
             <td class="p-3"><input type="checkbox" :value="p.id" v-model="sel" class="w-4 h-4 accent-indigo-600 cursor-pointer"></td>
             <td class="p-3 font-medium">{{ p.name }}<div v-if="p.stock < 5" class="text-[10px] text-red-500 font-bold mt-0.5">⚠️ Stok rendah!</div></td>
             <td class="p-3"><span class="text-xs bg-indigo-50 dark:bg-indigo-500/20 text-primary dark:text-indigo-300 px-2 py-1 rounded-full font-bold">{{ (p.images || []).length }} foto</span></td>
@@ -104,6 +109,13 @@ const AdminProducts = {
           </tr>
         </tbody>
       </table>
+    </div>
+    <div v-if="totalPages > 1" class="flex items-center justify-center gap-1.5 mt-4">
+      <button @click="pg = Math.max(1, pg - 1)" :disabled="pg <= 1" class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">‹</button>
+      <button v-for="n in totalPages" :key="n" @click="pg = n"
+              :class="['w-9 h-9 rounded-full text-sm font-bold transition', pg === n ? 'text-white' : 'nv-btn-ghost !p-0']"
+              :style="pg === n ? 'background:linear-gradient(135deg,#7a88ff,#5a68e8);box-shadow:0 4px 12px rgba(108,124,255,.4)' : ''">{{ n }}</button>
+      <button @click="pg = Math.min(totalPages, pg + 1)" :disabled="pg >= totalPages" class="nv-btn-ghost w-9 h-9 !p-0 text-sm disabled:opacity-30">›</button>
     </div>
     <product-form-modal @saved="load"></product-form-modal>
     <!-- Modal stok kode voucher -->
