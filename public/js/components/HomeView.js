@@ -75,6 +75,16 @@ const HomeView = {
     buyNow(id) { this.addCart(id); go('checkout'); },
     setCat(c) { store.f.cat = c; store.f.tag = ''; },
     setTag(t) { store.f.tag = store.f.tag === t ? '' : t; },
+    catProducts(catId) {
+      return store.products.filter(p => p.category === catId).slice(0, 12);
+    },
+    showCatSection(c) {
+      if (store.productsLoading) return false;
+      const fc = store.f.cat;
+      if (fc && fc !== 'all' && fc !== c.id) return false;
+      if (store.f.q || store.f.tag) return false;
+      return this.catProducts(c.id).length > 0;
+    },
   },
   template: `
   <div class="max-w-6xl mx-auto px-4 py-4 space-y-5">
@@ -143,9 +153,8 @@ const HomeView = {
               :class="['nv-chip', f.tag===t ? 'on' : '']">#{{ t }}</button>
     </div>
 
-    <!-- Sort + count -->
-    <div class="flex items-center justify-between">
-      <span class="text-sm text-gray-500 dark:text-nova-muted">{{ list.length }} produk</span>
+    <!-- Sort -->
+    <div class="flex items-center justify-end">
       <select v-model="f.sort" class="text-sm rounded-full px-4 py-2 bg-white dark:bg-nova-surface dark:border dark:border-nova-line dark:text-nova-text outline-none cursor-pointer">
         <option value="pop">🔥 Populer</option>
         <option value="murah">💰 Termurah</option>
@@ -154,6 +163,37 @@ const HomeView = {
       </select>
     </div>
 
+    <!-- Produk per kategori (slider) -->
+    <template v-for="c in store.cats" :key="'cs'+c.id">
+      <section v-if="showCatSection(c)">
+        <div class="nv-sec">
+          <span class="dot"></span>
+          <h2>{{ c.icon }} {{ c.label }}</h2>
+          <a class="more" @click="setCat(c.id)">Lihat semua ›</a>
+        </div>
+        <div class="flex gap-2.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4">
+          <div v-for="p in catProducts(c.id)" :key="p.id" @click="openProduct(p.id)"
+               class="nv-card clickable flex-shrink-0 w-28 sm:w-36 overflow-hidden">
+            <div class="relative">
+              <blur-img :src="imgOf(p)" cls="aspect-square w-full" :alt="p.name"></blur-img>
+              <span v-if="p.discount > 0" class="absolute top-1.5 left-1.5 nv-badge nv-badge-red !text-[9px] !px-1.5 !py-0.5">-{{ Math.round(p.discount) }}%</span>
+            </div>
+            <div class="p-2">
+              <div class="text-[11px] font-semibold leading-snug clamp2 dark:text-nova-text" style="min-height:2.2em">{{ p.name }}</div>
+              <div class="nv-price text-xs mt-1">{{ rp(finalPrice(p)) }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <!-- Semua produk (grid normal, tanpa slide) -->
+    <section id="all-products">
+      <div class="nv-sec">
+        <span class="dot"></span>
+        <h2>🛍️ Semua Produk</h2>
+        <span class="text-xs text-gray-500 dark:text-nova-muted font-medium">{{ list.length }} produk</span>
+      </div>
     <!-- Grid produk -->
     <div v-if="store.productsLoading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
       <div v-for="i in 6" :key="'sk'+i" class="nv-card overflow-hidden">
@@ -200,6 +240,7 @@ const HomeView = {
         <button @click="f.q=''; f.cat='all'; f.tag=''" class="nv-btn text-sm px-6 py-2.5">Lihat Semua Produk</button>
       </div>
     </div>
+    </section>
     <!-- Testimoni pembeli -->
     <section v-if="testimonialsLoading" class="mt-8">
       <div class="skel h-5 w-32 mb-3"></div>
